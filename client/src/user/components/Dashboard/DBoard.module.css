@@ -1,0 +1,442 @@
+
+.customBorder {
+  border-right: 1px solid #f3f4f6;
+  
+}
+
+
+
+@media (min-width : 768px),
+(width:768px) {
+
+  .dashBtn {
+    width: 25% !important;
+    /* height: 30px; */
+    display: flex;
+    margin-left: -8px !important;
+    /* gap: 0.5rem; */
+  }
+
+  div .bookslotBtn {
+    position: relative;
+  }
+
+  .bookslotBtn {
+    width: 180px !important;
+    /* py-[10px] px-[24px] */
+    height: 40px;
+    font-size: 5px;
+    font-weight: 200;
+    padding: 0px 30px;
+    position: absolute;
+    top: 1.8rem !important;
+    right: 1.5rem !important;
+    /* margin-top: 2rem; */
+  }
+
+  .ratingSpan {
+    /* margin-right: 1rem;
+     */
+    position: absolute;
+    right: 0.5rem;
+  }
+
+  div .ratingSpan {
+    position: relative;
+  }
+
+  .viewallBtn {
+    width: 100px;
+    /* margin-bottom: 0.5rem; */
+    /* padding-bottom: 1.5rem; */
+  }
+
+  .timepara {
+    font-size: 13px !important;
+  }
+
+  .stethcontainer {
+    height: 30px;
+  }
+
+  .calendarContainer {
+    height: 30px;
+    /* margin-top: 0px; */
+  }
+
+  .docType {
+    margin: 0px;
+  }
+
+  .profileContainer {
+    width: 180px;
+    display: flex;
+    gap: 1rem;
+    /* align-items: center; */
+    /* justify-content: center; */
+  }
+
+}
+
+@media (min-width: 1200px) {
+  .sidebar-wrapper {
+    position: fixed !important;
+    top: 80px !important;
+    left: 0px !important;
+    width: 380px !important;
+  }
+
+
+  .toggle-icon-btn {
+    /* top: 69px !important; */
+    left: 55px !important;
+  }
+
+
+
+  .dashBtn {
+    width: 60%;
+    display: flex;
+    justify-content: space-between;
+    margin-left: 76px;
+    /* gap: 0.5rem; */
+  }
+
+  .statesData {
+    border: 1.5px solid #f3f4f6 !important;
+    border-radius: 10px;
+  }
+
+  .statesData .customBorder {
+    border: none !important;
+   
+  }
+
+}
+
+
+@media (min-width: 425px) {
+  .sidebar-wrapper {
+    top: 15px;
+    left: 15px;
+    width: 260px;
+    padding: 25px;
+  }
+
+  .snapcontainer {
+    /* snap-start min-w-[284px] h-[120px]  */
+    min-width: 230px;
+    /* height: 100px; */
+  }
+
+  .reminderPara {
+    font-size: 12px;
+    font-weight: 500;
+  }
+
+  .toggle-icon-btn {
+    top: 15px;
+    left: 15px;
+    padding: 11px 0px 0px 4px;
+  }
+
+  .dboardContainer {
+    margin-top: -0.5rem !important;
+    margin-left: 2rem; 
+  }
+
+  .dashBtn {
+    width: 75%;
+    display: flex;
+    justify-content: space-between;
+    margin-left: 76px;
+    /* gap: 0.5rem; */
+  }
+
+  .stethcontainer {
+    height: 40px;
+  }
+
+  .calendarContainer {
+    height: 50px;
+    /* margin-top: 0px; */
+  }
+
+  .docType {
+    margin: 0px;
+  }
+
+  .viewallBtn {
+    width: 100%;
+    margin-left: 85px;
+  }
+
+  div .bookslotBtn {
+    position: relative;
+  }
+
+  .bookslotBtn {
+    width: 160px !important;
+    /* py-[10px] px-[24px] */
+    height: 40px;
+    font-size: 5px;
+    font-weight: 200;
+    /* padding : 0px 30px; */
+    position: absolute;
+    top: 0.5rem;
+    right: 0.5rem;
+    /* bottom: 1rem; */
+    /* margin-top: 2rem; */
+  }
+}
+
+@media (max-width : 426px) {
+  .dContainer {
+    width: 380px;
+    margin: 0 auto;
+    /* center it if needed */
+  }
+}
+
+@media (max-width: 426px),
+(width: 768px) {
+
+  .statesData .customBorder {
+    border: 1.5px solid #f3f4f6;
+    border-radius: 5px;
+  }
+
+  .statesData {
+    border: none !important;
+  }
+}
+
+@media (min-width: 1024px) {
+  .statesData {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+  }
+
+  .dContainer {
+    width: 760px;
+  }
+
+
+
+  .mainSnapcontainer {
+    width: 100%;
+    display: flex;
+    gap: 2px !important;
+    height: fit-content !important;
+  }
+
+  .mainSnapcontainer .snapcontainer {
+    width: 97px;
+    height: 100px !important;
+    padding: 8px;
+  }
+
+  
+
+  .snapcontainer {
+    flex: 0 0 230px !important;
+    min-width: 230px !important;
+    max-width: 230px !important;
+    height: 100px !important;
+  }
+
+  .statesData {
+    display: grid !important;
+    gap: 0px !important;
+  }
+  .customBorder {
+    width: 100px;
+    /* p-4 flex flex-col items-start */
+    padding: 5px;
+    display: flex;
+    flex-direction: column;
+    border-right: #f3f4f6 !important;
+    /* align-items/: flex-start; */
+  }
+
+  .statesDateOne .innerStateData {
+    display: grid !important;
+    /* grid-template-columns: 1fr 1fr; */
+    gap: 10px !important;
+  }
+
+  .statesValue {
+    font-size: 15px !important;
+    /* font-weight: 400 !important; */
+
+  }
+  .statesSubvalue {
+    font-size: 15px !important;
+    /* padding-right: 5px !important; */
+  }
+
+  .dContainers span {
+    font-size: 15px !important;
+  }
+  .dContainers .subpara{
+    font-size: 15px !important;
+  }
+  .dContainers {
+    display: flex !important;
+    align-items: center !important;
+    gap: 2px !important;
+    margin-top: 0 !important;
+
+  }
+ 
+}
+
+@media (min-width: 1440px) {
+
+  div .dboardContainer {
+    margin-left: 0.4rem ;
+  }
+  .dContainer {
+    width: 1080px;
+    margin-top: 40px;
+    /* or any larger value you need */
+    /* margin: 0 auto; 
+       center it if needed */
+    margin-right: 1rem;
+  }
+
+  .profileContainer {
+    width: 290px !important;
+    display: flex;
+    gap: 1rem;
+    /* align-items: center; */
+    /* justify-content: center; */
+  }
+
+  .viewallBtn {
+    position: absolute;
+    left: 6rem;
+    top: 2rem;
+  }
+
+  .sidebar-wrapper {
+    width: 380px !important;
+  }
+
+  
+   .statesData {
+    border-right: 1.5px solid #f3f4f6 !important;
+  
+  }
+
+  .main-section {
+    padding-left: 40px;
+    padding-right: 40px;
+  }
+
+  .stats-box {
+    width: 250px;
+  }
+
+  .dMainContainer {
+    display: flex;
+    gap: 65px;
+  }
+
+  .dashBtn {
+    width: 95% !important;
+    margin-left: 1rem !important;
+  }
+
+  div .bookslotBtn {
+    position: relative;
+  }
+
+  .bookslotBtn {
+    width: 120px !important;
+    /* py-[10px] px-[24px] */
+    height: 40px;
+    font-size: 5px;
+    /* font-weight: 200; */
+    padding: 0px 30px;
+    position: absolute;
+    top: 1rem !important;
+    left: 0.5rem !important;
+    /* right: 1.5rem !important; */
+    /* margin-top: 2rem; */
+  }
+  .snapcontainer {
+    /* flex: 0 0 284px; */
+    min-width: 284px !important;
+    height: 105px !important;
+    /* max-width: 284px; */
+  }
+}
+
+/* === EXTRA FIXES FOR <424px SCREENS === */
+@media (max-width: 424px) {
+  /* Make main container fluid */
+  .dContainer {
+    width: 100% !important;
+    padding: 0 10px !important;
+    margin: 0 auto !important;
+  }
+
+  /* All grids single column */
+  .statesDateOne,
+  .statesData,
+  .innerStateData {
+    display: grid !important;
+    grid-template-columns: 1fr !important;
+    gap: 10px !important;
+  }
+
+  /* Remove right borders on stacked cards */
+  .customBorder {
+    border-right: none !important;
+  }
+
+  /* Snap containers shrink */
+  .snapcontainer {
+    flex: 0 0 90% !important;
+    min-width: unset !important;
+    max-width: unset !important;
+    height: auto !important;
+  }
+
+  /* Appointment / My doctor buttons stacked */
+  .bookslotBtn {
+    position: static !important;
+    width: 100% !important;
+    margin-top: 10px !important;
+    height: auto !important;
+    font-size: 12px !important;
+    padding: 1px 12px !important;
+  }
+
+  /* Appointment buttons container full width */
+  .dashBtn {
+    width: 100% !important;
+    margin-left: 0 !important;
+    flex-wrap: wrap;
+    justify-content: flex-start !important;
+    gap: 10px;
+  }
+
+  /* Fonts shrink */
+  .sec-header,
+  .labtest-header {
+    font-size: 18px !important;
+  }
+  .reminderPara {
+    font-size: 12px !important;
+  }
+  .timepara {
+    font-size: 12px !important;
+  }
+
+  /* Overflow hidden so nothing breaks out */
+  .dMainContainer {
+    overflow-x: hidden !important;
+  }
+}

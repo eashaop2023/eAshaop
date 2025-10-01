@@ -1,0 +1,95 @@
+.mainContainer {
+  /* leaves space under fixed topbar */
+  padding-top: 90px;
+  padding-left: 1rem;
+  padding-right: 1rem;
+  margin: 0 auto;
+  max-width: 100%;
+}
+
+.heading {
+  font-weight: 500;
+  margin-bottom: 24px;
+  text-align: left;
+}
+
+/* grid row spacing */
+.rowContainer {
+  margin-top: 0;
+}
+
+/* column container */
+.colContainer {
+  cursor: pointer;
+  display: flex;
+  justify-content: center;
+}
+
+/* card box */
+.cardBox {
+  border: 1px solid #cccccc;
+  border-radius: 18px;
+  padding: 16px;
+  background: #ffffff;
+  width: 100%;
+  max-width: 480px;
+}
+
+.iconBox {
+  background: #e6feff;
+  margin-right: 10px;
+  width: 48px;
+  height: 48px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 8px;
+}
+
+.catIcon {
+  width: 48px;
+  height: 48px;
+}
+
+/* ========== MEDIA QUERIES ========== */
+@media (max-width: 424px) {
+  .mainContainer {
+    padding-top: 110px; /* extra space under topbar on very small phones */
+  }
+  .heading {
+    font-size: 20px;
+    text-align: center;
+  }
+}
+
+@media (min-width: 425px) and (max-width: 767px) {
+  .mainContainer {
+    width: 95%;
+    padding-top: 100px;
+  }
+}
+
+@media (min-width: 768px) {
+  .mainContainer {
+    width: 95%;
+    padding-top: 115px;
+  }
+}
+
+@media (min-width: 1024px) and (max-width: 1439px) {
+  .mainContainer {
+    max-width: 75%;
+    margin-left: 260px;
+    padding-top: 115px;
+  }
+}
+
+
+@media (min-width: 1440px) {
+  .mainContainer {
+    max-width: 75%;
+    margin-left: 310px;
+    overflow-x: hidden;
+    padding-top: 115px;
+  }
+}

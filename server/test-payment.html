@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Appointment Payment Test</title>
+    <script src="https://checkout.razorpay.com/v1/checkout.js"></script>
+  </head>
+
+  <body>
+    <h1>Book Appointment & Pay</h1>
+
+    <label>Amount (INR):</label>
+    <input type="number" id="amount" value="500" />
+    <button onclick="bookAndPay()">Book & Pay</button>
+
+    <h3>Result:</h3>
+    <pre id="result">No payment yet.</pre>
+
+    <script>
+      async function bookAndPay() {
+        try {
+          const amount = parseInt(document.getElementById("amount").value);
+
+          //Call backend to create order + appointment
+          const bookRes = await fetch(
+            "http://localhost:5000/api/appointments",
+            {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({
+              
+  "userId": "68d27a92c52a5dff587a0de0",
+  "doctorId": "68d1183a8eb6967ed4ab2795",
+  "date": "2025-09-30",
+  "time": "18:30",
+  "type": "video",
+  "amount": 500
+
+              }),
+            }
+          );
+
+          const bookData = await bookRes.json();
+          console.log("Book API Response:", bookData);
+
+          if (!bookRes.ok) {
+            document.getElementById("result").innerText =
+              "❌ Failed to create order: " + bookData.message;
+            return;
+          }
+
+          const { order, appointmentId } = bookData;
+
+          //Open Razorpay Checkout
+          const options = {
+            key: "rzp_test_RMXMtuD0tkQwlL", // Your Razorpay Test Key
+            amount: order.amount,
+            currency: order.currency,
+            name: "HealthCare App",
+            description: "Doctor Appointment Payment",
+            order_id: order.id,
+            prefill: {
+              name: "Test User",
+              email: "test@example.com",
+              contact: "9999999999",
+            },
+            handler: async function (response) {
+              document.getElementById("result").innerText =
+                "✅ Payment Success!\n" + JSON.stringify(null, 2);
+
+              // Confirm payment with backend
+              const confirmRes = await fetch(
+                "http://localhost:5000/api/appointments/confirm-payment",
+                {
+                  method: "POST",
+                  headers: { "Content-Type": "application/json" },
+                  body: JSON.stringify({
+                    appointmentId: appointmentId,
+                    razorpayPaymentId: response.razorpay_payment_id,
+                    razorpayOrderId: response.razorpay_order_id,
+                    razorpaySignature: response.razorpay_signature,
+                  }),
+                }
+              );
+
+              const confirmData = await confirmRes.json();
+              console.log("Confirm Payment API Response:", confirmData);
+
+              if (confirmRes.ok) {
+                document.getElementById("result").innerText +=
+                  "\n\n✅ Backend Verified & Appointment Confirmed!";
+              } else {
+                document.getElementById("result").innerText +=
+                  "\n\n❌ Backend Verification Failed: " + confirmData.message;
+              }
+            },
+            theme: { color: "#3399cc" },
+          };
+
+          const rzp = new Razorpay(options);
+          rzp.open();
+        } catch (err) {
+          console.error("Error:", err);
+          document.getElementById("result").innerText =
+            "❌ Error: " + err.message;
+        }
+      }
+    </script>
+  </body>
+</html>

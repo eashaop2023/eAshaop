@@ -1,0 +1,87 @@
+/* ✅ NEW – for extra small screens */
+@media (max-width: 425px) {
+  .mainContainer {
+    padding-left: 10px !important;
+    padding-right: 10px !important;
+    padding-top: 80px !important;
+  }
+  .btnContainer {
+    margin-left: 0 !important;
+  }
+  .headerOne {
+    margin-left: 0 !important;
+    text-align: center;
+  }
+}
+
+/* Existing rules */
+@media (min-width : 425px) {
+  .mainContainer {
+    padding-left: 18px !important;
+    padding-top: 100px !important;
+  }
+  .btnContainer {
+    margin-top: 10px !important;
+    margin-left: 1rem !important;
+  }
+  .headerOne {
+    margin-top: 0.5rem;
+    margin-left: 1.5rem;
+  }
+}
+
+@media (min-width : 768px) {
+  .rowContainer {
+    display: flex !important;
+    flex-wrap: wrap !important;
+  }
+  .mainContainer {
+    padding-top: 100px !important;
+  }
+}
+
+@media (min-width : 1024px) {
+  .mainContainer {
+    padding-left: 260px !important;
+  }
+  .headerOne {
+    margin-top: -1% !important;
+  }
+}
+
+@media (min-width : 1440px) {
+  .mainContainer {
+    padding-left: 320px !important;
+  }
+  .secWrapper {
+    height: 151px !important;
+  }
+  .headerOne {
+    margin-left: 0.5rem !important;
+  }
+  .btnContainer {
+    margin-left: 0rem !important;
+  }
+}
+
+/* ✅ Force the two buttons to stay in one horizontal row and not wrap */
+.btnContainer {
+  flex-wrap: nowrap !important;     /* force horizontal always */
+  gap: 0.5rem;                      /* small gap between buttons */
+}
+
+/* ✅ Make text never wrap and adjust font size */
+.toggleBtn {
+  white-space: nowrap;              /* text stays one line */
+  font-size: 0.85rem;                /* slightly smaller text */
+  justify-content: center;
+}
+
+/* ✅ On very small screens, make text a little smaller */
+@media (max-width: 425px) {
+  .toggleBtn {
+    font-size: 0.78rem;
+    padding-left: 0.5rem;
+    padding-right: 0.5rem;
+  }
+}

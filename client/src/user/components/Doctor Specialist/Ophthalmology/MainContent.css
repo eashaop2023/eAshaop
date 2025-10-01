@@ -1,0 +1,208 @@
+
+
+@media (min-width: 1024px) and (max-width: 1440px) {
+  .main-contents {
+    margin-left: 200px; /* space for sidebar on desktop */
+  }
+    
+  
+}
+
+/* Show Filters button only up to 1024px */
+@media (min-width: 1024px) {
+  .filters {
+    display: none !important;
+  }
+  .text{
+    display: flex !important;
+  }
+
+   .outer-toggle {
+    display: flex !important;
+    /* align-items: flex-start !important; */
+    justify-content: flex-start !important;
+  }
+  .toggle-images {
+  height: 26px !important;
+  width: 24px !important;
+  /* padding: 10px 10px !important; */
+}
+ .btn1 {
+      padding: 10px !important;
+
+ }
+.toggle-buttons-container {
+   width: 60% !important;
+   display: grid !important;
+   /* align-items: center !important; */
+   grid-template-columns: 1fr 1fr !important;
+   justify-content: space-between !important;
+}
+}
+
+
+@media (min-width: 1440px) {
+  .main-contents {
+    margin-left: 360px; /* no sidebar on mobile */
+  }
+  /* .btn {
+    padding: 12px !important;
+  } */
+  .btn1 {
+    padding: 13px !important;
+  }
+  .toggle-buttons-container {
+    width: 40% !important;
+  }
+ 
+}
+
+@media (max-width:500px){
+  .searchbar{
+    width: 100% !important;
+  }
+  .filters{
+    width: 30% !important;
+  } 
+   .toggle-buttons-container button{
+    font-size: 15px !important;
+    padding: 8px 16px !important;
+
+  }
+  .toggle-images {
+  height: 23px !important;
+  width: 24px !important;
+}
+} 
+
+@media (width:1023px){
+  .searchbar{
+    width: 100% !important;
+
+  }
+  .filters{
+    width: 20% !important;
+  } 
+  .toggle-buttons-container button {
+    padding: 8px 16px !important;
+    font-size: 14px !important;
+  }
+  .filters-with-search{
+    width: 100% !important;
+    display: flex !important;
+    justify-content: space-between !important;
+  }
+
+}
+
+@media (min-width:500px) and (max-width: 1023.8px) {
+   .searchbar{
+    width: 100% !important;
+
+  }
+  .filters{
+    width: 20% !important;
+  } 
+  .toggle-buttons-container button {
+    padding: 11px 16px !important;
+    font-size: 14px !important;
+  }
+  .speciality{
+    font-size: 13px !important  ;
+  }
+  .navigations{
+    margin-bottom: 15px !important;
+  }
+  .filters-with-search{
+    width: 100% !important;
+    display: flex !important;
+    justify-content: space-around !important;
+  }
+   
+  
+}
+
+
+@media (min-width: 560px) and (max-width: 1439px) {
+
+  .fee-details{
+    display: flex;
+    flex-direction: column;
+    border: none !important;
+  }
+
+  .consultation-fee-box
+   {
+    display: block;
+    border: 1px solid #E7E7E7;
+    border-radius: 28px;
+    padding: 8px 10px 8px 10px;
+    margin-bottom: 5px;
+    width: 100%;
+    text-align: flex-start;
+  }
+  .consultation-fee-box .fee{
+    font-size: 14px !important;
+  }
+  .next-slot-box{
+    display: flex;
+    width: 100%;
+    justify-content: start;
+    margin-left: 20px;
+   }
+  .vertical-line{
+    display: none !important;
+  }
+   p.doctor-name {
+    font-size: 15px !important;
+  }
+  .speciality {
+    display: flex;
+    font-size: 10px !important;
+  }
+
+}
+
+@media (min-width : 425px) {
+  
+}
+
+@media (min-width:768px) and (max-width:777px){
+  .card-body{
+    padding-left: 10px !important;
+    padding-right: 10px !important;
+  }
+  .toggle-images {
+  height: 26px !important;
+  width: 24px !important;
+}
+
+  .toggle-buttons-container {
+    width: 60% !important;
+    display: flex !important;
+    /* align-items: flex-start !important; */
+  }
+  .outer-toggle {
+    display: flex !important;
+    /* align-items: flex-start !important; */
+    justify-content: flex-start !important;
+  }
+  .btn1 {
+        width: 55% !important;
+  }
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

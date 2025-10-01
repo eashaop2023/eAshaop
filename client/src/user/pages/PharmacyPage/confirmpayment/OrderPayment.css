@@ -1,0 +1,40 @@
+.upi-container {
+  position: relative;
+  display: flex;
+  gap: 32px;
+}
+
+.upi-box {
+  width: 113px;
+  height: 129px;
+  padding: 24px;
+  text-align: center;
+  font-size: 12px;
+  border-radius: 8px;
+  border: 1px solid transparent;
+  cursor: pointer;
+  position: relative;
+  z-index: 1;
+}
+
+.upi-box-inner {
+  position: relative;
+  z-index: 2;
+}
+
+.upi-box img {
+  width: 56px;
+}
+
+.upi-highlight {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 113px;
+  height: 129px;
+  background-color: #EDFFFE;
+  border: 1px solid #00A99D;
+  border-radius: 28px;
+  z-index: 0;
+  transition: transform 0.4s ease;
+}

@@ -1,0 +1,70 @@
+
+@media (min-width : 425px) {
+.mainContainer {
+    width: 557px;
+    padding-top: 40px !important;
+    margin-left: 50px !important;
+    font-family: Urbanist, sans-serif !important;
+   
+}
+.mainWrapper {
+    width: 100% !important;
+    display: flex !important;
+    /* align-items: center !important; */
+    justify-content: center !important;
+ }
+ .secContainer {
+    width: 100% !important;
+ }
+ .secHeader {
+   margin-top: 2.5rem !important;
+ }
+}
+
+
+
+
+@media (min-width : 1024px) {
+    .mainContainer {
+    width: 617px;
+    padding-top: 110px !important;
+    margin-left: 333px !important;
+    font-family: Urbanist, sans-serif !important;
+
+    }
+    .mainWrapper {
+    width: 100% !important;
+    display: flex !important;
+    /* align-items: center !important; */
+    justify-content: center !important;
+ }
+
+}
+
+@media (width : 768px)  {
+ .mainContainer {
+    width: 557px;
+    padding-top: 29px !important;
+    margin-left: 50px !important;
+    font-family: Urbanist, sans-serif !important;
+   
+    }
+ .mainWrapper {
+    width: 100% !important;
+    display: flex !important;
+    /* align-items: center !important; */
+    justify-content: center !important;
+ }
+  .secHeader {
+   margin-top: 3rem !important;
+ }
+
+
+}
+
+@media (min-width : 1440px) {
+.mainContainer {
+    padding-top: 75px !important;
+    
+}
+}
