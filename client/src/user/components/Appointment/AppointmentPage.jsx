@@ -6,7 +6,9 @@ import Call from "../../assets/confirmappointmenticons/call.svg"
 import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
 import Calender from "../../assets/calendar.svg";
-import { useNavigate } from "react-router-dom";
+import { useNavigate,useLocation } from "react-router-dom";
+    import axios from 'axios';
+// import { useLocation } from "react-router-dom";
 import { Link } from "react-router-dom";
 // import '../../components/Appointment/AppointmentPage.css';
 import AddMemberForm from "../addmemberform/AddMemberForm";
@@ -25,13 +27,33 @@ export default function AppointmentPage() {
   const [selectedDateIndex, setSelectedDateIndex] = useState(0);
   const scrollTargetRef = useRef(null);
   const [isMobile, setIsMobile] = useState(window.innerWidth <= 1020);
+  const [doctor, setDoctor] = useState(null);
 
+  
   useEffect(() => {
     const handleResize = () => setIsMobile(window.innerWidth <= 1020);
     window.addEventListener("resize", handleResize);
     return () => window.removeEventListener("resize", handleResize);
   }, []);
-
+  const location = useLocation();
+  const doctorId = location.state?.doctorId;
+  console.log("Doctor id is",doctorId)
+ useEffect(() => {
+    if (doctorId) {
+      const fetchDoctor = async () => {
+        try {
+          
+          // console.log("process.env.REACT_APP_SERVER_URL", process.env.REACT_APP_SERVER_URL)
+          const res = await axios.get(`http://localhost:5000/api/doctors/${doctorId}`);
+          console.log("Doctors details are",res.data)
+          setDoctor(res.data);
+        } catch (err) {
+          console.error("Error fetching doctor:", err);
+        }
+      };
+      fetchDoctor();
+    }
+  }, [doctorId]);
   const timeSlots = [
     "08:30 am",
     "09:30 am",
@@ -119,8 +141,107 @@ export default function AppointmentPage() {
                         />
                         Doctors
                       </button>
+                          
+                          {/* Doctor Profile Header */}
+<div className="mb-3 doctor-img-data w-100 ">
+  <div className="d-flex justify-content-center w-100 bottom-2 mb-3">
+  <img 
+    src={doctor?.profileImage || Profile} 
+    alt={`Dr. ${doctor?.name}`} 
+    className="rounded-circle appointment-image" 
+    style={{ 
+      height: '120px', 
+      width: '120px', 
+      objectFit: 'cover' 
+    }} 
+  />
+</div>
+  <div className="doctor-data d-flex flex-column gap-2">
+    {/* DYNAMIC: Doctor's name and education */}
+    <h5 className="mt-3 mb-0 fw-bold text-[22px] ">{doctor?.name} <small className="fw-medium text-[18px]">{doctor?.education}</small></h5>
+    {/* DYNAMIC: Doctor's speciality */}
+    <p className="text-muted fw-medium text-[18px] mb-0">♡ {doctor?.speciality}</p>
+    {/* DYNAMIC: Doctor's average rating */}
+    <div className="d-flex align-items-center fw-medium text-[18px] gap-1 text-muted"><span style={{ color: "#FDCB02", fontSize: "16px" }}>★</span><span>{doctor?.averageRating} / 5</span></div>
+  </div>
+</div>
 
-            <div className="mb-3 doctor-img-data w-100 ">
+{/* Call Button (Static) */}
+<div className="d-flex w-100 justify-content-between mb-3 button-group-mobile">
+  <Button variant="outline" className="w-100 fw-normal text-[18px] call-btn" style={{ backgroundColor: "#EDFFFE", color: "#00A99D", borderRadius: "28px", height: "72px", width: "272px", display: "flex", alignItems: "center", justifyContent: "center", gap: "10px" }}>
+    <img src={Call} alt="call" className="h-8 w-8 text-[18px]" /> <span className="fw-normal text-[20px]">Call</span>
+  </Button>
+</div>
+
+{/* Detailed Information Section */}
+<div className="heading w-100">
+  {/* DYNAMIC: About section */}
+  <h6 className="fw-bold w-100" style={{fontSize:"18px", fontWeight:"bold"}}>About</h6>
+  <p className="text-muted small w-100" style={{fontSize:"17px", fontWeight:"normal"}}>{doctor?.about}</p>
+
+  {/* DYNAMIC: Languages spoken */}
+  <h6 className="fw-bold" style={{fontSize:"18px", fontWeight:"normal"}}>Languages</h6>
+  <p className="text-muted small" style={{fontSize:"17px", fontWeight:"normal"}}>{doctor?.languages?.join(', ')}</p>
+
+  {/* DYNAMIC: Areas of Expertise, split from a string */}
+  <h6 className="fw-bold" style={{fontSize:"18px", fontWeight:"normal"}}>Areas of Expertise</h6>
+  <div className="d-flex flex-wrap gap-3"style={{fontSize:"18px", fontWeight:"normal"}}> 
+    {doctor?.areaOfInterest?.split(',').map(item => (
+      <span key={item} className="badge bg-light text-dark rounded-pill" style={{ width: 'auto', padding: '10px 15px', height: '37px', fontWeight: 400 }}>{item}</span>
+    ))}
+  </div>
+{/* DYNAMIC: Displaying a filtered list of certificate links */}
+{/* <h6 className="fw-bold mt-3" style={{fontSize:"18px", fontWeight:"normal"}}>Certifications</h6>
+<div>
+  {doctor?.medicalCertificates
+    ?.filter(cert => cert.type !== 'Medical License')
+    .map((cert) => (
+      <p key={cert._id} className="text-muted small mb-1" style={{fontSize:"17px", fontWeight:"normal"}}>
+        <a 
+          href={cert.fileUrl} 
+          target="_blank" 
+          rel="noopener noreferrer"
+          style={{ color: '#00A99D' }}
+        >
+          View {cert.type}
+        </a>
+      </p>
+  ))}
+</div> */}
+  {/* STATIC: Kept as is, since no 'certifications' field exists in the data
+  <h6 className="fw-bold mt-3" style={{fontSize:"18px", fontWeight:"normal"}}>Certifications</h6>
+  <p className="text-muted small" style={{fontSize:"17px", fontWeight:"normal"}}>Board Certified in Cardiology</p> */}
+
+  {/* DYNAMIC: Education details */}
+  <h6 className="fw-bold" style={{fontSize:"18px", fontWeight:"normal"}}>Education & Training</h6>
+  <p className="text-muted small mb-1" style={{fontSize:"17px", fontWeight:"normal"}}>
+    Degree: {doctor?.education} from {doctor?.university}
+  </p>
+  <p className="text-muted small" style={{fontSize:"17px", fontWeight:"normal"}}>
+    Works at: {doctor?.hospitalName}
+  </p>
+</div>
+
+{/* Dynamic Reviews Section */}
+<div className="heading-reviews">
+  <h6 className="fw-bold mt-3 mb-2" style={{fontSize:"18px", fontWeight:"normal"}}>Reviews</h6>
+  <div className="review-Container pl-0 pb-2 d-flex gap-3 justify-content-between">
+    <input type="text" placeholder="Write review" className="border rounded-5 p-2 w-100" />
+    <button className="btn border rounded-5" style={{backgroundColor: "#8E8E8E", color:'white'}} >Post</button>
+  </div>
+  
+  {/* Logic handles the empty 'reviews' array correctly */}
+  {doctor?.reviews && doctor?.reviews.length > 0 ? (
+    doctor?.reviews.map((review, index) => (
+      <div key={review._id || index} className="border-bottom pb-3 mb-3">
+        {/* Review content would go here */}
+      </div>
+    ))
+  ) : (
+    <p className="text-muted small">No reviews yet.</p>
+  )}
+</div>
+            {/* <div className="mb-3 doctor-img-data w-100 ">
               <div className="d-flex justify-content-center w-100  bottom-2 mb-3">
                 <img src={Profile} alt="Doctor" className="rounded-circle appointment-image" height={100} />
               </div>
@@ -181,7 +302,7 @@ export default function AppointmentPage() {
                   <a href="#" className="text-decoration-none small" style={{ color: '#00A99D' }}>See More</a>
                 </div>
               ))}
-            </div>
+            </div> */}
           </div>
         </Col>
 

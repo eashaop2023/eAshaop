@@ -18,7 +18,7 @@ const Topbar = () => {
   const navigate = useNavigate();
 
   const handleClick = ()=>{
-    navigate('profile')
+    navigate('/user/profile')
   }
 
   return (

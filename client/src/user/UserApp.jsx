@@ -267,7 +267,7 @@ function UserApp() {
         <Route path="virtual-appointment" element={<VirtualAppointment />} />
 
         {/* ---------- Profile Routes ---------- */}
-        <Route path="profile" element={<ProfileLayout />}>
+        <Route path="/profile" element={<ProfileLayout />}>
           <Route index element={<Profile />} />
           <Route path="payment-and-billing" element={<Billing />} />
           <Route path="family-members" element={<FamilyPanel />} />

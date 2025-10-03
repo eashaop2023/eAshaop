@@ -363,7 +363,7 @@ useEffect(() => {
                 <button
                   className="btn w-100 rounded-pill"
                   style={{ backgroundColor: "#00B2A9", color: "white", fontSize: '14px' }}
-                  onClick={() => navigate("/user/category/bookappointment")}
+                  onClick={() => navigate("/user/category/bookappointment",{ state: { doctorId: doc._id } })}
                 >
                   Book a slot
                 </button>
