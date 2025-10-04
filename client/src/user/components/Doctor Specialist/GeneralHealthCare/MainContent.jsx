@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { FiSearch, FiMic, FiX } from "react-icons/fi";
 import { useParams } from "react-router-dom";
+import { API_BASE_URL } from "../../../../api-config";
 
 import { FaStar } from "react-icons/fa";
 import Cardiology from "../../../assets/cardiologist/cardiology.png";
@@ -40,7 +41,7 @@ const MainContent = ({ selectedFilters, setSelectedFilters, clearAllFilters, onT
  useEffect(() => {
     async function fetchDoctors() {
       try {
-const res = await fetch(`http://localhost:5000/api/categories/${uuid}/doctors`);
+const res = await fetch(`${API_BASE_URL}/api/categories/${uuid}/doctors`);
         if (!res.ok) throw new Error("Failed to fetch doctors");
 
         const data = await res.json();

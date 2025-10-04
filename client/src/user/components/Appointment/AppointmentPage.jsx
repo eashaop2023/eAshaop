@@ -13,6 +13,7 @@ import { Link } from "react-router-dom";
 // import '../../components/Appointment/AppointmentPage.css';
 import AddMemberForm from "../addmemberform/AddMemberForm";
 import Arrowleft from "../../assets/confirmappointmenticons/arrow-left.svg";
+import { API_BASE_URL } from "../../../api-config";
 
 export default function AppointmentPage() {
   const [startDate, setStartDate] = useState(() => {
@@ -37,15 +38,11 @@ export default function AppointmentPage() {
   }, []);
   const location = useLocation();
   const doctorId = location.state?.doctorId;
-  console.log("Doctor id is",doctorId)
  useEffect(() => {
     if (doctorId) {
       const fetchDoctor = async () => {
         try {
-          
-          // console.log("process.env.REACT_APP_SERVER_URL", process.env.REACT_APP_SERVER_URL)
-          const res = await axios.get(`http://localhost:5000/api/doctors/${doctorId}`);
-          console.log("Doctors details are",res.data)
+          const res = await axios.get(`${API_BASE_URL}/api/doctors/${doctorId}`);
           setDoctor(res.data);
         } catch (err) {
           console.error("Error fetching doctor:", err);

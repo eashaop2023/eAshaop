@@ -5,7 +5,7 @@ import { Link, useNavigate } from "react-router-dom";
 import { FaEye, FaEyeSlash } from "react-icons/fa";
 import { toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
-
+import { API_BASE_URL } from "../../api-config";
 
 const API_URL = "http://localhost:5000";
 
@@ -62,8 +62,8 @@ const sendOtp = async () => {
 
     const endpoint =
       role === "doctor"
-        ? `${API_URL}/api/doctors/login/request-otp`
-        : `http://localhost:5000/api/user/login/send-otp`;
+        ? `${API_BASE_URL}/api/doctors/login/request-otp`
+        : `${API_BASE_URL}/api/user/login/send-otp`;
 
 
     const res = await fetch(endpoint, {
@@ -106,8 +106,8 @@ verifyBy: isEmail ? "email" : "mobile",
 
     const endpoint =
       role === "doctor"
-        ? `${API_URL}/api/doctors/login/resend-login-otp`
-        : `http://localhost:5000/api/user/login/resend-otp`;
+        ? `${API_BASE_URL}/api/doctors/login/resend-login-otp`
+        : `${API_BASE_URL}/api/user/login/resend-otp`;
 
 
     const res = await fetch(endpoint, {
@@ -146,8 +146,8 @@ const verifyOtp = async () => {
 
     const endpoint =
       role === "doctor"
-        ? `${API_URL}/api/doctors/login/verify-otp`
-        : `${API_URL}/api/user/login/verify-otp`;
+        ? `${API_BASE_URL}/api/doctors/login/verify-otp`
+        : `${API_BASE_URL}/api/user/login/verify-otp`;
 
     const res = await fetch(endpoint, {
       method: "POST",
@@ -235,8 +235,8 @@ const handleLogin = async (e) => {
 
       const res = await fetch(
         role === "doctor"
-          ? `${API_URL}/api/doctors/login`
-          : `${API_URL}/api/user/login`,
+          ? `${API_BASE_URL}/api/doctors/login`
+          : `${API_BASE_URL}/api/user/login`,
         {
           method: "POST",
           headers: { "Content-Type": "application/json" },

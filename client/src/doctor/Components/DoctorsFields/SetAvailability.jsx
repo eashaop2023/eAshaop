@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 // import { FaTrash, FaPlus } from "react-icons/fa";
+import { API_BASE_URL } from "../../../api-config";
 
 const CalendarAndSlots = () => {
   const [selectedDate, setSelectedDate] = useState(new Date());
@@ -36,7 +37,7 @@ const payload = {
     try {
       // Replace doctorId dynamically or from context
       const response = await fetch(
-        `http://localhost:5000/api/doctors/${doctorId}/availability`,
+        `${API_BASE_URL}/api/doctors/${doctorId}/availability`,
         {
           method: "POST",
           headers: { "Content-Type": "application/json" },

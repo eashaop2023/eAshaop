@@ -4,6 +4,7 @@ import "bootstrap/dist/css/bootstrap.min.css";
 import logo from "../.././assets/eAshalogo.png";
 import { useNavigate, useLocation } from "react-router-dom";
 import { toast } from "react-toastify";
+import { API_BASE_URL } from "../../api-config";
 
 const ForgotOtp = () => {
   const [otp, setOtp] = useState(["", "", "", ""]);
@@ -38,9 +39,9 @@ const ForgotOtp = () => {
 
     const getApiBase = (action) => {
     if (role === "doctor") {
-      return `http://localhost:5000/api/doctors/forgot-password/${action}`;
+      return `${API_BASE_URL}/api/doctors/forgot-password/${action}`;
     } else {
-      return `http://localhost:5000/api/user/forgot-password/${action}`;
+      return `${API_BASE_URL}/api/user/forgot-password/${action}`;
     }
   };
 

@@ -42,7 +42,7 @@ const Topbar = () => {
             height: '60px',
             marginRight: '40px',
           }}
-          onClick={()=> {navigate('/')}}
+          onClick={()=> {navigate('/user/profile')}}
         />
       </div>
 
@@ -53,7 +53,7 @@ const Topbar = () => {
           alt="Notification"
           style={{ width: '22px', height: '22px', marginRight: '15px',cursor:"pointer" }}
         />
-        <i className="bi bi-bell fs-5 me-3"></i>
+        {/* <i className="bi bi-bell fs-5 me-3"></i> */}
         <img
           src={dp}
           alt="User"

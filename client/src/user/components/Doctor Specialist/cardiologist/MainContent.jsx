@@ -18,6 +18,8 @@ import video from '../../../assets/confirmappointmenticons/video.svg'
 import walk from '../../../assets/walking_icon.svg'
 import Star from '../../../assets/icons/star.png'
 
+import { API_BASE_URL } from "../../../../api-config";
+
 // const mockDoctors = Array(9).fill({
 //   name: "Dr. Nithish Jagannatham",
 //   speciality: "Cardiologist",
@@ -42,7 +44,7 @@ const MainContent = ({ selectedFilters, setSelectedFilters, clearAllFilters, onT
   useEffect(() => {
       async function fetchDoctors() {
         try {
-  const res = await fetch(`http://localhost:5000/api/categories/${uuid}/doctors`);
+  const res = await fetch(`${API_BASE_URL}/api/categories/${uuid}/doctors`);
           if (!res.ok) throw new Error("Failed to fetch doctors");
   
           const data = await res.json();

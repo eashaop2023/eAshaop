@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import 'bootstrap-icons/font/bootstrap-icons.css';
 import { toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
-
+import { API_BASE_URL } from "../../../api-config";
 
 
 const DoctorProfilePage = () => {
@@ -51,7 +51,7 @@ const DoctorProfilePage = () => {
   // Fetch doctor profile
   const fetchProfile = async () => {
     try {
-      const res = await fetch("http://localhost:5000/api/doctors/profile", {
+      const res = await fetch(`${API_BASE_URL}/api/doctors/profile`, {
         method: "GET",
         headers: {
           "Authorization": `Bearer ${localStorage.getItem("authToken")}`,
@@ -159,7 +159,7 @@ const handleSubmit = async (e) => {
     }
 
     // --- API call ---
-    const res = await fetch("http://localhost:5000/api/doctors/profile", {
+    const res = await fetch(`${API_BASE_URL}/api/doctors/profile`, {
       method: "PUT",
       headers: {
         "Authorization": `Bearer ${localStorage.getItem("authToken")}`,

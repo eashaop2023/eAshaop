@@ -6,6 +6,7 @@ import { FiEye, FiEyeOff } from "react-icons/fi";
 import { useNavigate } from "react-router-dom";
 import { toast } from "react-toastify";
 import { useLocation } from "react-router-dom";
+import { API_BASE_URL } from "../../../api-config";
 
 
 import EashaLogo from "../../../assets/eAshalogo.png";
@@ -150,7 +151,7 @@ const doctorId = location.state?.doctorId || localStorage.getItem("doctorId") ||
                   toast.error("Doctor ID missing. Please restart the process.");
                   return;
                 }
-                apiUrl = "http://localhost:5000/api/doctors/forgot-password/reset";
+                apiUrl = `${API_BASE_URL}/api/doctors/forgot-password/reset`;
                 payload = { newPassword: values.newPassword };
                 headers["doctorid"] = doctorId;
 
@@ -160,7 +161,7 @@ const doctorId = location.state?.doctorId || localStorage.getItem("doctorId") ||
                   toast.error("User email/phone missing. Please restart the process.");
                   return;
                 }
-                apiUrl = "http://localhost:5000/api/user/reset-password";
+                apiUrl = `${API_BASE_URL}/api/user/reset-password`;
                 payload = {
                   value: identifier,
                   newPassword: values.newPassword,

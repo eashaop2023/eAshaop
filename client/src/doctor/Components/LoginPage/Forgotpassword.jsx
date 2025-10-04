@@ -6,6 +6,7 @@ import EashaLogo from "../../../assets/eAshalogo.png";
 import { useLocation } from "react-router-dom";
 import { toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
+import { API_BASE_URL } from "../../../api-config";
 
 
 const Forgotpassword = () => {
@@ -33,8 +34,8 @@ const Forgotpassword = () => {
   });
 
     const apiBase = role === "doctor"
-    ? "http://localhost:5000/api/doctors/forgot-password/request-otp"
-    : "http://localhost:5000/api/user/forgot-password/send-otp";
+    ? `${API_BASE_URL}/api/doctors/forgot-password/request-otp`
+    : `${API_BASE_URL}/api/user/forgot-password/send-otp`;
 
 
   return (

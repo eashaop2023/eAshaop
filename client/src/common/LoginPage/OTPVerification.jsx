@@ -4,7 +4,7 @@ import logo from "../.././assets/eAshalogo.png";
 import { useNavigate, useLocation } from "react-router-dom";
 import { toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
-
+import { API_BASE_URL } from "../../api-config";
 
 const API_URL = "http://localhost:5000"; // adjust if needed
 
@@ -48,7 +48,7 @@ const identifier = location.state?.verifyByValue || "";
 
     setLoading(true);
     try {
-      const res = await fetch(`${API_URL}/api/user/registration/verify-otp`, {
+      const res = await fetch(`${API_BASE_URL}/api/user/registration/verify-otp`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -82,7 +82,7 @@ const identifier = location.state?.verifyByValue || "";
   // ✅ Resend OTP with backend
   const handleResendOtp = async () => {
     try {
-      const res = await fetch(`${API_URL}/api/user/registration/resend-otp`, {
+      const res = await fetch(`${API_BASE_URL}/api/user/registration/resend-otp`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
 body: JSON.stringify({

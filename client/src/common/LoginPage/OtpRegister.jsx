@@ -4,6 +4,7 @@ import logo from "../.././assets/eAshalogo.png";
 import { useNavigate, useLocation } from "react-router-dom";
 import { toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
+import { API_BASE_URL } from "../../api-config";
 
 
 const OtpRegister = () => {
@@ -50,7 +51,7 @@ const handleSubmit = async (e) => {
   const enteredOtp = otp.join("").trim();  
 
   try {
-    const res = await fetch("http://localhost:5000/api/doctors/verify-otp", {
+    const res = await fetch(`${API_BASE_URL}/api/doctors/verify-otp`, {
       method: "POST",
       headers: { "Content-Type": "application/json",doctorId:doctorId, },
       body: JSON.stringify({ doctorId, email: identifier, otp: enteredOtp }),
@@ -85,7 +86,7 @@ const handleResend = async () => {
     verifyBy: identifier.includes("@") ? "email" : "mobile",
   });
   try {
-    const res = await fetch("http://localhost:5000/api/doctors/resend-verification-otp", {
+    const res = await fetch(`${API_BASE_URL}/api/doctors/resend-verification-otp`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
 body: JSON.stringify({ doctorId, verifyBy: identifier.includes("@") ? "email" : "mobile" }),

@@ -10,6 +10,7 @@ import {
   FaBars,
   FaTimes,
 } from "react-icons/fa";
+import { API_BASE_URL } from "../../../api-config";
 
 const Sidebar = () => {
   const location = useLocation();
@@ -35,7 +36,7 @@ const handleLogout = async () => {
   try {
     const token = localStorage.getItem("authToken");
     if (token) {
-      await fetch("http://localhost:5000/api/doctors/logout", {
+      await fetch(`${API_BASE_URL}/api/doctors/logout`, {
         method: "POST",
         headers: {
           "Authorization": `Bearer ${token}`,
