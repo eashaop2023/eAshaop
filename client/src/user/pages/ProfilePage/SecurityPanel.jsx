@@ -3,7 +3,6 @@ import "bootstrap/dist/css/bootstrap.min.css";
 import { FiEye, FiEyeOff } from "react-icons/fi";
 import { Link } from "react-router-dom";
 import styles from "../../pages/ProfilePage/SecurityPanel.module.css";
-import { API_BASE_URL } from "../../../api-config";
 
 function SecurityAndLogin() {
   const [showPassword, setShowPassword] = useState(false);
@@ -29,7 +28,7 @@ function SecurityAndLogin() {
       const userId = storedUser.id;
       const token = localStorage.getItem("token"); // optional
 
-      const response = await fetch(`${API_BASE_URL}/api/user/${userId}`, {
+      const response = await fetch(`http://localhost:5000/api/user/${userId}`, {
         headers: {
           "Content-Type": "application/json",
           Authorization: token ? `Bearer ${token}` : undefined,

@@ -24,7 +24,6 @@ import eashalog from "../../assets/eashalog.png";
 import bookread from "../../assets/bookreading.png";
 import { useNavigate } from "react-router-dom";
 import styles from './DBoard.module.css';
-import { API_BASE_URL } from "../../../api-config";
 
 
 
@@ -141,13 +140,13 @@ const prescriptions = [
   { title: "MRI", subtitle: "Shylaja Lab, Hyderabad, Telangana." },
 ];
 
-// const doctors = Array(3).fill({
-//   name: "Dr. Clara Bennett",
-//   spec: "Pulmonologist",
-//   slots: "56 slots available",
-//   rating: "4.2",
-//   next: "Next slot today at 12:40pm",
-// });
+const doctors = Array(3).fill({
+  name: "Dr. Clara Bennett",
+  spec: "Pulmonologist",
+  slots: "56 slots available",
+  rating: "4.2",
+  next: "Next slot today at 12:40pm",
+});
 
 function DBoard() {
   const [activeIndex, setActiveIndex] = useState(0);
@@ -156,7 +155,7 @@ function DBoard() {
   const [user,setUser]=useState(null);
   const [loading, setLoading] = useState(true);
 
-  const [doctors, setDoctors] = useState([]);
+
   const navigate = useNavigate();
 
 useEffect(() => {
@@ -173,7 +172,7 @@ useEffect(() => {
   setUser(storedUser);
 
   // Fetch latest user data from backend
-  fetch(`${API_BASE_URL}/api/user/${storedUser.id}`)
+  fetch(`http://localhost:5000/api/user/${storedUser.id}`)
     .then((res) => res.json()) // parse JSON
     .then((data) => {
       console.log("Fetched user from API:", data);
@@ -185,28 +184,6 @@ useEffect(() => {
     })
     .finally(() => setLoading(false));
 }, []);
-useEffect(() => {
-  fetch(`${API_BASE_URL}/api/doctors/all`)
-    .then((res) => res.json())
-   .then((data) => {
-  console.log("Fetched doctors:", data);
-
-  // Make sure data.doctors exists and is an array
-  if (Array.isArray(data.doctors)) {
-    setDoctors(data.doctors.slice(0, 3)); // ✅ Get top 3 doctors
-  } else {
-    setDoctors([]); // fallback
-  }
-})
-
-    .catch((err) => {
-      console.error("Error fetching doctors:", err);
-      setDoctors([]);
-    });
-}, []);
-
-
-
   return (
     <div className={`${styles.dMainContainer} flex justify-end`}>
       <div className={`${styles.dContainer} flex w-[1080px] mt-5 gap-10`}>
@@ -485,65 +462,13 @@ useEffect(() => {
                 <button
                   className="doctoView text-[18px] font-normal leading-[120%] hover:cursor-pointer text-[#494949]"
                   onClick={() => {
-                    navigate("/user/category");
+                    navigate("/category");
                   }}
                 >
                   View all
                 </button>
               </div>
               {doctors.map((d, i) => (
-  <div
-    key={i}
-    className="flex items-start gap-2 px-4 py-3 border-b-[0.5px] border-gray-100"
-  >
-    <img
-      src={d.profileImage || docImage} // ✅ Use real image if available
-      alt={d.name}
-      className="w-[92px] h-[92px] rounded-xl object-cover"
-    />
-    <div className="flex-1 ml-4">
-      <div className="flex gap-3 items-center">
-        <span className="bg-green-100 text-[#06A343] py-[6px] px-[8px] rounded-[6px] text-[14px] font-normal">
-          {d.consultationMode || "Clinic Visit"}
-        </span>
-        <span className="flex items-center gap-1 text-[14px] font-normal text-[#494949]">
-          <img src={rating} alt="rating" className="h-[15px] w-[15px]" />
-          <span>{d.averageRating || "4.5"} / 5</span>
-        </span>
-      </div>
-      <h3 className="docname-header font-Urbanist font-medium text-[18px] text-[#252525] leading-[120%] mt-1">
-        Dr. {d.name}
-      </h3>
-      <div className="flex items-start gap-2 mt-1">
-        <img src={steth} alt="Stethoscope" />
-        <p className="font-normal text-[14px] text-[#494949] leading-[120%]">
-          {d.speciality}
-        </p>
-      </div>
-      <div className="flex justify-between items-center mt-1">
-        <p className="font-normal text-[14px] text-[#494949] leading-[120%]">
-          {`Experience: ${d.experience} years | Fee: ₹${d.consultationFee}`}
-        </p>
-        <button
-          className={`${styles.bookslotBtn} h-[45px] btn rounded-[28px] py-[10px] px-[24px] hover:cursor-pointer`}
-          onClick={() => {
-            navigate("/user/category");
-          }}
-          style={{
-            backgroundColor: "#00A99D",
-            color: "white",
-            borderRadius: "28px",
-            fontSize: "12px",
-          }}
-        >
-          Book a slot
-        </button>
-      </div>
-    </div>
-  </div>
-))}
-
-              {/* {doctors.map((d, i) => (
                 <div
                   key={i}
                   className="flex items-start gap-2 px-4 py-3 border-b-[0.5px] border-gray-100"
@@ -583,7 +508,7 @@ useEffect(() => {
                       <button
                         className={`${styles.bookslotBtn} h-[45px] btn rounded-[28px] py-[10px] px-[24px] hover:cursor-pointer`}
                         onClick={() => {
-                          navigate("/user/category");
+                          navigate("/category");
                         }}
                         style={{
                           // bg-[#00A99D] text-white
@@ -598,7 +523,7 @@ useEffect(() => {
                     </div>
                   </div>
                 </div>
-              ))} */}
+              ))}
             </div>
           </div>
         </div>

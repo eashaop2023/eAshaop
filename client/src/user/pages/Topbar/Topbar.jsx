@@ -4,6 +4,8 @@ import dp from '../../assets/bookreading.png';
 import notification from '../../assets/notification.svg'
 import { useNavigate } from 'react-router-dom';
 import styles from "../../pages/ProfilePage/Profile.module.css"
+import {FiLogOut} from "react-icons/fi"
+
 
 const Topbar = () => {
   const [isMobile, setIsMobile] = useState(false);
@@ -20,6 +22,34 @@ const Topbar = () => {
   const handleClick = ()=>{
     navigate('/user/profile')
   }
+
+  const handleLogout = async () => {
+    try {
+      // ✅ Call backend logout API
+      const response = await fetch("http://localhost:5000/api/user/logout", {
+        method: "POST",
+        credentials: "include", // if using cookies for session
+        headers: {
+          "Content-Type": "application/json",
+        },
+      });
+
+      const data = await response.json();
+
+      if (response.ok) {
+        // ✅ Clear tokens or localStorage if you store them there
+        localStorage.removeItem("token");
+        localStorage.removeItem("user");
+
+        // Redirect to login
+        navigate("/login");
+      } else {
+        console.error("Logout failed:", data.message);
+      }
+    } catch (error) {
+      console.error("Error logging out:", error);
+    }
+  };
 
   return (
     <div
@@ -42,18 +72,25 @@ const Topbar = () => {
             height: '60px',
             marginRight: '40px',
           }}
-          onClick={()=> {navigate('/user/profile')}}
+          onClick={()=> {navigate('/')}}
         />
       </div>
 
       {/* Right: Notification + Bell + Profile Pic */}
       <div className="d-flex align-items-center ms-auto">
+
+        <FiLogOut
+        size={22}
+        style={{ cursor: "pointer", color: "#dc3545",marginRight:'15px' }}
+        onClick={handleLogout}
+        title="Logout"
+      />
         <img
           src={notification}
           alt="Notification"
           style={{ width: '22px', height: '22px', marginRight: '15px',cursor:"pointer" }}
         />
-        {/* <i className="bi bi-bell fs-5 me-3"></i> */}
+        <i className="bi bi-bell fs-5 me-3"></i>
         <img
           src={dp}
           alt="User"
@@ -61,6 +98,8 @@ const Topbar = () => {
           style={{ width: '48px', height: '48px', objectFit: 'cover' }}
           onClick={handleClick}
         />
+
+        
       </div>
     </div>
   );

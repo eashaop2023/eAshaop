@@ -31,6 +31,9 @@ function LoginPage() {
   full_name: user.full_name,
   email: user.email,
   phone_number: user.phone_number,
+  dob: user.dob || user.DOB || "",      // fallback if missing
+  gender: user.gender || "Not Provided" // fallback if missing
+
 });
 
   const countdownRef = useRef(null);
