@@ -14,7 +14,6 @@ import mentalHealth from "../../assets/DBIcons/mentalHealth.svg";
 import doctor from "../../assets/icons/doctor.svg";
 import styles from "../../components/Doctor Specialist/DashBoard.module.css";
 import { toast } from "react-toastify";
-import { API_BASE_URL } from "../../../api-config";
 
 
 const staticCategories = [
@@ -39,7 +38,7 @@ const Dashboard = () => {
   useEffect(() => {
     const fetchCategories = async () => {
       try {
-        const res = await fetch(`${API_BASE_URL}/api/categories`);
+        const res = await fetch("http://localhost:5000/api/categories");
         const backendCategories = await res.json();
 
         // 🔹 Merge backend data into static categories

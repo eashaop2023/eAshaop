@@ -1,6 +1,5 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { API_BASE_URL } from "../../../api-config";
 
 const PersonalDetailsForm = () => {
   const navigate = useNavigate();
@@ -109,7 +108,7 @@ const PersonalDetailsForm = () => {
     if (files.qualification)
       formDataToSend.append("educationCertificate", files.qualification);
 
-    const res = await fetch(`${API_BASE_URL}/api/doctors/register`, {
+    const res = await fetch("http://localhost:5000/api/doctors/register", {
       method: "POST",
       body: formDataToSend,
     });

@@ -10,11 +10,9 @@ import Security from "../../assets/icons/pharmacy.svg";
 import Legal from "../../assets/icons/home-hashtag.png";
 import Payment from "../../assets/icons/Money Bag.png";
 import Family from "../../assets/icons/people.png";
-import dashboard from "../../assets/icons/dashboard.svg"
 
 const sidebarOptions = [
-  {label:"Dashboard",icon:dashboard, path: "/user/dashboard"},
-  { label: "User details", icon: User, path: "/user/profile" }, 
+  { label: "User details", icon: User, path: "/user/profile" },
   { label: "Security and Login", icon: Security, path: "/user/profile/security-and-login" },
   { label: "Payment and Billing", icon: Payment, path: "/user/profile/payment-and-billing" },
   { label: "Family Members", icon: Family, path: "/user/profile/family-members" },

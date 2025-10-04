@@ -18,8 +18,6 @@ import video from '../../../assets/confirmappointmenticons/video.svg'
 import walk from '../../../assets/walking_icon.svg'
 import Star from '../../../assets/icons/star.png'
 
-import { API_BASE_URL } from "../../../../api-config";
-
 // const mockDoctors = Array(9).fill({
 //   name: "Dr. Nithish Jagannatham",
 //   speciality: "Cardiologist",
@@ -34,32 +32,43 @@ import { API_BASE_URL } from "../../../../api-config";
 const MainContent = ({ selectedFilters, setSelectedFilters, clearAllFilters, onToggleSidebar,categorySlug }) => {
   const navigate = useNavigate();
   const { uuid } = useParams();
-  const [selected, setSelected] = useState("video");
+  const [selected, setSelected] = useState("");
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [isMobileView, setIsMobileView] = useState(window.innerWidth <= 1439);
   const [doctors, setDoctors] = useState([]);
   const [loading, setLoading] = useState(true);
   
 
-  useEffect(() => {
-      async function fetchDoctors() {
-        try {
-  const res = await fetch(`${API_BASE_URL}/api/categories/${uuid}/doctors`);
-          if (!res.ok) throw new Error("Failed to fetch doctors");
-  
-          const data = await res.json();
-          setDoctors(data.doctors || []);
-        } catch (err) {
-          console.error("Error fetching doctors:", err);
-          setDoctors([]);
-        } finally {
-          setLoading(false);
-        }
-      }
-  
-      if (uuid) fetchDoctors();
-    }, [uuid]);
+useEffect(() => {
+  if(!uuid) return;
 
+  async function fetchDoctors() {
+    setLoading(true);
+    try {
+      let url = `http://localhost:5000/api/categories/${uuid}/doctors`;
+      if (selected) {
+        const mode = selected === "video" ? "Video" : "Clinic";
+        url += `?consultationMode=${mode}`;
+      }
+
+      const res = await fetch(url);
+      if (!res.ok) throw new Error("Failed to fetch doctors");
+
+      const data = await res.json();
+      setDoctors(data.doctors || []);
+    } catch (err) {
+      console.error("Error fetching doctors:", err);
+      setDoctors([]);
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  fetchDoctors();
+}, [uuid, selected]);
+
+// And just display doctors as is:
+const filteredDoctors = doctors; // no extra filtering needed
   useEffect(() => {
     function handleResize() {
       setIsMobileView(window.innerWidth <= 1439);
@@ -75,7 +84,10 @@ const MainContent = ({ selectedFilters, setSelectedFilters, clearAllFilters, onT
     }));
   };
   if (loading) return <p>Loading doctors...</p>;
-  if (!doctors.length) return <p>No doctors available for this category.</p>;
+// const filteredDoctors = doctors.filter(doc => {
+//   if (!selected) return true;
+//   return doc.consultationType?.toLowerCase().includes(selected.toLowerCase());
+// });
 
   
   return (
@@ -175,7 +187,7 @@ const MainContent = ({ selectedFilters, setSelectedFilters, clearAllFilters, onT
               color: selected === "video" ? "white" : "#8E8E8E",
             }}
             className="btn fw-semibold px-4 py-2 rounded-pill d-flex"
-            onClick={() => setSelected("video")}
+  onClick={() => setSelected(selected === "video" ? "" : "video")} // toggle off
           >
             <span className="me-2"><img src={video} height={24} width={24} className="toggle-images"/></span>
             Video Consultant
@@ -186,7 +198,7 @@ const MainContent = ({ selectedFilters, setSelectedFilters, clearAllFilters, onT
               color: selected === "clinic" ? "white" : "#8E8E8E",
             }}
             className="btn1 fw-semibold  rounded-pill d-flex"
-            onClick={() => setSelected("clinic")}
+  onClick={() => setSelected(selected === "clinic" ? "" : "clinic")} // toggle off
           >
             <span className="me-1 ps-4"><img src={walk} height={14} width={24} className="toggle-images"/></span>
             Clinic Visit
@@ -236,7 +248,9 @@ const MainContent = ({ selectedFilters, setSelectedFilters, clearAllFilters, onT
 
 
       <div className="row">
-        {doctors.map((doc, index) => (
+                {filteredDoctors.length === 0 && <p>No doctors available for this consultation type.</p>}
+
+        {filteredDoctors.map((doc, index) => (
           <div key={index} className="col-md-4 col-sm-6 mb-4">
             <div className="card shadow-sm rounded-4 border-0 h-100">
               <div className="card-body px-4 py-4 d-flex flex-column justify-content-between h-100">
@@ -266,7 +280,7 @@ const MainContent = ({ selectedFilters, setSelectedFilters, clearAllFilters, onT
                           style={{ color: "#FFC300", marginRight: 6 }}
                           alt="star"
                         />
-                        {doc.rating} 4.5
+                        {doc.averageRating} 
                       </div>
                     </div>
 
@@ -300,7 +314,7 @@ const MainContent = ({ selectedFilters, setSelectedFilters, clearAllFilters, onT
                           style={{ color: "#FFC300" }}
                           alt="star"
                         />{" "}
-                        {doc.rating} 4.5
+                        {doc.averageRating}
                       </div>
                     </div>
                     {/* Desktop: profile + name + speciality row */}
@@ -366,8 +380,18 @@ const MainContent = ({ selectedFilters, setSelectedFilters, clearAllFilters, onT
                 <button
                   className="btn w-100 rounded-pill"
                   style={{ backgroundColor: "#00B2A9", color: "white", fontSize: '14px' }}
-                  onClick={() => navigate("/user/category/bookappointment",{ state: { doctorId: doc._id } })}
-                >
+onClick={() => {
+    if (!selected) {
+      alert("Please select a consultation type before booking a slot.");
+      return;
+    }
+    navigate("/user/category/bookappointment", {
+      state: { 
+        doctorId: doc._id,
+        consultationType: selected === "video" ? "Video" : "Clinic"
+      }
+    });
+  }}                >
                   Book a slot
                 </button>
               </div>

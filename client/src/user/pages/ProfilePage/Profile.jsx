@@ -3,7 +3,6 @@ import React, { useState, useEffect, useRef } from "react";
 import { Container, Row, Col, Form, Button, Badge } from "react-bootstrap";
 import Boy from "../../assets/user.png";
 import styles from "../../pages/ProfilePage/Profile.module.css";
-import { API_BASE_URL } from "../../../api-config";
 
 function useIsMobileOrTablet() {
   const [isMobileOrTablet, setIsMobileOrTablet] = useState(window.innerWidth < 1024);
@@ -56,7 +55,7 @@ export default function UserDetailsPanel() {
     const storedUser = JSON.parse(localStorage.getItem("user"));
     if (!storedUser?.id) return;
 
-    fetch(`${API_BASE_URL}/api/user/${storedUser.id}`)
+    fetch(`http://localhost:5000/api/user/${storedUser.id}`)
       .then((res) => res.json())
       .then((data) => {
       console.log("User data from API:", data.user);  // ✅ Add this
@@ -102,7 +101,7 @@ const handleSave = async () => {
       aadhaar_number: formData.aadhaar_number,
     };
 
-    const response = await fetch(`${API_BASE_URL}/api/user/${storedUser.id}`, {
+    const response = await fetch(`http://localhost:5000/api/user/${storedUser.id}`, {
       method: "PUT",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(payload),
@@ -129,7 +128,7 @@ const handleSave = async () => {
 
     try {
     const res = await fetch(
-      `${API_BASE_URL}/api/user/update-profile-image/${storedUser.id}`, // ✅ PUT route
+      `http://localhost:5000/api/user/update-profile-image/${storedUser.id}`, // ✅ PUT route
       {
         method: "PUT",
         body: formDataObj,

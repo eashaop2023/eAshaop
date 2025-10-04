@@ -154,7 +154,8 @@ function UserApp() {
                   clearAllFilters={() => clearAllFilters(setSelectedFilters)}
                 />
               }
-            /></Route>
+            />
+            </Route>
             {/* <Route
               path=":uuid"
               element={

@@ -1,10 +1,10 @@
 import React, { useEffect, useState } from "react";
 import { FiSearch, FiMic, FiX } from "react-icons/fi";
 import { useParams } from "react-router-dom";
-import { API_BASE_URL } from "../../../../api-config";
 
 import { FaStar } from "react-icons/fa";
 import Cardiology from "../../../assets/cardiologist/cardiology.png";
+import Category from "../../../assets/DBIcons/generalHealthCare.svg";
 import Doctoricon from "../../../assets/doctoricon.svg";
 import profile from "../../../assets/cardiologist/profileone.png";
 import specialityimage from "../../../assets/cardiologist/life.png";
@@ -32,30 +32,42 @@ import Star from '../../../assets/icons/star.png'
 const MainContent = ({ selectedFilters, setSelectedFilters, clearAllFilters, onToggleSidebar,categorySlug }) => {
   const navigate = useNavigate();
   const { uuid } = useParams();
-  const [selected, setSelected] = useState("video");
+  const [selected, setSelected] = useState("");
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [isMobileView, setIsMobileView] = useState(window.innerWidth <= 1439);
   const [doctors, setDoctors] = useState([]);
     const [loading, setLoading] = useState(true);
 
- useEffect(() => {
-    async function fetchDoctors() {
-      try {
-const res = await fetch(`${API_BASE_URL}/api/categories/${uuid}/doctors`);
-        if (!res.ok) throw new Error("Failed to fetch doctors");
+useEffect(() => {
+  if (!uuid) return;
 
-        const data = await res.json();
-        setDoctors(data.doctors || []);
-      } catch (err) {
-        console.error("Error fetching doctors:", err);
-        setDoctors([]);
-      } finally {
-        setLoading(false);
+  async function fetchDoctors() {
+    setLoading(true);
+    try {
+      // only add consultationMode if a selection is made
+      let url = `http://localhost:5000/api/categories/${uuid}/doctors`;
+      if (selected) {
+        const mode = selected === "video" ? "Video" : "Clinic";
+        url += `?consultationMode=${mode}`;
       }
-    }
 
-    if (uuid) fetchDoctors();
-  }, [uuid]);
+      const res = await fetch(url);
+      if (!res.ok) throw new Error("Failed to fetch doctors");
+
+      const data = await res.json();
+      setDoctors(data.doctors || []);
+    } catch (err) {
+      console.error("Error fetching doctors:", err);
+      setDoctors([]);
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  fetchDoctors();
+}, [uuid, selected]);
+const filteredDoctors = doctors; // no extra filtering needed
+
 
 
   useEffect(() => {
@@ -74,7 +86,10 @@ const res = await fetch(`${API_BASE_URL}/api/categories/${uuid}/doctors`);
   };
 
     if (loading) return <p>Loading doctors...</p>;
-  if (!doctors.length) return <p>No doctors available for this category.</p>;
+  // const filteredDoctors = doctors.filter(doc => {
+  //   if (!selected) return true; // no toggle filter applied
+  //   return doc.consultationType === selected; // match selected toggle
+  // });
 
 
   return (
@@ -94,7 +109,7 @@ const res = await fetch(`${API_BASE_URL}/api/categories/${uuid}/doctors`);
       {/* Header */}
       <div className="d-flex justify-content-between align-items-center mb-4">
         <div className=" d-none  align-items-center gap-3 text">
-          <img src={Cardiology} alt="Cardiology Icon" width={32} height={32} />
+          <img src={Category} alt="General Healthcare Icon" width={52} height={52} />
           <div>
 <h2 className="mb-1">{categorySlug?.replace(/-/g, " ")}</h2>
             <p className="text-muted mb-0 d-flex" style={{fontSize:'1.12rem'}}>
@@ -173,7 +188,7 @@ const res = await fetch(`${API_BASE_URL}/api/categories/${uuid}/doctors`);
               color: selected === "video" ? "white" : "#8E8E8E",
             }}
             className="btn fw-semibold px-4 py-2 rounded-pill d-flex"
-            onClick={() => setSelected("video")}
+  onClick={() => setSelected(selected === "video" ? "" : "video")} // toggle off
           >
             <span className="me-2"><img src={video} height={24} width={24} className="toggle-images"/></span>
             Video Consultant
@@ -184,7 +199,7 @@ const res = await fetch(`${API_BASE_URL}/api/categories/${uuid}/doctors`);
               color: selected === "clinic" ? "white" : "#8E8E8E",
             }}
             className="btn1 fw-semibold  rounded-pill d-flex"
-            onClick={() => setSelected("clinic")}
+  onClick={() => setSelected(selected === "clinic" ? "" : "clinic")} // toggle off
           >
             <span className="me-1 ps-4"><img src={walk} height={14} width={24} className="toggle-images"/></span>
             Clinic Visit
@@ -234,7 +249,9 @@ const res = await fetch(`${API_BASE_URL}/api/categories/${uuid}/doctors`);
 
 
       <div className="row">
-        {doctors.map((doc, index) => (
+                {filteredDoctors.length === 0 && <p>No doctors available for this consultation type.</p>}
+
+        {filteredDoctors.map((doc, index) => (
           <div key={index} className="col-md-4 col-sm-6 mb-4">
             <div className="card shadow-sm rounded-4 border-0 h-100">
               <div className="card-body px-4 py-4 d-flex flex-column justify-content-between h-100">
@@ -264,7 +281,7 @@ const res = await fetch(`${API_BASE_URL}/api/categories/${uuid}/doctors`);
                           style={{ color: "#FFC300", marginRight: 6 }}
                           alt="star"
                         />
-                        {doc.rating} 4.5
+                        {doc.averageRating}
                       </div>
                     </div>
 
@@ -278,9 +295,9 @@ const res = await fetch(`${API_BASE_URL}/api/categories/${uuid}/doctors`);
                         className="d-flex speciality mb-3"
                       >
                         <img
-                          src={specialityimage}
+                          src={Category}
                           className="me-1"
-                          alt="Speciality"
+                          alt="Speciality" style={{width:'15px',height:'15px'}}
                         />
                         {doc.speciality} <span className="ms-1"> | {doc.experience} years</span>
                       </div>
@@ -298,7 +315,7 @@ const res = await fetch(`${API_BASE_URL}/api/categories/${uuid}/doctors`);
                           style={{ color: "#FFC300" }}
                           alt="star"
                         />{" "}
-                        {doc.rating} 4.5
+                        {doc.averageRating}
                       </div>
                     </div>
                     {/* Desktop: profile + name + speciality row */}
@@ -322,9 +339,9 @@ const res = await fetch(`${API_BASE_URL}/api/categories/${uuid}/doctors`);
                           className="d-flex speciality"
                         >
                           <img
-                            src={specialityimage}
+                            src={Category}
                             className="me-1"
-                            alt="Speciality"
+                            alt="Speciality" style={{width:'25px',height:'25px'}}
                           />
                           {doc.speciality} <span className="ms-1"> | {doc.experience} Years</span>
                         </div>
@@ -362,12 +379,24 @@ const res = await fetch(`${API_BASE_URL}/api/categories/${uuid}/doctors`);
                 </div>
 
                 <button
-                  className="btn w-100 rounded-pill"
-                  style={{ backgroundColor: "#00B2A9", color: "white", fontSize: '14px' }}
-                  onClick={() => navigate("/user/category/bookappointment",{ state: { doctorId: doc._id } })}
-                >
-                  Book a slot
-                </button>
+  className="btn w-100 rounded-pill"
+  style={{ backgroundColor: "#00B2A9", color: "white", fontSize: '14px' }}
+  onClick={() => {
+    if (!selected) {
+      alert("Please select a consultation type before booking a slot.");
+      return;
+    }
+    navigate("/user/category/bookappointment", {
+      state: { 
+        doctorId: doc._id,
+        consultationType: selected === "video" ? "Video" : "Clinic"
+      }
+    });
+  }}
+>
+  Book a slot
+</button>
+
               </div>
             </div>
           </div>

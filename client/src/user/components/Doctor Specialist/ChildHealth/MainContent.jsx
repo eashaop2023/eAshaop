@@ -235,7 +235,7 @@ const MainContent = ({ selectedFilters, setSelectedFilters, clearAllFilters, onT
                           style={{ color: "#FFC300", marginRight: 6 }}
                           alt="star"
                         />
-                        {doc.rating}
+                        {doc.averageRating}
                       </div>
                     </div>
 
@@ -265,7 +265,7 @@ const MainContent = ({ selectedFilters, setSelectedFilters, clearAllFilters, onT
                           style={{ color: "#FFC300" }}
                           alt="star"
                         />{" "}
-                        {doc.rating}
+                        {doc.averageRating}
                       </div>
                     </div>
                     {/* Desktop: profile + name + speciality row */}
