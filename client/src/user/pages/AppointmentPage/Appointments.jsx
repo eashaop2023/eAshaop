@@ -240,9 +240,9 @@ const Appointments = () => {
     <>
       <div className={`${styles.mainContainer} d-flex`}>
         <div className="flex-grow-1 px-3">
-          <h5 className={`${styles.headerOne} mb-3`} style={{ fontSize: "24px" }}>
+          {/* <h5 className={`${styles.headerOne} mb-3`} style={{ fontSize: "24px" }}>
             Upcoming appointments
-          </h5>
+          </h5> */}
 
           {/* Toggle Buttons */}
           <div
@@ -281,6 +281,9 @@ const Appointments = () => {
               Clinic visit
             </button>
           </div>
+          <h5 className={`${styles.headerOne} mb-3`} style={{ fontSize: "24px" }}>
+            Upcoming appointments
+          </h5>
 
           {/* Upcoming Cards */}
           <div className={`${styles.rowContainer} row`}>
