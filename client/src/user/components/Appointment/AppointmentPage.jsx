@@ -99,25 +99,31 @@ export default function AppointmentPage() {
     if (!storedUser) return;
 
     const user = JSON.parse(storedUser);
-    const calculateAge = dob => {
-      if (!dob) return 0;
-      const birthDate = new Date(dob);
-      const today = new Date();
-      let age = today.getFullYear() - birthDate.getFullYear();
-      const monthDiff = today.getMonth() - birthDate.getMonth();
-      if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birthDate.getDate())) age--;
-      return age;
-    };
+//     const calculateAge = dob => {
+//   if (!dob) return "Not Provided"; // handle missing DOB
+//   const birthDate = new Date(dob);
+//   if (isNaN(birthDate.getTime())) return "Not Provided"; // invalid date
+//   const today = new Date();
+//   let age = today.getFullYear() - birthDate.getFullYear();
+//   const monthDiff = today.getMonth() - birthDate.getMonth();
+//   if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birthDate.getDate())) age--;
+//   return age;
+// };
+
 
     const mainUser = {
-      name: user.full_name || user.name || "Unknown Patient",
-      age: calculateAge(user.dob || user.DOB),
-      sex: user.gender || "Not Provided",
-      isUser: true,
-      _id: user._id
-    };
+  name: user.full_name || user.name || "Unknown Patient",
+  age: user.age || "Not Provided", // use age from localStorage
+  sex: user.gender || user.sex || "Not Provided", // fallback to stored gender
+  isUser: true,
+  _id: user._id || user.id
+};
+
 
     setMembers([mainUser, ...(user.dependents || [])]);
+
+    console.log("Loaded user from localStorage:", user);
+  console.log("Main user object used in appointment page:", mainUser)
   }, []);
 
   // Handle adding a dependent
@@ -299,18 +305,50 @@ export default function AppointmentPage() {
                 <span>{selectedSlot || "Select slot"}</span>
               </div>
 
-              <Button
-                style={{ backgroundColor: "#00A99D", borderColor: "#00A99D", borderRadius: 999, padding: "6px 16px", minWidth: 102 }}
-                onClick={() => {
-                  if (!selectedMember) return alert("Please select a patient.");
-                  if (!selectedSlot) return alert("Please select a time slot.");
-                  navigate("/user/category/confirmappointment", {
-                    state: { member: selectedMember, slot: selectedSlot, date: startDate, doctorId, amount: doctor?.consultationFee, patient: selectedMember, consultationType, doctor, mainUser }
-                  });
-                }}
-              >
-                Book slot
-              </Button>
+<Button
+  style={{ backgroundColor: "#00A99D", borderColor: "#00A99D", borderRadius: 999, padding: "6px 16px", minWidth: 102 }}
+  onClick={async () => {
+    if (!selectedMember) return alert("Please select a patient.");
+    if (!selectedSlot) return alert("Please select a time slot.");
+
+    try {
+      // Check if slot is already booked
+  //     const res = await axios.post("http://localhost:5000/api/doctors/check-slot", {
+  //       doctorId,
+  // date: startDate.toISOString().split("T")[0], // YYYY-MM-DD
+  //       slot: availableSlots.find(s => s.start === selectedSlot)
+  //     });
+
+  //     if (res.data.exists) {
+  //       return alert("This slot is already reserved. Please select another slot.");
+  //     }
+
+      // Navigate to confirm/payment page
+      navigate("/user/category/confirmappointment", {
+        state: { 
+          member: selectedMember, 
+          slot: selectedSlot, 
+          date: startDate, 
+          doctorId, 
+          amount: doctor?.consultationFee, 
+          patient: selectedMember, 
+          consultationType, 
+          doctor, 
+          mainUser 
+        }
+      });
+
+      // Optionally, remove slot locally so user can't click again
+      setAvailableSlots(prev => prev.filter(s => s.start !== selectedSlot));
+      setSelectedSlot(null);
+    } catch (err) {
+      console.error("Slot check error:", err);
+      alert("Failed to check slot availability. Please try again.");
+    }
+  }}
+>
+  Book slot
+</Button>
             </div>
 
             <div ref={bottomRef} style={{ height: '100px' }} />

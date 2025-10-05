@@ -6,8 +6,8 @@ import { FaStar } from "react-icons/fa";
 import Cardiology from "../../../assets/cardiologist/cardiology.png";
 import Category from "../../../assets/DBIcons/generalHealthCare.svg";
 import Doctoricon from "../../../assets/doctoricon.svg";
-import profile from "../../../assets/cardiologist/profileone.png";
-import specialityimage from "../../../assets/cardiologist/life.png";
+// import profile from "../../../assets/cardiologist/profileone.png";
+// import specialityimage from "../../../assets/cardiologist/life.png";
 import arrowright from "../../../assets/cardiologist/arrowRight.png"
 import { Link } from "react-router-dom";
 import { useNavigate } from "react-router-dom";
@@ -33,7 +33,7 @@ const MainContent = ({ selectedFilters, setSelectedFilters, clearAllFilters, onT
   const navigate = useNavigate();
   const { uuid } = useParams();
   const [selected, setSelected] = useState("");
-  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+  // const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [isMobileView, setIsMobileView] = useState(window.innerWidth <= 1439);
   const [doctors, setDoctors] = useState([]);
     const [loading, setLoading] = useState(true);

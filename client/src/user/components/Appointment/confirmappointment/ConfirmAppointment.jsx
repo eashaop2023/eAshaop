@@ -156,7 +156,7 @@ const handlePayment = async () => {
         const confirmData = await confirmRes.json();
         if (confirmRes.ok) {
           alert("Payment Successful & Appointment Confirmed!");
-          navigate("/user/appointments");
+          navigate("/user/appointment");
         } else {
           alert("Payment verification failed: " + confirmData.message);
         }

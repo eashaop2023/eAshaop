@@ -26,15 +26,32 @@ function LoginPage() {
   const [resendCount, setResendCount] = useState(0);
   const [otpSent, setOtpSent] = useState(false);
 
-  const normalizeUser = (user) => ({
-  id: user._id || user.id,
-  full_name: user.full_name,
-  email: user.email,
-  phone_number: user.phone_number,
-  dob: user.dob || user.DOB || "",      // fallback if missing
-  gender: user.gender || "Not Provided" // fallback if missing
+  const normalizeUser = (user) => {
+  const dob = user.dob || user.DOB || null;
+  const gender = user.gender || "Not Provided";
 
-});
+  const calculateAge = dobValue => {
+    if (!dobValue) return "Not Provided";
+    const birthDate = new Date(dobValue);
+    if (isNaN(birthDate.getTime())) return "Not Provided";
+    const today = new Date();
+    let age = today.getFullYear() - birthDate.getFullYear();
+    const monthDiff = today.getMonth() - birthDate.getMonth();
+    if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birthDate.getDate())) age--;
+    return age;
+  };
+
+  return {
+    id: user._id || user.id,
+    full_name: user.full_name || user.name || "Unknown",
+    email: user.email || "",
+    phone_number: user.phone_number || "",
+    dob,
+    gender,
+    age: calculateAge(dob)
+  };
+};
+
 
   const countdownRef = useRef(null);
 

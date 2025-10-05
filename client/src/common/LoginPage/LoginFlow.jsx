@@ -3,7 +3,7 @@ import { Route, Routes } from 'react-router-dom'
 import LoginPage from './LoginPage'
 import ContactForm from './ContactForm' ;
 import CreatePassword from './CreatePassword' ;
-import OtpVerification from './OtpVerification'; 
+import OtpVerification from './OtpVerification';
 import Forgotpassword from './Forgotpassword';
 import ForgotOtp from './ForgotOtp';
 import OtpRegister from './OtpRegister';
@@ -18,7 +18,7 @@ function LoginFlow() {
             <Route path="/" element={<LoginPage />} />
             <Route path="/login/*" element={<LoginPage />} />
             <Route path="/contact" element={<ContactForm />} />
-            <Route path="/createpassword" element={<CreatePassword />} />
+            <Route path="/create-password" element={<CreatePassword />} />
             <Route path="/otpverification" element={<OtpVerification />} />
             <Route path="/forgot-password" element={<Forgotpassword />} />
             <Route path="/forgot-otp" element={<ForgotOtp />} />

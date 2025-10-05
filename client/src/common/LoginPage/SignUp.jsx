@@ -102,7 +102,7 @@ function SignUp() {
         /* Fix password toggle button alignment */
         .password-toggle {
           position: absolute;
-          top: 50%;
+          top: 70%;
           right: 15px;
           transform: translateY(-50%);
           border: none;
