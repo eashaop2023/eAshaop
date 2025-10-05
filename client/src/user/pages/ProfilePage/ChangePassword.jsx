@@ -6,6 +6,7 @@ import 'bootstrap/dist/css/bootstrap.min.css';
 import Topbar from '../Topbar/Topbar';
 import { toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
+import { API_BASE_URL } from '../../../api-config';
 
 const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{6,}$/;
 
@@ -35,7 +36,7 @@ const handleChangePassword = async (values, resetForm) => {
       return;
     }
 
-    const response = await fetch(`http://localhost:5000/api/user/change-password/${userId}`, {
+    const response = await fetch(`${API_BASE_URL}/api/user/change-password/${userId}`, {
       method: 'PUT',
       headers: {
         'Content-Type': 'application/json',

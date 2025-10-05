@@ -44,7 +44,7 @@ useEffect(() => {
   async function fetchDoctors() {
     setLoading(true);
     try {
-      let url = `http://localhost:5000/api/categories/${uuid}/doctors`;
+      let url = `${API_BASE_URL}/api/categories/${uuid}/doctors`;
       if (selected) {
         const mode = selected === "video" ? "Video" : "Clinic";
         url += `?consultationMode=${mode}`;

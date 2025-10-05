@@ -11,6 +11,7 @@ import Walk from "../../../assets/walking_icon.svg";
 import Arrowleft from "../../../assets/confirmappointmenticons/arrow-left.svg";
 import Dil from "../../../assets/confirmappointmenticons/dil.svg";
 import Star from "../../../assets/confirmappointmenticons/Star.svg";
+import { API_BASE_URL } from "../../../../api-config";
 
 // Map consultation types to icons and labels
 const consultationTypesMap = {
@@ -102,7 +103,7 @@ const handlePayment = async () => {
     });
 
     // 1️⃣ Create appointment + Razorpay order
-    const bookRes = await fetch("http://localhost:5000/api/appointments", {
+    const bookRes = await fetch(`${API_BASE_URL}/api/appointments`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
@@ -140,7 +141,7 @@ const handlePayment = async () => {
       handler: async function (response) {
         // 3️⃣ Confirm payment with backend
         const confirmRes = await fetch(
-          "http://localhost:5000/api/appointments/confirm-payment",
+          `${API_BASE_URL}/api/appointments/confirm-payment`,
           {
             method: "POST",
             headers: { "Content-Type": "application/json" },

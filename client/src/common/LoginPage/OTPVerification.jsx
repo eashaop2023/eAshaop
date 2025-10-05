@@ -6,7 +6,7 @@ import { toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import { API_BASE_URL } from "../../api-config";
 
-const API_URL = "http://localhost:5000"; // adjust if needed
+// const API_BASE_URL = "${API_BASE_URL}"; // adjust if needed
 
 const OTPVerification = () => {
   const [otp, setOtp] = useState(["", "", "", ""]);

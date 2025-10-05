@@ -1,6 +1,6 @@
 import React, { useState , useEffect} from "react";
 import eAdd from "../../assets/add.png";
-import HeartIcon from "../../assets/icons/heart.png";
+import HeartIcon from "../../assets/icons/Heart.png";
 import BloodIcon from "../../assets/icons/blood.png";
 import StepsIcon from "../../assets/icons/legfist.png";
 import RunningIcon from "../../assets/icons/run.png";

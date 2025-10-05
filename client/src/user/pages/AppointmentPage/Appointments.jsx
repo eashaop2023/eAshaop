@@ -7,6 +7,7 @@ import videoIcon from "../../assets/confirmappointmenticons/video.svg";
 import calendarIcon from "../../assets/icons/calendar.png";
 import profile from "../../assets/icons/profile.png";
 import styles from "../AppointmentPage/Appointments.module.css";
+import { API_BASE_URL } from "../../../api-config";
 
 const Appointments = () => {
   const [activeTab, setActiveTab] = useState("virtual");
@@ -23,7 +24,7 @@ const Appointments = () => {
     const fetchAppointments = async () => {
       try {
         const res = await axios.get(
-          `http://localhost:5000/api/appointments/user/${userId}`
+          `${API_BASE_URL}/api/appointments/user/${userId}`
         );
         setAppointments({
           upcoming: res.data.upcoming || [],
@@ -46,7 +47,7 @@ const Appointments = () => {
   // const confirmCancel = async () => {
   //   try {
   //     await axios.put(
-  //       `http://localhost:5000/api/appointments/cancel/${cancelTarget}`
+  //       `${API_BASE_URL}/api/appointments/cancel/${cancelTarget}`
   //     );
   //     setAppointments((prev) => ({
   //       ...prev,

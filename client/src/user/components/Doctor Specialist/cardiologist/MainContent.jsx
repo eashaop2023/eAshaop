@@ -17,6 +17,7 @@ import Mic from '../../../assets/cardiologist/microphone.svg'
 import video from '../../../assets/confirmappointmenticons/video.svg'
 import walk from '../../../assets/walking_icon.svg'
 import Star from '../../../assets/icons/star.png'
+import { API_BASE_URL } from "../../../../api-config";
 
 // const mockDoctors = Array(9).fill({
 //   name: "Dr. Nithish Jagannatham",
@@ -45,7 +46,7 @@ useEffect(() => {
   async function fetchDoctors() {
     setLoading(true);
     try {
-      let url = `http://localhost:5000/api/categories/${uuid}/doctors`;
+      let url = `${API_BASE_URL}/api/categories/${uuid}/doctors`;
       if (selected) {
         const mode = selected === "video" ? "Video" : "Clinic";
         url += `?consultationMode=${mode}`;

@@ -23,7 +23,7 @@
 
           //Call backend to create order + appointment
           const bookRes = await fetch(
-            "http://localhost:5000/api/appointments",
+            "${API_BASE_URL}/api/appointments",
             {
               method: "POST",
               headers: { "Content-Type": "application/json" },
@@ -70,7 +70,7 @@
 
               // Confirm payment with backend
               const confirmRes = await fetch(
-                "http://localhost:5000/api/appointments/confirm-payment",
+                "${API_BASE_URL}/api/appointments/confirm-payment",
                 {
                   method: "POST",
                   headers: { "Content-Type": "application/json" },
