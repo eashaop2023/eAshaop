@@ -4,6 +4,7 @@ import eAshaLogo from "../../../assets/eAshalogo.png";
 import { Formik, Form, Field, ErrorMessage } from "formik";
 import * as Yup from "yup";
 import { FaEye, FaEyeSlash } from "react-icons/fa";
+import { API_BASE_URL } from "../../../api-config";
 
 const SignUpSchema = Yup.object().shape({
   fullName: Yup.string()
@@ -147,7 +148,7 @@ function SignUp() {
       verifyBy: values.email ? "email" : "phone", // ✅ choose OTP method
     };
 
-    const res = await fetch("http://localhost:5000/api/user/registration/send-otp", {
+    const res = await fetch(`${API_BASE_URL}/api/user/registration/send-otp`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(payload),

@@ -4,6 +4,7 @@ import { useNavigate, useLocation } from "react-router-dom";
 import axios from "axios";
 import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
+import { API_BASE_URL } from "../../../api-config";
 
 import Profile from "../../assets/confirmappointmenticons/doctor.jpg";
 import Call from "../../assets/confirmappointmenticons/call.svg";
@@ -45,7 +46,7 @@ export default function AppointmentPage() {
 
     const fetchDoctor = async () => {
       try {
-        const res = await axios.get(`http://localhost:5000/api/doctors/${doctorId}`);
+        const res = await axios.get(`${API_BASE_URL}/api/doctors/${doctorId}`);
         setDoctor(res.data);
       } catch (err) {
         console.error("Error fetching doctor:", err);
@@ -62,7 +63,7 @@ export default function AppointmentPage() {
     const fetchSlots = async () => {
       try {
         const dateStr = startDate.toLocaleDateString("en-CA");
-        const res = await axios.get(`http://localhost:5000/api/doctors/${doctorId}/availability/${dateStr}`);
+        const res = await axios.get(`${API_BASE_URL}/api/doctors/${doctorId}/availability/${dateStr}`);
         let slots = res.data.slots || [];
 
         const today = new Date();
@@ -313,7 +314,7 @@ export default function AppointmentPage() {
 
     try {
       // Check if slot is already booked
-  //     const res = await axios.post("http://localhost:5000/api/doctors/check-slot", {
+  //     const res = await axios.post("${API_BASE_URL}/api/doctors/check-slot", {
   //       doctorId,
   // date: startDate.toISOString().split("T")[0], // YYYY-MM-DD
   //       slot: availableSlots.find(s => s.start === selectedSlot)

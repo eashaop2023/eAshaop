@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { FiSearch, FiMic, FiX } from "react-icons/fi";
 import { useParams } from "react-router-dom";
+import { API_BASE_URL } from "../../../../api-config";
 
 import { FaStar } from "react-icons/fa";
 import Cardiology from "../../../assets/cardiologist/cardiology.png";
@@ -45,7 +46,7 @@ useEffect(() => {
     setLoading(true);
     try {
       // only add consultationMode if a selection is made
-      let url = `http://localhost:5000/api/categories/${uuid}/doctors`;
+      let url = `${API_BASE_URL}/api/categories/${uuid}/doctors`;
       if (selected) {
         const mode = selected === "video" ? "Video" : "Clinic";
         url += `?consultationMode=${mode}`;

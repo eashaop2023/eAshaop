@@ -26,7 +26,7 @@ const Topbar = () => {
   const handleLogout = async () => {
     try {
       // ✅ Call backend logout API
-      const response = await fetch("http://localhost:5000/api/user/logout", {
+      const response = await fetch(`${API_BASE_URL}/api/user/logout`, {
         method: "POST",
         credentials: "include", // if using cookies for session
         headers: {
@@ -90,7 +90,7 @@ const Topbar = () => {
           alt="Notification"
           style={{ width: '22px', height: '22px', marginRight: '15px',cursor:"pointer" }}
         />
-        <i className="bi bi-bell fs-5 me-3"></i>
+       
         <img
           src={dp}
           alt="User"
