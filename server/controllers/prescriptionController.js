@@ -1,4 +1,4 @@
-const Prescription = require("../models/Prescription");
+const Prescription = require("../models/prescription");
 const Patient = require("../models/patientModel");
 const Doctor = require("../models/doctorModel");
 const PDFDocument = require("pdfkit");
