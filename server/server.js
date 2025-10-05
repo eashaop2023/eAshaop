@@ -28,11 +28,13 @@ const app = express();
 // CORS: allow your frontend URL
 app.use(
   cors({
-    origin: [`${process.env.CLIENT_ORIGIN}`, "http://localhost:5500", "http://127.0.0.1:5500", "http://127.0.0.1:5173", "http://localhost:5173"], // frontend URL
+    origin: [process.env.CLIENT_ORIGIN, "http://localhost:5500", "http://127.0.0.1:5500", "http://127.0.0.1:5173", "http://localhost:5173"], // frontend URL
     methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
     credentials: true,
   })
 );
+
+app.use("*", cors())
 
 app.use(
   "/api/appointments/razorpay/webhook",
