@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Container, Row, Col, Button, Card } from 'react-bootstrap';
-import Check from '../../../assets/pharmacyicons/Check.png'
+import Check from '../../../assets/pharmacyicons/check.png'
 import 'bootstrap/dist/css/bootstrap.min.css';
 import AddAddressModal from '../addAddress/AddAddressModel';
 import { useNavigate } from 'react-router-dom';

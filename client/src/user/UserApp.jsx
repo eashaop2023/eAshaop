@@ -2,7 +2,7 @@ import React, { useState } from "react";
 import ScrollToTop from "./components/commonComponent/ScrollToTop";
 import { Routes, Route } from "react-router-dom";
 import './UserApp.css';
-import './UserIndex.css';
+import './Userindex.css';
 import { ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 

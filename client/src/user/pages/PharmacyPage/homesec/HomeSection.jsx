@@ -10,7 +10,7 @@ import uploadIcon from "../../../assets/pharmacyicons/Upload.svg"
 
 import Medicines from "../../../assets/pharmacyicons/Medicines.png"
 import PersonalCare from "../../../assets/pharmacyicons/PersonalCare.png"
-import BabyMomCare from "../../../assets/pharmacyicons/Baby&MomCare.png";
+import BabyMomCare from "../../../assets/pharmacyicons/Baby&Momcare.png";
 import HealthDevices from "../../../assets/pharmacyicons/HealthDevices.png"
 import AyurvedaHerbal from "../../../assets/pharmacyicons/Ayurved.png"
 import Homeopathy from "../../../assets/pharmacyicons/Homeopathy.png"

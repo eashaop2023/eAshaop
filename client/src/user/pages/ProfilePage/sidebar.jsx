@@ -3,7 +3,7 @@ import { ListGroup } from "react-bootstrap";
 import { useNavigate, useLocation } from "react-router-dom";
 import { FiMenu, FiX } from "react-icons/fi";
 import "bootstrap/dist/css/bootstrap.min.css";
-import "./Sidebar.css";
+import "./sidebar.css";
 
 import User from "../../assets/icons/profile.png";
 import Security from "../../assets/icons/pharmacy.svg";
