@@ -7,6 +7,8 @@ const crypto = require("crypto");
 const cors = require("cors");
 const { raw } = require("body-parser");
 const { response } = require("express");
+const moment = require("moment-timezone");
+
 // Helper: Generate Jitsi Meeting Link
 function generateJitsiLink(appointmentId) {
   return `https://meet.jit.si/consult_${appointmentId}_${Date.now()}`;
@@ -204,26 +206,19 @@ exports.getAllAppointments = async (req, res) => {
 };
 
 // GET /api/appointments/user/:userId
+
 exports.getUserAppointments = async (req, res) => {
   try {
     const { userId } = req.params;
-    const now = new Date();
-
-    const upcoming = await Appointment.find({ userId, date: { $gte: now } })
+    const appointments = await Appointment.find({ userId })
       .populate(
         "doctorId",
         "name education speciality hospitalName hospitalLocation consultationMode email mobile profileImage"
       )
       .lean();
 
-    const past = await Appointment.find({ userId, date: { $lt: now } })
-      .populate(
-        "doctorId",
-        "name education speciality hospitalName hospitalLocation consultationMode email mobile profileImage"
-      )
-      .lean();
+    const now = moment().tz("Asia/Kolkata"); // Current IST time
 
-    // Format the appointments
     const formatAppointment = (appt) => ({
       appointmentId: appt._id,
       type: appt.type,
@@ -241,25 +236,42 @@ exports.getUserAppointments = async (req, res) => {
             hospitalLocation: appt.doctorId.hospitalLocation,
             email: appt.doctorId.email,
             mobile: appt.doctorId.mobile,
-            profileImage: appt.doctorId.profileImage, // ✅ Include profile image
+            profileImage: appt.doctorId.profileImage,
           }
         : null,
       dependent: appt.dependent || null,
       jitsiLink: appt.jitsiLink || null,
     });
 
+    const upcoming = [];
+    const past = [];
+
+    appointments.forEach((appt) => {
+      // Combine date + time into full datetime
+      const apptDateTime = moment.tz(
+        `${moment(appt.date).format("YYYY-MM-DD")} ${appt.time}`,
+        "YYYY-MM-DD hh:mm A",
+        "Asia/Kolkata"
+      );
+
+      if (apptDateTime.isSameOrAfter(now)) {
+        upcoming.push(formatAppointment(appt));
+      } else {
+        past.push(formatAppointment(appt));
+      }
+    });
+
     res.status(200).json({
       totalUpcoming: upcoming.length,
       totalPast: past.length,
-      upcoming: upcoming.map(formatAppointment),
-      past: past.map(formatAppointment),
+      upcoming,
+      past,
     });
   } catch (error) {
     console.error("Get User Appointments Error:", error);
     res.status(500).json({ message: error.message });
   }
 };
-
 // GET /api/appointments/doctor/:doctorId
 exports.getDoctorAppointments = async (req, res) => {
   try {
