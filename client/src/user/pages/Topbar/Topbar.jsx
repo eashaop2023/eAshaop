@@ -5,7 +5,7 @@ import notification from '../../assets/notification.svg'
 import { useNavigate } from 'react-router-dom';
 import styles from "../../pages/ProfilePage/Profile.module.css"
 import {FiLogOut} from "react-icons/fi"
-
+import { API_BASE_URL } from '../../../api-config';
 
 const Topbar = () => {
   const [isMobile, setIsMobile] = useState(false);
