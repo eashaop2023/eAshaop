@@ -48,6 +48,10 @@ app.use(bodyParser.urlencoded({ extended: true, limit: "50mb" }));
 // app.use("/api/appointments/razorpay/webhook", express.raw({ type: "*/*" }));
 
 // -------------------- ROUTES --------------------
+app.get("/", (req, res) => {
+  res.json({ servicename: "first app module" });
+});
+
 app.use("/api/doctors", doctorRoutes);
 app.use("/api/categories", categoryRoutes);
 app.use("/api/prescriptions", prescriptionRoutes);
