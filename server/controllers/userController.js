@@ -73,56 +73,77 @@ exports.registerUserApp = async (req, res) => {
 // User Registration with OTP
 exports.registerUser = async (req, res) => {
   try {
-    const { full_name, phone_number, dob, gender, password, email, verifyBy } =
-      req.body;
+    const { full_name, phone_number, dob, gender, password, email, verifyBy } = req.body;
     const method = verifyBy?.toLowerCase(); // "email" or "phone"
 
+    // ⿡ Validate required fields
     if (!full_name || !phone_number || !dob || !gender || !password) {
-      return res
-        .status(400)
-        .json({ message: "All required fields must be provided" });
+      return res.status(400).json({ message: "All required fields must be provided" });
     }
 
-    let normalizedPhone = phone_number.replace(/\D/g, "");
-    if (normalizedPhone.length === 10)
-      normalizedPhone = `+91${normalizedPhone}`;
+    if (!["email", "phone"].includes(method)) {
+      return res.status(400).json({ message: "Invalid verification method" });
+    }
+
+    // ⿢ Normalize phone and email
+    let normalizedPhone = phone_number.replace(/\D/g, "").trim();
+    if (normalizedPhone.length === 10) normalizedPhone = `+91${normalizedPhone}`;
     else if (normalizedPhone.length === 12 && normalizedPhone.startsWith("91"))
       normalizedPhone = `+${normalizedPhone}`;
+    else
+      return res.status(400).json({ message: "Invalid phone number format" });
 
-    const existingUser = await User.findOne({
-      $or: [{ email }, { phone_number: normalizedPhone }],
-    });
-    if (existingUser) {
-      return res
-        .status(400)
-        .json({ message: "User already exists with this email or phone" });
+    const normalizedEmail = email?.trim().toLowerCase();
+
+    // ⿣ Check existing user (only with provided fields)
+    const query = [];
+    if (normalizedEmail) query.push({ email: normalizedEmail });
+    if (normalizedPhone) query.push({ phone_number: normalizedPhone });
+
+    let existingUser = null;
+    if (query.length > 0) {
+      existingUser = await User.findOne({ $or: query });
     }
 
+    if (existingUser) {
+      return res.status(400).json({ message: "User already exists with this email or phone" });
+    }
+
+    // ⿤ Hash password
     const hashedPassword = await bcrypt.hash(password.trim(), 10);
 
-    const otp = Math.floor(1000 + Math.random() * 5000);
-    const expires = new Date(Date.now() + 10 * 60 * 1000); // 10 min expiry
+    // ⿥ Generate 4-digit OTP (Always 4 digits)
+    const otp = String(Math.floor(1000 + Math.random() * 9000)).padStart(4, "0");
+    const expires = new Date(Date.now() + 10 * 60 * 1000); // 10 minutes expiry
 
+    // ⿦ Create user
     const user = new User({
       full_name,
       phone_number: normalizedPhone,
       dob,
       gender,
       password: hashedPassword,
-      email,
+      email: normalizedEmail,
       registration_otp: { code: otp, expires },
     });
 
     await user.save();
 
-    if (method === "email") {
-      await sendOTP({ verifyBy: "email", email, otp });
-    } else {
-      await sendOTP({ verifyBy: "phone", mobile: normalizedPhone, otp });
+    // ⿧ Send OTP (Email or SMS)
+    try {
+      if (method === "email") {
+        await sendOTP({ verifyBy: "email", email: normalizedEmail, otp });
+      } else {
+        await sendOTP({ verifyBy: "phone", mobile: normalizedPhone, otp });
+      }
+    } catch (err) {
+      console.error("OTP sending error:", err.message);
+      // Continue even if OTP fails
     }
 
+    // ⿨ Success Response
     res.status(201).json({
-      message: `OTP sent to your ${method}`,
+      message: `OTP sent successfully to your ${method}`,
       user: {
         id: user._id,
         full_name: user.full_name,
@@ -132,8 +153,8 @@ exports.registerUser = async (req, res) => {
     });
   } catch (err) {
     console.error("Registration Error:", err);
-    res.status(500).json({ message: "Registration failed" });
-  }
+    res.status(500).json({ message: "Registration failed", error: err.message });
+  }
 };
 
 //  Verify OTP & Save User
@@ -627,7 +648,7 @@ exports.resendForgotOTP = async (req, res) => {
     console.error("Resend Forgot OTP Error:", error);
     res.status(500).json({ message: "Internal server error" });
   }
-};
+}; 
 
 
 exports.verifyForgotOTP = async (req, res) => {
@@ -646,7 +667,7 @@ exports.verifyForgotOTP = async (req, res) => {
       const phone = value;
       user = await User.findOne({ phone_number: phone });
     } else {
-      return res.status(400).json({ message: "Invalid verifyBy value" });
+      return res.status(400).json({ message: "Invalid verifyBy Key" });
     }
 
     if (!user) return res.status(404).json({ message: "User not found" });
