@@ -5,7 +5,8 @@ const bcrypt = require("bcrypt");
 
 // const User = require("../models/user");
 const User = require("../models/user.js");
-const { generateOTP, sendOTP } = require("../utils/otpHelperUser.js"); 
+// const { generateOTP, sendOTP } = require("../utils/otpHelperUser.js"); 
+const { generateOTP, sendOTP } = require("../utils/otpHelper");
 
 exports.registerUserApp = async (req, res) => {
   try {
