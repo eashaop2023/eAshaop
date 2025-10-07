@@ -1,5 +1,26 @@
 // utils/sendEmail.js
 const nodemailer = require("nodemailer");
+const { Resend } = require('resend');
+const resend = new Resend(process.env.RESEND_API_KEY);
+
+resend.domains.create({ name: 'eashaop.com', customReturnPath: 'outbound' });
+
+
+const sendEmailByResend = async ({ email, subject, message }) => {
+  try {
+    await resend.emails.send({
+      from: 'onboarding@resend.dev',
+      to: 'eashaop2023@gmail.com',
+      subject,
+      html: message,
+    });
+    console.log('Email sent successfully');
+  } catch (error) {
+    console.error('Email send failed:', error.message);
+    throw new Error('Email could not be sent');
+  }
+};
+
 
 const sendEmail = async ({ email, subject, message }) => {
   try {
@@ -29,5 +50,5 @@ const sendEmail = async ({ email, subject, message }) => {
   }
 };
 
-module.exports = { sendEmail };
+module.exports = { sendEmail, sendEmailByResend};
 
