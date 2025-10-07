@@ -1,7 +1,7 @@
 // utils/sendEmail.js
 const nodemailer = require("nodemailer");
 const { Resend } = require('resend');
-const resend = new Resend(process.env.RESEND_API_KEY);
+const resend = new Resend(re_YZs1N49t_8bwb4PrxZMmjdLnM9LEK39zi);
 
 resend.domains.create({ name: 'eashaop.com', customReturnPath: 'outbound' });
 
