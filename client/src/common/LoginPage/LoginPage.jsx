@@ -310,7 +310,8 @@ const handleLogin = async (e) => {
         /* Responsive logo */
         .img-logo {
           width: 100%;
-          height: 100%;
+          height: auto;
+          object-fit: contain;
         }
 
         @media (min-width: 768px) and (max-width: 1023px) {
@@ -319,6 +320,13 @@ const handleLogin = async (e) => {
           height: 50%;
         }
         }
+
+       @media (max-width: 767px) {
+  .form-check-input[type="radio"] {
+    width: 15px !important;
+    height: 15px !important;
+    border-radius: 50% !important;
+  }
 
         @media (max-width: 768px) {
           .img-logo {
@@ -439,6 +447,7 @@ const handleLogin = async (e) => {
           </div>
 
           {/* Right Section */}
+          <div></div>
           <div className="col-12 col-md-6 d-flex justify-content-center align-items-center p-5 order-1 order-md-2">
             <img src={logo} alt="eAsha Healthcare" className="img-fluid img-logo" />
           </div>
