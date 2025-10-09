@@ -716,20 +716,18 @@ exports.razorpayWebhook = async (req, res) => {
 
 exports.bookAppointment = async (req, res) => {
   try {
-    const { userId, doctorId, date, time, type, dependentData, amount } = req.body;
+    const { userId, doctorId, date, time, type, dependent, amount } = req.body;
+
+    const requestedDateIST1 = moment.utc(date).tz("Asia/Kolkata");
+    console.log("Appointment saved with date:", requestedDateIST1);
 
     if (!userId || !doctorId || !date || !time || !type || !amount)
       return res.status(400).json({ message: "All fields are required" });
 
     if (typeof amount !== "number" || amount <= 0)
-      return res.status(400).json({ message: "Amount must be a positive number" });
-
-    const appointmentDateUTC = moment.utc(date);
-    const appointmentDateIST = appointmentDateUTC.clone().tz("Asia/Kolkata");
-    const dateOnlyISTStart = appointmentDateIST.clone().startOf("day");
-    const dateToStore = dateOnlyISTStart.clone().utc().toDate();
-    const appointmentDateStr = appointmentDateIST.format("YYYY-MM-DD");
-    const appointmentDateTime = moment.tz(`${appointmentDateStr} ${time}`, "YYYY-MM-DD HH:mm", "Asia/Kolkata");
+      return res
+        .status(400)
+        .json({ message: "Amount must be a positive number" });
 
     const user = await User.findById(userId);
     if (!user) return res.status(404).json({ message: "User not found" });
@@ -737,52 +735,67 @@ exports.bookAppointment = async (req, res) => {
     const doctor = await Doctor.findById(doctorId);
     if (!doctor) return res.status(404).json({ message: "Doctor not found" });
 
+    // ✅ Convert date & time to IST
+    const requestedDateIST = moment.tz(requestedDateIST1, "YYYY-MM-DD", "Asia/Kolkata");
+    const requestedTimeIST = moment.tz(`${requestedDateIST1} ${time}`, "YYYY-MM-DD HH:mm", "Asia/Kolkata");
+
+    // Start and end of requested date in IST
+    const requestedDateStart = requestedDateIST.startOf("day").toDate();
+    const requestedDateEnd = requestedDateIST.endOf("day").toDate();
+
+    // Check doctor availability
     const availability = await DoctorAvailability.findOne({
       doctor: doctorId,
-      date: { $gte: dateToStore, $lte: moment(dateToStore).endOf("day").toDate() },
+      date: { $gte: requestedDateStart, $lte: requestedDateEnd },
     });
 
     if (!availability)
-      return res.status(400).json({ message: "Doctor is not available on this date" });
+      return res
+        .status(400)
+        .json({ message: "Doctor is not available on this date" });
 
-    const availableStart = moment.tz(`${appointmentDateStr} ${availability.startTime}`, "YYYY-MM-DD HH:mm", "Asia/Kolkata");
-    const availableEnd = moment.tz(`${appointmentDateStr} ${availability.endTime}`, "YYYY-MM-DD HH:mm", "Asia/Kolkata");
-    const nowIST = moment().tz("Asia/Kolkata");
+    // Check time within doctor's slot
+    const [startHour, startMinute] = availability.startTime.split(":").map(Number);
+    const [endHour, endMinute] = availability.endTime.split(":").map(Number);
 
-    if (appointmentDateTime.isBefore(nowIST)) {
+    const startTime = moment(requestedDateIST).hour(startHour).minute(startMinute).toDate();
+    const endTime = moment(requestedDateIST).hour(endHour).minute(endMinute).toDate();
+
+    const now = moment().tz("Asia/Kolkata").toDate();
+
+    if (requestedTimeIST.toDate() < now)
       return res.status(400).json({ message: "Cannot book an appointment in the past" });
-    }
 
-    if (appointmentDateTime.isBefore(availableStart) || appointmentDateTime.isAfter(availableEnd)) {
-      return res.status(400).json({ message: "Doctor is not available for this time slot" });
-    }
+    if (requestedTimeIST.toDate() < startTime || requestedTimeIST.toDate() > endTime)
+      return res.status(400).json({ message: "Doctor is not available for this slot" });
 
-    const order = await razorpay.orders.create({
-      amount: amount * 100,
-      currency: "INR",
-      receipt: `receipt_${Date.now()}`,
-    });
-
+  // Create Razorpay order
+  const order = await razorpay.orders.create({
+    amount: amount * 100, // INR to paise
+    currency: "INR",
+    receipt: `receipt_${Date.now()}`,
+  });
+    // Save appointment
     const appointment = await Appointment.create({
       userId,
       doctorId,
-      date: dateToStore,
-      time,
       type,
-      dependent: dependentData || null,
+      date: requestedDateIST.format("YYYY-MM-DD"), // store date string
+      time, // store time as string (24-hour)
+      dependent: dependent || null,
       status: "pending",
       amount,
       razorpayOrderId: order.id,
     });
 
-    return res.status(201).json({
+    res.status(201).json({
       message: "Razorpay order created. Complete payment to confirm appointment",
       order,
       appointmentId: appointment._id,
     });
   } catch (error) {
     console.error("Book Appointment Error:", error);
-    return res.status(500).json({ message: "Server Error", error: error.message });
+    res.status(500).json({ message: "Server Error", error: error.message });
   }
 };
 
