@@ -483,7 +483,7 @@ exports.bookAppointment = async (req, res) => {
   try {
     const { userId, doctorId, date, time, type, dependent, amount } = req.body;
 
-    const requestedDateIST1 = moment.tz(date, "Asia/Kolkata").toDate();
+    const requestedDateIST1 = moment.tz(date, "Asia/Kolkata").toDate().toString();
     console.log("Appointment saved with date:", requestedDateIST1);
 
     if (!userId || !doctorId || !date || !time || !type || !amount)
