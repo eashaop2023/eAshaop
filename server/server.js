@@ -28,13 +28,13 @@ const app = express();
 // CORS: allow your frontend URL
 app.use(
   cors({
-    origin: [process.env.CLIENT_ORIGIN, "http://localhost:5500", "http://127.0.0.1:5500", "http://127.0.0.1:5173", "http://localhost:5173"], // frontend URL
+    origin: ["https://eashaop.com","https://www.eashaop.com", "http://localhost:5500", "http://127.0.0.1:5500", "http://127.0.0.1:5173", "http://localhost:5173"], // frontend URL
     methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
     credentials: true,
   })
 );
 
-app.use("*", cors())
+// app.use("*", cors())
 
 app.use(
   "/api/appointments/razorpay/webhook",
@@ -48,6 +48,10 @@ app.use(bodyParser.urlencoded({ extended: true, limit: "50mb" }));
 // app.use("/api/appointments/razorpay/webhook", express.raw({ type: "*/*" }));
 
 // -------------------- ROUTES --------------------
+app.get("/", (req, res) => {
+  res.json({ servicename: "first app module" });
+});
+
 app.use("/api/doctors", doctorRoutes);
 app.use("/api/categories", categoryRoutes);
 app.use("/api/prescriptions", prescriptionRoutes);

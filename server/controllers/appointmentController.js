@@ -483,6 +483,9 @@ exports.bookAppointment = async (req, res) => {
   try {
     const { userId, doctorId, date, time, type, dependent, amount } = req.body;
 
+    const requestedDateIST1 = moment.utc(date).tz("Asia/Kolkata");
+    console.log("Appointment saved with date:", requestedDateIST1);
+
     if (!userId || !doctorId || !date || !time || !type || !amount)
       return res.status(400).json({ message: "All fields are required" });
 
@@ -497,11 +500,15 @@ exports.bookAppointment = async (req, res) => {
     const doctor = await Doctor.findById(doctorId);
     if (!doctor) return res.status(404).json({ message: "Doctor not found" });
 
-    const requestedDateStart = new Date(date);
-    requestedDateStart.setHours(0, 0, 0, 0);
-    const requestedDateEnd = new Date(date);
-    requestedDateEnd.setHours(23, 59, 59, 999);
+    // ✅ Convert date & time to IST
+    const requestedDateIST = moment.tz(requestedDateIST1, "YYYY-MM-DD", "Asia/Kolkata");
+    const requestedTimeIST = moment.tz(`${requestedDateIST1} ${time}`, "YYYY-MM-DD HH:mm", "Asia/Kolkata");
 
+    // Start and end of requested date in IST
+    const requestedDateStart = requestedDateIST.startOf("day").toDate();
+    const requestedDateEnd = requestedDateIST.endOf("day").toDate();
+
+    // Check doctor availability
     const availability = await DoctorAvailability.findOne({
       doctor: doctorId,
       date: { $gte: requestedDateStart, $lte: requestedDateEnd },
@@ -509,32 +516,23 @@ exports.bookAppointment = async (req, res) => {
 
     if (!availability)
       return res
-
         .status(400)
         .json({ message: "Doctor is not available on this date" });
 
-    const [reqHour, reqMinute] = time.split(":").map(Number);
-    const requestedTime = new Date(requestedDateStart);
-    requestedTime.setHours(reqHour, reqMinute, 0, 0);
-
-    const [startHour, startMinute] = availability.startTime
-      .split(":")
-      .map(Number);
+    // Check time within doctor's slot
+    const [startHour, startMinute] = availability.startTime.split(":").map(Number);
     const [endHour, endMinute] = availability.endTime.split(":").map(Number);
-    const startTime = new Date(requestedDateStart);
-    startTime.setHours(startHour, startMinute, 0, 0);
-    const endTime = new Date(requestedDateStart);
-    endTime.setHours(endHour, endMinute, 0, 0);
 
-    const now = new Date();
-    if (requestedTime < now)
-      return res
-        .status(400)
-        .json({ message: "Cannot book an appointment in the past" });
-    if (requestedTime < startTime || requestedTime > endTime)
-      return res
-        .status(400)
-        .json({ message: "Doctor is not available for this slot" });
+    const startTime = moment(requestedDateIST).hour(startHour).minute(startMinute).toDate();
+    const endTime = moment(requestedDateIST).hour(endHour).minute(endMinute).toDate();
+
+    const now = moment().tz("Asia/Kolkata").toDate();
+
+    if (requestedTimeIST.toDate() < now)
+      return res.status(400).json({ message: "Cannot book an appointment in the past" });
+
+    if (requestedTimeIST.toDate() < startTime || requestedTimeIST.toDate() > endTime)
+      return res.status(400).json({ message: "Doctor is not available for this slot" });
 
     // Create Razorpay order
     const order = await razorpay.orders.create({
@@ -543,27 +541,24 @@ exports.bookAppointment = async (req, res) => {
       receipt: `receipt_${Date.now()}`,
     });
 
-    console.log("order", order)
-    // Save appointment with pending status
+    // Save appointment
     const appointment = await Appointment.create({
       userId,
       doctorId,
       type,
-      date: requestedDateStart,
-      time,
+      date: requestedDateIST.format("YYYY-MM-DD"), // store date string
+      time, // store time as string (24-hour)
       dependent: dependent || null,
       status: "pending",
       amount,
       razorpayOrderId: order.id,
     });
 
-    res.status(201).json({  
-      message:
-        "Razorpay order created. Complete payment to confirm appointment",
-        razorpay,
+    res.status(201).json({
+      message: "Razorpay order created. Complete payment to confirm appointment",
       order,
       appointmentId: appointment._id,
-    });   
+    });
   } catch (error) {
     console.error("Book Appointment Error:", error);
     res.status(500).json({ message: "Server Error", error: error.message });
