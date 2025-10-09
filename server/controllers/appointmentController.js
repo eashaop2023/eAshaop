@@ -504,10 +504,8 @@ exports.bookAppointment = async (req, res) => {
     const doctor = await Doctor.findById(doctorId);
     if (!doctor) return res.status(404).json({ message: "Doctor not found" });
 
-
-
-    const dayStart = appointmentDate.clone().startOf("day").toDate(); // 00:00 IST
-    const dayEnd = appointmentDate.clone().endOf("day").toDate(); // 23:59:59 IST
+    const dayStart = appointmentDate.clone().startOf("day").toDate(); // 00:00 IST as UTC Date
+    const dayEnd = appointmentDate.clone().endOf("day").toDate();     // 23:59:59 IST as UTC Date
 
     const availability = await DoctorAvailability.findOne({
       doctor: doctorId,
@@ -517,12 +515,8 @@ exports.bookAppointment = async (req, res) => {
     if (!availability)
       return res.status(400).json({ message: "Doctor is not available on this date" });
 
-    // Step 4: Check if appointment time is within the doctor's available time
-    const [startHour, startMinute] = availability.startTime.split(":").map(Number);
-    const [endHour, endMinute] = availability.endTime.split(":").map(Number);
-
-    const availableStart = appointmentDate.clone().hour(startHour).minute(startMinute).toDate();
-    const availableEnd = appointmentDate.clone().hour(endHour).minute(endMinute).toDate();
+     const availableStart = moment.tz(`${appointmentDateStr} ${availability.startTime}`, "YYYY-MM-DD HH:mm", "Asia/Kolkata").toDate();
+    const availableEnd = moment.tz(`${appointmentDateStr} ${availability.endTime}`, "YYYY-MM-DD HH:mm", "Asia/Kolkata").toDate();
 
     const now = moment().tz("Asia/Kolkata").toDate();
 
