@@ -483,7 +483,7 @@ exports.bookAppointment = async (req, res) => {
   try {
     const { userId, doctorId, date, time, type, dependent, amount } = req.body;
 
-    const requestedDateIST1 = moment.utc(new Date(date)).tz("Asia/Kolkata").toDate();
+    const requestedDateIST1 = moment.tz(date, "Asia/Kolkata").toDate();
     console.log("Appointment saved with date:", requestedDateIST1);
 
     if (!userId || !doctorId || !date || !time || !type || !amount)
@@ -500,7 +500,7 @@ exports.bookAppointment = async (req, res) => {
     const doctor = await Doctor.findById(doctorId);
     if (!doctor) return res.status(404).json({ message: "Doctor not found" });
 
-    // ✅ Convert date & time to IST
+    //Convert date & time to IST
     const requestedDateIST = moment.tz(requestedDateIST1, "YYYY-MM-DD", "Asia/Kolkata");
     const requestedTimeIST = moment.tz(`${requestedDateIST1} ${time}`, "YYYY-MM-DD HH:mm", "Asia/Kolkata");
 
