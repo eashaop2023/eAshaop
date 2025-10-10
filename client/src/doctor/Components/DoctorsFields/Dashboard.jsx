@@ -1,5 +1,4 @@
-import React, { useState } from "react";
-import { CalendarDays } from "lucide-react";
+import React, { useState, useEffect } from "react";
 import {
   BarChart,
   Bar,
@@ -9,24 +8,53 @@ import {
   Tooltip,
   ResponsiveContainer,
 } from "recharts";
-
-const bookings = [
-  { name: "Laxmi Sharma", time: "10:00 am", status: "pending" },
-  { name: "Ravi Kumar", time: "11:00 am", status: "pending" },
-  { name: "Sita Devi", time: "12:00 pm", status: "completed" },
-  { name: "Amit Singh", time: "01:00 pm", status: "pending" },
-  { name: "Neha Gupta", time: "02:00 pm", status: "pending" },
-  { name: "Rajesh Kumar", time: "03:00 pm", status: "completed" },
-  { name: "Anita Sharma", time: "04:00 pm", status: "pending" },
-  { name: "Sunita Devi", time: "05:00 pm", status: "cancelled" },
-];
-
+import axios from "axios";
+import { API_BASE_URL } from "../../../api-config";
+// This component encapsulates the UI for the bookings list.
 const statusStyles = {
   pending: { backgroundColor: "#facc15", color: "#fff" },
   completed: { backgroundColor: "#22c55e", color: "#fff" },
   cancelled: { backgroundColor: "#ef4444", color: "#fff" },
 };
 
+const LatestBookings = ({ bookings }) => {
+  return (
+    <div className="bg-white rounded-2xl border border-[#F7F7F7] p-4 w-full">
+      <h2 className="text-lg sm:text-xl md:text-2xl font-semibold mb-3 break-words">
+        Latest Bookings
+      </h2>
+      <div className="space-y-4">
+        {bookings.map((b, i) => (
+          <div key={i} className="flex items-center justify-between w-full">
+            <div className="flex items-center gap-3 w-full max-w-[70%]">
+              <img
+                src="https://randomuser.me/api/portraits/women/44.jpg"
+                alt={b.userId?.full_name}
+                className="w-10 h-10 rounded-full object-cover"
+              />
+              <div className="whitespace-normal break-words">
+                <p className="text-xs sm:text-sm md:text-base font-medium break-words">
+                  {b.userId?.full_name || "Unknown"}
+                </p>
+                <p className="text-[10px] sm:text-xs md:text-sm text-gray-500">
+                  {b.date} at {b.time}
+                </p>
+              </div>
+            </div>
+            <span
+              className="px-2 sm:px-3 py-1 rounded-lg text-[10px] sm:text-xs md:text-sm font-medium capitalize"
+              style={statusStyles[b.status]}
+            >
+              {b.status}
+            </span>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+};
+
+// --- CHART DATA ---
 const dataSets = {
   days: [
     { name: "1", earnings: 2000 },
@@ -68,9 +96,43 @@ const dataSets = {
   ],
 };
 
+// --- MAIN DASHBOARD COMPONENT ---
 const Dashboard = () => {
   const [selectedRange, setSelectedRange] = useState("week");
-  const [isActive, setIsActive] = useState(true); // Toggle state
+  const [isActive, setIsActive] = useState(true);
+  const [bookings, setBookings] = useState([]);
+  const [totalAppointments, setTotalAppointments] = useState(0);
+  const [totalEarnings, setTotalEarnings] = useState(0);
+  useEffect(() => {
+    try {
+      console.log("in call of appointment fecthing");
+      const doctorId = localStorage.getItem("doctorId");
+      console.log(doctorId);
+
+      if (doctorId) {
+        const fetchBookings = async () => {
+          const response = await axios.get(
+            `${API_BASE_URL}/api/appointments/doctor/${doctorId}`
+          );
+           const { upcoming = [], past = [] } = response.data;
+          console.log(response.data);
+          setBookings(response.data.upcoming || []);
+          setTotalAppointments(response.data.upcoming.length + response.data.past.length);
+           // Calculate total earnings from completed/booked past appointments
+        const earnings = past
+          .filter((appointment) =>
+            ["booked", "completed"].includes(appointment.status?.toLowerCase())
+          )
+          .reduce((sum, appt) => sum + (Number(appt.amount) || 0), 0);
+
+        setTotalEarnings(earnings);
+        };
+        fetchBookings();
+      }
+    } catch (error) {
+      console.error("Error fetching bookings:", error);
+    }
+  }, []);
 
   return (
     <div className="overflow-y-hidden">
@@ -103,15 +165,26 @@ const Dashboard = () => {
               }`}
             ></div>
           </label>
-          <span className="text-sm font-medium">{isActive ? "Active" : "Inactive"}</span>
-          <a href="https://meet.jit.si/d6b3a8a3-128c-4f61-baef-f22e2713db51" target="_blank" rel="noopener noreferrer" style={{padding:"10px 20px", backgroundColor:"#00A99D", color:"#fff", borderRadius:"8px", textDecoration:"none",marginLeft:'30px',fontWeight:'500'}}>
-  <button>Join Call</button>
-</a>
-
-
+          <span className="text-sm font-medium">
+            {isActive ? "Active" : "Inactive"}
+          </span>
+          <a
+            href="https://meet.jit.si/d6b3a8a3-128c-4f61-baef-f22e2713db51"
+            target="_blank"
+            rel="noopener noreferrer"
+            style={{
+              padding: "10px 20px",
+              backgroundColor: "#00A99D",
+              color: "#fff",
+              borderRadius: "8px",
+              textDecoration: "none",
+              marginLeft: "30px",
+              fontWeight: "500",
+            }}
+          >
+            <button>Join Call</button>
+          </a>
         </div>
-        
-
 
         {/* FLEX LAYOUT */}
         <div className="flex flex-col xl:flex-row gap-6 mt-6">
@@ -119,14 +192,18 @@ const Dashboard = () => {
           <div className="flex-1 space-y-6 w-full">
             {/* Cards */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 lg:gap-6 w-full max-w-full">
-              <div className="rounded-xl shadow-sm flex flex-col justify-center px-6 py-4 bg-[#00A99D] text-white w-full">
-                <h2 className="text-sm sm:text-base md:text-lg font-medium break-words">
-                  Total Earnings
-                </h2>
-                <p className="text-xl sm:text-2xl md:text-3xl font-bold break-words">
-                  ₹12,345.67
-                </p>
-              </div>
+             <div className="rounded-xl shadow-sm flex flex-col justify-center px-6 py-4 bg-[#00A99D] text-white w-full">
+  <h2 className="text-sm sm:text-base md:text-lg font-medium break-words">
+    Total Earnings
+  </h2>
+  <p className="text-xl sm:text-2xl md:text-3xl font-bold break-words">
+    ₹{totalEarnings.toLocaleString()}
+  </p>
+  <p className="text-xs sm:text-sm mt-1 italic text-white/80">
+    From completed appointments
+  </p>
+</div>
+
 
               <div className="rounded-xl shadow-sm flex items-center justify-between px-4 py-3 border border-[#F7F7F7] bg-white w-full">
                 <div className="flex flex-col justify-center w-full">
@@ -134,7 +211,7 @@ const Dashboard = () => {
                     Total Appointments
                   </h2>
                   <p className="text-lg sm:text-xl md:text-2xl font-bold text-black leading-tight break-words">
-                    245
+                    {totalAppointments}
                   </p>
                   <p className="text-[10px] sm:text-xs md:text-sm text-gray-500 leading-none">
                     Last 30 days
@@ -183,83 +260,15 @@ const Dashboard = () => {
               </div>
             </div>
 
-            {/* Latest Bookings (stacked below for small desktops, right for xl+) */}
+            {/* UPDATED: Latest Bookings (stacked below for small desktops) */}
             <div className="w-full xl:hidden max-h-[70vh] overflow-y-auto space-y-6 mt-4">
-              <div className="bg-white rounded-2xl border border-[#F7F7F7] p-4 w-full">
-                <h2 className="text-lg sm:text-xl md:text-2xl font-semibold mb-3 break-words">
-                  Latest Bookings
-                </h2>
-                <div className="space-y-4">
-                  {bookings.map((b, i) => (
-                    <div
-                      key={i}
-                      className="flex items-center justify-between w-full"
-                    >
-                      <div className="flex items-center gap-3 w-full max-w-[70%]">
-                        <img
-                          src="https://randomuser.me/api/portraits/women/44.jpg"
-                          alt={b.name}
-                          className="w-10 h-10 rounded-full object-cover"
-                        />
-                        <div className="whitespace-normal break-words">
-                          <p className="text-xs sm:text-sm md:text-base font-medium break-words">
-                            {b.name}
-                          </p>
-                          <p className="text-[10px] sm:text-xs md:text-sm text-gray-500">
-                            {b.time}
-                          </p>
-                        </div>
-                      </div>
-                      <span
-                        className="px-2 sm:px-3 py-1 rounded-lg text-[10px] sm:text-xs md:text-sm font-medium capitalize"
-                        style={statusStyles[b.status]}
-                      >
-                        {b.status}
-                      </span>
-                    </div>
-                  ))}
-                </div>
-              </div>
+              <LatestBookings bookings={bookings} />
             </div>
           </div>
 
-          {/* Latest Bookings (only visible on xl+ right side) */}
+          {/* UPDATED: Latest Bookings (right side for xl+ screens) */}
           <div className="hidden xl:block w-full xl:w-80 max-h-[70vh] overflow-y-auto space-y-6">
-            <div className="bg-white rounded-2xl border border-[#F7F7F7] p-4 w-full">
-              <h2 className="text-lg sm:text-xl md:text-2xl font-semibold mb-3 break-words">
-                Latest Bookings
-              </h2>
-              <div className="space-y-4">
-                {bookings.map((b, i) => (
-                  <div
-                    key={i}
-                    className="flex items-center justify-between w-full"
-                  >
-                    <div className="flex items-center gap-3 w-full max-w-[70%]">
-                      <img
-                        src="https://randomuser.me/api/portraits/women/44.jpg"
-                        alt={b.name}
-                        className="w-10 h-10 rounded-full object-cover"
-                      />
-                      <div className="whitespace-normal break-words">
-                        <p className="text-xs sm:text-sm md:text-base font-medium break-words">
-                          {b.name}
-                        </p>
-                        <p className="text-[10px] sm:text-xs md:text-sm text-gray-500">
-                          {b.time}
-                        </p>
-                      </div>
-                    </div>
-                    <span
-                      className="px-2 sm:px-3 py-1 rounded-lg text-[10px] sm:text-xs md:text-sm font-medium capitalize"
-                      style={statusStyles[b.status]}
-                    >
-                      {b.status}
-                    </span>
-                  </div>
-                ))}
-              </div>
-            </div>
+            <LatestBookings bookings={bookings} />
           </div>
         </div>
       </div>

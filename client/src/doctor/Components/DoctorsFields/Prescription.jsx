@@ -201,15 +201,15 @@ const PrescriptionForm = () => {
           <h3 className="text-lg font-medium mb-3">Recent Prescriptions</h3>
 
           {/* Search Bar */}
-          <input
+          {/* <input
             type="text"
             placeholder="Search by patient, medicine, or status"
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
             className="border border-gray-300 rounded-lg px-4 py-2 w-full mb-4"
-          />
+          /> */}
 
-          <div className="overflow-x-auto">
+          {/* <div className="overflow-x-auto">
             <table className="w-full border-collapse min-w-[600px]">
               <thead>
                 <tr className="bg-gray-100 text-gray-700 text-left">
@@ -254,7 +254,7 @@ const PrescriptionForm = () => {
                 )}
               </tbody>
             </table>
-          </div>
+          </div> */}
         </div>
       </div>
     </div>
