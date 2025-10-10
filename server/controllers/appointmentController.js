@@ -731,53 +731,56 @@ exports.bookAppointment = async (req, res) => {
     if (!doctor) return res.status(404).json({ message: "Doctor not found" });
 
     const requestedDateIST = moment.utc(date).tz("Asia/Kolkata");
-    const requestedDateISTDate = requestedDateIST.toDate();
+    const startOfDay = moment(requestedDateIST).startOf("day").toDate();
+    const endOfDay = moment(requestedDateIST).endOf("day").toDate();
     const requestedTimeIST = moment.tz(`${requestedDateIST.format("YYYY-MM-DD")} ${time}`, "YYYY-MM-DD HH:mm", "Asia/Kolkata");
+    const now = moment().tz("Asia/Kolkata");
 
-    const availability = await DoctorAvailability.findOne({
-      doctor: doctorId,
-      date: { $gte: requestedDateISTDate },
-    });
-
-    if (!availability)
-      return res.status(400).json({ message: "Doctor is not available on this date" });
-
-    const [startHour, startMinute] = availability.startTime.split(":").map(Number);
-    const [endHour, endMinute] = availability.endTime.split(":").map(Number);
-
-    const startTime = requestedDateIST.clone().hour(startHour).minute(startMinute).toDate();
-    const endTime = requestedDateIST.clone().hour(endHour).minute(endMinute).toDate();
-
-    const now = moment().tz("Asia/Kolkata").toDate();
-
-    if (requestedTimeIST.toDate() < now)
+    if (requestedTimeIST.isBefore(now))
       return res.status(400).json({ message: "Cannot book an appointment in the past" });
 
-    if (requestedTimeIST.toDate() < startTime || requestedTimeIST.toDate() > endTime)
+    const availabilities = await DoctorAvailability.find({
+      doctor: doctorId,
+      date: { $gte: startOfDay, $lte: endOfDay }
+    });
+
+    if (!availabilities.length)
+      return res.status(400).json({ message: "Doctor is not available on this date" });
+
+    const matchingSlot = availabilities.find((availability) => {
+      const [startHour, startMinute] = availability.startTime.split(":").map(Number);
+      const [endHour, endMinute] = availability.endTime.split(":").map(Number);
+      const slotStart = moment(requestedDateIST).hour(startHour).minute(startMinute);
+      const slotEnd = moment(requestedDateIST).hour(endHour).minute(endMinute);
+      if (slotEnd.isBefore(slotStart)) slotEnd.add(1, "day");
+      return requestedTimeIST.isBetween(slotStart, slotEnd, null, "[)");
+    });
+
+    if (!matchingSlot)
       return res.status(400).json({ message: "Doctor is not available for this slot" });
 
     const order = await razorpay.orders.create({
       amount: amount * 100,
       currency: "INR",
-      receipt: `receipt_${Date.now()}`,
+      receipt: `receipt_${Date.now()}`
     });
 
     const appointment = await Appointment.create({
       userId,
       doctorId,
       type,
-      date: requestedDateIST.format("YYYY-MM-DD"),
+      date: requestedDateIST.toDate(),
       time,
       dependent: dependent || null,
       status: "pending",
       amount,
-      razorpayOrderId: order.id,
+      razorpayOrderId: order.id
     });
 
     res.status(201).json({
       message: "Razorpay order created. Complete payment to confirm appointment",
       order,
-      appointmentId: appointment._id,
+      appointmentId: appointment._id
     });
   } catch (error) {
     console.error("Book Appointment Error:", error);
