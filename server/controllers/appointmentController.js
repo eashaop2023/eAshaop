@@ -748,16 +748,16 @@ exports.bookAppointment = async (req, res) => {
       return res.status(400).json({ message: "Doctor is not available on this date" });
 
     const matchingSlot = availabilities.find((availability) => {
-      const [startHour, startMinute] = availability.startTime.split(":").map(Number);
-      const [endHour, endMinute] = availability.endTime.split(":").map(Number);
+      const [startHour, startMinute] = availability.startTime.split(":");
+      const [endHour, endMinute] = availability.endTime.split(":");
       const slotStart = moment(requestedDateIST).hour(startHour).minute(startMinute);
       const slotEnd = moment(requestedDateIST).hour(endHour).minute(endMinute);
       if (slotEnd.isBefore(slotStart)) slotEnd.add(1, "day");
       return requestedTimeIST.isBetween(slotStart, slotEnd, null, "[)");
     });
 
-    // if (!matchingSlot)
-    //   return res.status(400).json({ message: "Doctor is not available for this slot" });
+    if (!matchingSlot)
+      return res.status(400).json({ message: "Doctor is not available for this slot" });
 
     const order = await razorpay.orders.create({
       amount: amount * 100,
