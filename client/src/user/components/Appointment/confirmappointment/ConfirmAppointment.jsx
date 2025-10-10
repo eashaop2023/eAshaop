@@ -29,16 +29,16 @@ const ConfirmAppointment = () => {
   const { doctor, slot, date, member, amount, consultationType,mainUser } =
     location.state || {};
 
-// if (slot && date) {
-//     const [hours, minutes] = slot.split(":").map(Number);
+if (slot && date) {
+    const [hours, minutes] = slot.split(":").map(Number);
 
-//     date.setHours(hours);
-//     date.setMinutes(minutes);
-//     date.setSeconds(0);
-//     date.setMilliseconds(0);
+    date.setHours(hours);
+    date.setMinutes(minutes);
+    date.setSeconds(0);
+    date.setMilliseconds(0);
 
-//     console.log("Updated date object with slot time:", date.toString());
-// }
+    console.log("Updated date object with slot time:", date.toString());
+}
 
 
   const paymentOptions = ["UPI", "Card"];
