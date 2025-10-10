@@ -741,7 +741,7 @@ exports.bookAppointment = async (req, res) => {
 
     const availabilities = await DoctorAvailability.find({
       doctor: doctorId,
-      date: { $gte: startOfDay, $lte: endOfDay }
+      date: { $gte: requestedTimeIST}
     });
 
     if (!availabilities.length)
