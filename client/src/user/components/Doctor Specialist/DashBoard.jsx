@@ -26,7 +26,7 @@ const staticCategories = [
   { name: "ENT", icon: ent, path: "ent" },
   { name: "Dental", icon: dental, path: "dental" },
   { name: "Women health", icon: womenHealth, path: "women-health" },
-  { name: "Child health", icon: childHealth, path: "child-health" },
+  // { name: "Child health", icon: childHealth, path: "child-health" },
   { name: "Skin & Beauty", icon: skin, path: "skin-&-beauty" },
   { name: "Mental health", icon: mentalHealth, path: "mental-health" },
 ];
