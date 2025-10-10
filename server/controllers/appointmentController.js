@@ -756,8 +756,8 @@ exports.bookAppointment = async (req, res) => {
       return requestedTimeIST.isBetween(slotStart, slotEnd, null, "[)");
     });
 
-    if (!matchingSlot)
-      return res.status(400).json({ message: "Doctor is not available for this slot" });
+    // if (!matchingSlot)
+    //   return res.status(400).json({ message: "Doctor is not available for this slot" });
 
     const order = await razorpay.orders.create({
       amount: amount * 100,
