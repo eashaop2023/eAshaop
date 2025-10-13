@@ -2,12 +2,15 @@ import React, { useEffect, useState } from "react";
 import { FiSearch, FiMic, FiX } from "react-icons/fi";
 import { FaStar } from "react-icons/fa";
 import Cardiology from "../../../assets/cardiologist/cardiology.png";
+import Category from "../../../assets/DBIcons/dental.svg"
 import Doctoricon from "../../../assets/doctoricon.svg";
-import profile from "../../../assets/cardiologist/profileone.png";
-import specialityimage from "../../../assets/cardiologist/life.png";
+// import profile from "../../../assets/cardiologist/profileone.png";
+// import specialityimage from "../../../assets/cardiologist/life.png";
 import arrowright from "../../../assets/cardiologist/arrowRight.png"
 import { Link } from "react-router-dom";
-import { useNavigate } from "react-router-dom";
+import { useNavigate,useParams } from "react-router-dom";
+import { API_BASE_URL } from "../../../../api-config";
+
 import Filter from '../../../assets/filter-icon.svg'
 import "../../../components/Doctor Specialist/cardiologist/MainContent.css"
 import Search from '../../../assets/confirmappointmenticons/search.svg'
@@ -15,22 +18,74 @@ import Mic from '../../../assets/cardiologist/microphone.svg'
 import video from '../../../assets/confirmappointmenticons/video.svg'
 import walk from '../../../assets/walking_icon.svg'
 import Star from '../../../assets/icons/star.png'
-const mockDoctors = Array(9).fill({
-  name: "Dr. Nithish Jagannatham",
-  speciality: "Cardiologist",
-  experience: "12 Years experience",
-  rating: "3.2 / 5",
-  fee: "500",
-  slot: "Today 12:40pm",
-  profile: profile,
-  specialityicon: specialityimage,
-});
+import { toast } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
 
-const MainContent = ({ selectedFilters, setSelectedFilters, clearAllFilters, onToggleSidebar }) => {
+// const mockDoctors = Array(9).fill({
+//   name: "Dr. Nithish Jagannatham",
+//   speciality: "Cardiologist",
+//   experience: "12 Years experience",
+//   rating: "3.2 / 5",
+//   fee: "500",
+//   slot: "Today 12:40pm",
+//   profile: profile,
+//   specialityicon: specialityimage,
+// });
+
+const MainContent = ({ selectedFilters, setSelectedFilters, clearAllFilters, onToggleSidebar,categorySlug }) => {
   const navigate = useNavigate();
-  const [selected, setSelected] = useState("video");
-  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+  const { uuid } = useParams();
+  const [selected, setSelected] = useState(sessionStorage.getItem("selectedConsultation") || "");
+  // const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [isMobileView, setIsMobileView] = useState(window.innerWidth <= 1439);
+  const [doctors, setDoctors] = useState([]);
+    const [loading, setLoading] = useState(true);
+    const [allDoctors, setAllDoctors] = useState([]);
+
+    useEffect(() => {
+      if (!uuid) return;
+    
+      async function fetchDoctors() {
+        setLoading(true);
+        try {
+          const url = `${API_BASE_URL}/api/categories/${uuid}/doctors`;
+          const res = await fetch(url);
+          if (!res.ok) throw new Error("Failed to fetch doctors");
+          const data = await res.json();
+          setAllDoctors(data.doctors || []);
+          setDoctors(data.doctors || []); // show all initially
+        } catch (err) {
+          console.error("Error fetching doctors:", err);
+          setAllDoctors([]);
+          setDoctors([]);
+        } finally {
+          setLoading(false);
+        }
+      }
+    
+      fetchDoctors();
+    }, [uuid]);
+    
+    
+    
+    // Client-side filter when selected toggle changes
+    useEffect(() => {
+      if (!selected) {
+        setDoctors(allDoctors);
+      } else {
+        let mode = "";
+        if (selected === "video") mode = "Video Consultation";
+        if (selected === "clinic") mode = "Clinic Visit";
+    
+        const filtered = allDoctors.filter(
+          (doc) => doc.consultationMode === mode || doc.consultationMode === "Both"
+        );
+        setDoctors(filtered);
+      }
+    }, [selected, allDoctors]);
+    
+    
+  
 
   useEffect(() => {
     function handleResize() {
@@ -46,6 +101,15 @@ const MainContent = ({ selectedFilters, setSelectedFilters, clearAllFilters, onT
       [category]: prev[category].filter((v) => v !== value),
     }));
   };
+
+  const handleSelect = (type) => {
+  const newValue = selected === type ? "" : type;
+  setSelected(newValue);
+  localStorage.setItem("selectedConsultationType", newValue);
+};
+
+    if (loading) return <p>Loading doctors...</p>;
+
 
   return (
     <div className="p-4 main-contents" style={{ flex: 1, }}>
@@ -64,12 +128,12 @@ const MainContent = ({ selectedFilters, setSelectedFilters, clearAllFilters, onT
       {/* Header */}
       <div className="d-flex justify-content-between align-items-center mb-4">
         <div className=" d-none  align-items-center gap-3 text">
-          <img src={Cardiology} alt="Cardiology Icon" width={32} height={32} />
+          <img src={Category} alt="Cardiology Icon" width={52} height={52} />
           <div>
-            <h2 className="mb-1">Dental</h2>
+<h2 className="mb-1">{categorySlug?.replace(/-/g, " ")}</h2>
             <p className="text-muted mb-0 d-flex" style={{fontSize:'1.12rem'}}>
               <img src={Doctoricon} height={18} width={18} className="me-1" alt="Doctor" />
-              Doctors 245
+              {doctors.length === 1 ? "Doctor" : "Doctors"} {doctors.length}
             </p>
           </div>
         </div>
@@ -204,7 +268,9 @@ const MainContent = ({ selectedFilters, setSelectedFilters, clearAllFilters, onT
 
 
       <div className="row">
-        {mockDoctors.map((doc, index) => (
+                        {doctors.length === 0 && <p>No doctors available for this consultation type.</p>}
+
+        {doctors.map((doc, index) => (
           <div key={index} className="col-md-4 col-sm-6 mb-4">
             <div className="card shadow-sm rounded-4 border-0 h-100">
               <div className="card-body px-4 py-4 d-flex flex-column justify-content-between h-100">
@@ -218,7 +284,7 @@ const MainContent = ({ selectedFilters, setSelectedFilters, clearAllFilters, onT
                         style={{ width: 40, height: 40 }}
                       >
                         <img
-                          src={doc.profile}
+                          src={doc.profileImage}
                           alt={doc.name}
                           style={{ width: "100%", height: "100%", objectFit: "cover" }}
                         />
@@ -248,11 +314,11 @@ const MainContent = ({ selectedFilters, setSelectedFilters, clearAllFilters, onT
                         className="d-flex speciality mb-3"
                       >
                         <img
-                          src={doc.specialityicon}
+                          src={Category}
                           className="me-1"
-                          alt="Speciality"
+                          alt="Speciality" style={{width:'15px',height:'15px'}}
                         />
-                        {doc.speciality} <span className="ms-1"> | {doc.experience}</span>
+                        {doc.speciality} <span className="ms-1"> | {doc.experience} years</span>
                       </div>
                     </div>
                   </>
@@ -278,7 +344,7 @@ const MainContent = ({ selectedFilters, setSelectedFilters, clearAllFilters, onT
                         style={{ width: 60, height: 60 }}
                       >
                         <img
-                          src={doc.profile}
+                          src={doc.profileImage}
                           alt={doc.name}
                           style={{ width: "100%", height: "100%", objectFit: "cover" }}
                         />
@@ -292,11 +358,11 @@ const MainContent = ({ selectedFilters, setSelectedFilters, clearAllFilters, onT
                           className="d-flex speciality"
                         >
                           <img
-                            src={doc.specialityicon}
+                            src={Category}
                             className="me-1"
-                            alt="Speciality"
+                            alt="Speciality" style={{width:'25px',height:'25px'}}
                           />
-                          {doc.speciality} <span className="ms-1"> | {doc.experience}</span>
+                          {doc.speciality} <span className="ms-1"> | {doc.experience} Years</span>
                         </div>
                       </div>
                     </div>
@@ -313,7 +379,7 @@ const MainContent = ({ selectedFilters, setSelectedFilters, clearAllFilters, onT
                 >
                   <div className="consultation-fee-box">
                     <div className="fw-bold" style={{ fontSize: "18px" }}>
-                      <span className="fw-light" style={{ fontSize: "16px" }}>₹</span><span className="fee">{doc.fee}</span>
+                      <span className="fw-light" style={{ fontSize: "16px" }}>₹</span><span className="fee">{doc.consultationFee}</span>
                       <span className=" ms-2 fw-normal" style={{ fontSize: "14px" }}>Consultation fee</span>
                     </div>
                   </div>
@@ -326,17 +392,33 @@ const MainContent = ({ selectedFilters, setSelectedFilters, clearAllFilters, onT
                   ></div>
                   <div className="text-start next-slot-box" style={{ fontSize: "14px" }}>
                     <div>Next slot</div>
-                    <div> {doc.slot}</div>
+                    <div>12:00</div>
                   </div>
                 </div>
 
-                <button
-                  className="btn w-100 rounded-pill"
-                  style={{ backgroundColor: "#00B2A9", color: "white", fontSize: '14px' }}
-                  onClick={() => navigate("/user/category/bookappointment",{ state: { doctorId: doc._id } })}
-                >
-                  Book a slot
-                </button>
+<button
+  className="btn w-100 rounded-pill"
+  style={{ backgroundColor: "#00B2A9", color: "white", fontSize: '14px' }}
+  onClick={() => {
+  if (!selected) {
+    toast.warning("Please select consultation type before booking a slot", {
+      position: "top-right",
+      autoClose: 3000,
+    });
+    return;
+  }
+    navigate("/user/category/bookappointment", {
+  state: { 
+    doctorId: doc._id,
+    consultationType: selected === "video" ? "Video" : "Clinic",
+    selectedType: selected // 🔥 keep the selected mode for when you come back
+  }
+});
+
+  }}
+>
+  Book a slot
+</button>
               </div>
             </div>
           </div>

@@ -11,6 +11,9 @@ import Call from "../../assets/confirmappointmenticons/call.svg";
 import Calender from "../../assets/calendar.svg";
 import Arrowleft from "../../assets/confirmappointmenticons/arrow-left.svg";
 import AddMemberForm from "../addmemberform/AddMemberForm";
+import { toast } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
+
 
 export default function AppointmentPage() {
   const [startDate, setStartDate] = useState(() => {
@@ -18,8 +21,11 @@ export default function AppointmentPage() {
     d.setHours(0, 0, 0, 0);
     return d;
   });
-  const [selectedSlot, setSelectedSlot] = useState(null);
+const [selectedSlot, setSelectedSlot] = useState(() => {
+  return sessionStorage.getItem("selectedSlot") || null;
+});
   const [availableSlots, setAvailableSlots] = useState([]);
+
   const [members, setMembers] = useState([]);
   const [selectedMemberIndex, setSelectedMemberIndex] = useState(0);
   const [showAddMember, setShowAddMember] = useState(false);
@@ -81,9 +87,13 @@ export default function AppointmentPage() {
 
         slots = slots.slice(0, 8); // Limit next 8 slots
         setAvailableSlots(slots);
-        setSelectedSlot(slots.length > 0 ? slots[0].start : null);
-      } catch (err) {
-        console.error("Error fetching slots:", err);
+setSelectedSlot(prev => {
+        if (!prev && slots.length > 0) {
+          return slots[0].start;
+        }
+        return prev; // keep previously saved one
+      });
+    } catch (err) {        console.error("Error fetching slots:", err);
         setAvailableSlots([]);
         setSelectedSlot(null);
       }
@@ -180,6 +190,13 @@ export default function AppointmentPage() {
     d.setDate(d.getDate() + i);
     return d;
   });
+
+
+  useEffect(() => {
+  if (selectedSlot) {
+    sessionStorage.setItem("selectedSlot", selectedSlot);
+  }
+}, [selectedSlot]);
 
   const mainUser = members.find(m => m.isUser);
   const selectedMember = members[selectedMemberIndex];
@@ -309,9 +326,14 @@ export default function AppointmentPage() {
 <Button
   style={{ backgroundColor: "#00A99D", borderColor: "#00A99D", borderRadius: 999, padding: "6px 16px", minWidth: 102 }}
   onClick={async () => {
-    if (!selectedMember) return alert("Please select a patient.");
-    if (!selectedSlot) return alert("Please select a time slot.");
-
+if (!selectedMember) {
+      toast.error("Please select a patient.");
+      return;
+    }
+    if (!selectedSlot) {
+      toast.error("Please select a time slot.");
+      return;
+    }
     try {
       // Check if slot is already booked
   //     const res = await axios.post("${API_BASE_URL}/api/doctors/check-slot", {
@@ -324,27 +346,35 @@ export default function AppointmentPage() {
   //       return alert("This slot is already reserved. Please select another slot.");
   //     }
 
+  const [slotHours, slotMinutes] = selectedSlot.split(":").map(Number);
+      const appointmentDateTime = new Date(startDate);
+      appointmentDateTime.setHours(slotHours, slotMinutes, 0, 0);
       // Navigate to confirm/payment page
-      navigate("/user/category/confirmappointment", {
-        state: { 
-          member: selectedMember, 
-          slot: selectedSlot, 
-          date: startDate, 
-          doctorId, 
-          amount: doctor?.consultationFee, 
-          patient: selectedMember, 
-          consultationType, 
-          doctor, 
-          mainUser 
-        }
-      });
+      const appointmentData = {
+        member: selectedMember,
+        slot: selectedSlot,
+        date: appointmentDateTime.toISOString(),
+        doctor,
+        amount: doctor?.consultationFee,
+        consultationType,
+        mainUser
+      };
+      localStorage.setItem("appointmentData", JSON.stringify(appointmentData));
+toast.success(`You have selected slot at ${selectedSlot} Redirecting...`, {
+  autoClose: 1000,
+  position: "top-center"
+});
+
+      // ✅ Navigate to confirm appointment page
+      setTimeout(() => navigate("/user/category/confirmappointment"), 1000,{state:appointmentData});
+
 
       // Optionally, remove slot locally so user can't click again
       setAvailableSlots(prev => prev.filter(s => s.start !== selectedSlot));
       setSelectedSlot(null);
     } catch (err) {
       console.error("Slot check error:", err);
-      alert("Failed to check slot availability. Please try again.");
+      toast.error("Failed to process appointment. Please try again.");
     }
   }}
 >

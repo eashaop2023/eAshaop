@@ -4,6 +4,8 @@ import { Container, Row, Col, Form, Button, Badge } from "react-bootstrap";
 import Boy from "../../assets/user.png";
 import styles from "../../pages/ProfilePage/Profile.module.css";
 import { API_BASE_URL } from "../../../api-config";
+import { toast } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
 
 function useIsMobileOrTablet() {
   const [isMobileOrTablet, setIsMobileOrTablet] = useState(window.innerWidth < 1024);
@@ -90,6 +92,33 @@ export default function UserDetailsPanel() {
   };
 
 const handleSave = async () => {
+
+    // ✅ Frontend validations
+  if (formData.address.trim().length < 3) {
+    toast.error("Address must be at least 3 characters.");
+    return;
+  }
+  if (!formData.gender) {
+    toast.error("Please select a gender.");
+    return;
+  }
+  if (formData.height && (formData.height < 20 || formData.height > 400)) {
+    toast.error("Height must be between 20 and 400 cm.");
+    return;
+  }
+  if (formData.weight && (formData.weight < 1 || formData.weight > 500)) {
+    toast.error("Weight must be between 1 and 500 kg.");
+    return;
+  }
+  if (formData.aadhaar_number && !/^\d{12}$/.test(formData.aadhaar_number)) {
+    toast.error("Aadhaar number must be 12 digits.");
+    return;
+  }
+  if (!formData.language_preferred) {
+    toast.error("Please select a preferred language.");
+    return;
+  }
+
   try {
     const storedUser = JSON.parse(localStorage.getItem("user"));
     const payload = {
@@ -110,12 +139,14 @@ const handleSave = async () => {
 
     const result = await response.json();
     if (response.ok) {
-      alert("Profile updated successfully!");
+      toast.success("Profile updated successfully!");
     } else {
-      alert(result.message || "Update failed");
+      toast.error(result.message || "Update failed");
     }
   } catch (error) {
     console.error("Update error:", error);
+    toast.error("Something went wrong while updating profile.");
+
   }
 };
 
@@ -413,6 +444,7 @@ const handleSave = async () => {
                   style={{ height: "48px" }}
                   ref={refs[6]}
                   onKeyDown={(e) => handleEnterKey(e, 6)}
+                  placeholder="in cms"
                 />
               </Col>
               <Col xs={6} md={4} className="mb-3">
@@ -424,6 +456,7 @@ const handleSave = async () => {
                   style={{ height: "48px" }}
                   ref={refs[7]}
                   onKeyDown={(e) => handleEnterKey(e, 7)}
+                  placeholder="in kgs"
                 />
               </Col>
             </Row>

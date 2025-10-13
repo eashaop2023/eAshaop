@@ -206,7 +206,7 @@ navigate(item.path);
           )
         ) : (
           <img
-            src={isOpen ? open : close}
+            src={isOpen ? close : open}
             alt="Toggle Sidebar"
             style={{ width: "40px", height: "40px" }}
           />

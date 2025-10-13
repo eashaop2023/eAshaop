@@ -18,17 +18,17 @@ import { API_BASE_URL } from "../../../api-config";
 
 
 const staticCategories = [
-  { name: "General healthcare", icon: generalHealthCare, path: "general-healthcare" },
-  { name: "Cardiologists", icon: cardiologist, path: "cardiologist" },
-  { name: "Orthopedic", icon: orthopedic, path: "orthopedic" },
-  { name: "Neurologist", icon: neurologist, path: "neurologist" },
-  { name: "Ophthalmology", icon: ophthalmology, path: "ophthalmology" },
-  { name: "ENT", icon: ent, path: "ent" },
-  { name: "Dental", icon: dental, path: "dental" },
-  { name: "Women health", icon: womenHealth, path: "women-health" },
+  { name: "General healthcare", icon: generalHealthCare, path: "general-healthcare",uuid:"UqkGTNQTOD" },
+  { name: "Cardiologists", icon: cardiologist, path: "cardiologist",uuid:"bD1KuA_6pr" },
+  { name: "Orthopedic", icon: orthopedic, path: "orthopedic",uuid:"oybWOH7Ok8" },
+  { name: "Neurologist", icon: neurologist, path: "neurologist",uuid:"r1ArfRKaU_" },
+  { name: "Ophthalmology", icon: ophthalmology, path: "ophthalmology",uuid:"whHEP4Ba-m" },
+  { name: "ENT", icon: ent, path: "ent",uuid:"4A31RiqS_M" },
+  { name: "Dental", icon: dental, path: "dental",uuid:"u3bp-C0G4f" },
+  { name: "Women health", icon: womenHealth, path: "women-health",uuid:"EGGSWzg5RE" },
   // { name: "Child health", icon: childHealth, path: "child-health" },
-  { name: "Skin & Beauty", icon: skin, path: "skin-&-beauty" },
-  { name: "Mental health", icon: mentalHealth, path: "mental-health" },
+  { name: "Skin & Beauty", icon: skin, path: "skin-&-beauty",uuid:"_jCoVKpbHK" },
+  { name: "Mental health", icon: mentalHealth, path: "mental-health",uuid:"QWonnSUTJw" },
 ];
 
 const Dashboard = () => {
@@ -44,14 +44,13 @@ const Dashboard = () => {
 
         // 🔹 Merge backend data into static categories
         const merged = staticCategories.map((cat) => {
-          const backendCat = backendCategories.find(
-            (b) => b.name.toLowerCase() === cat.name.toLowerCase()
-          );
+          const backendCat = backendCategories.find((b) => b.uuid === cat.uuid);
+
           return {
             ...cat,
             uuid: backendCat?.uuid || null,
             doctorCount: backendCat?.doctorCount || 0,
-            message: backendCat?.message || null,
+            // message: backendCat?.message || null,
           };
         });
 
@@ -81,13 +80,17 @@ const Dashboard = () => {
   //   navigate(`/user/category/${path}`);
   // };
 
-  const handleCategoryClick = (uuid, name) => {
-    if (!uuid) {
-      toast.info(`No doctors available for ${name}`);
-      return;
-    }
-    navigate(`/user/category/${uuid}`, { state: { categoryName: name } });
-  };
+  const handleCategoryClick = (uuid, name, doctorCount) => {
+  // Show toast if no doctors
+  if (!uuid || doctorCount === 0) {
+    toast.info(`No doctors available for ${name}`);
+    return;
+  }
+
+  // Navigate to the category page by UUID
+  navigate(`/user/category/${uuid}`, { state: { categoryName: name } });
+};
+
 
   return (
     <div className={styles.mainContainer}>
@@ -98,7 +101,7 @@ const Dashboard = () => {
           <div
             key={index}
             className={`${styles.colContainer} col-12 col-sm-6 col-md-4 mb-3`}
-            onClick={() => handleCategoryClick(cat.uuid,cat.path)}
+onClick={() => handleCategoryClick(cat.uuid, cat.name, cat.doctorCount)}
           >
             <div className={styles.cardBox}>
               <div className="d-flex align-items-center">

@@ -1,10 +1,13 @@
 import React, { useEffect, useState } from "react";
-import { FiSearch, FiMic, FiX } from "react-icons/fi";
-import { FaStar } from "react-icons/fa";
+// import { FiSearch, FiMic, FiX } from "react-icons/fi";
+// import { FaStar } from "react-icons/fa";
 import { useParams } from "react-router-dom";
+import { API_BASE_URL } from "../../../../api-config";
+
 import Cardiology from "../../../assets/cardiologist/cardiology.png";
+import Category from "../../../assets/DBIcons/orthopedic.svg";
 import Doctoricon from "../../../assets/doctoricon.svg";
-import profile from "../../../assets/cardiologist/profileone.png";
+// import profile from "../../../assets/cardiologist/profileone.png";
 import specialityImage from "../../../assets/cardiologist/life.png";
 import arrowright from "../../../assets/cardiologist/arrowRight.png"
 import { Link } from "react-router-dom";
@@ -32,31 +35,29 @@ const MainContent = ({ selectedFilters, setSelectedFilters, clearAllFilters, onT
   const navigate = useNavigate();
    const { uuid } = useParams();
   
-  const [selected, setSelected] = useState("");
-  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+  const [selected, setSelected] = useState(sessionStorage.getItem("selectedConsultation") || "");
+  // const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [isMobileView, setIsMobileView] = useState(window.innerWidth <= 1439);
   const [doctors, setDoctors] = useState([]);
-      const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(true);
+  const [allDoctors, setAllDoctors] = useState([]);
+      
     
 useEffect(() => {
-  if(!uuid) return;
+  if (!uuid) return;
 
   async function fetchDoctors() {
     setLoading(true);
     try {
-      let url = `${API_BASE_URL}/api/categories/${uuid}/doctors`;
-      if (selected) {
-        const mode = selected === "video" ? "Video" : "Clinic";
-        url += `?consultationMode=${mode}`;
-      }
-
+      const url = `${API_BASE_URL}/api/categories/${uuid}/doctors`;
       const res = await fetch(url);
       if (!res.ok) throw new Error("Failed to fetch doctors");
-
       const data = await res.json();
-      setDoctors(data.doctors || []);
+      setAllDoctors(data.doctors || []);
+      setDoctors(data.doctors || []); // show all initially
     } catch (err) {
       console.error("Error fetching doctors:", err);
+      setAllDoctors([]);
       setDoctors([]);
     } finally {
       setLoading(false);
@@ -64,11 +65,25 @@ useEffect(() => {
   }
 
   fetchDoctors();
-}, [uuid, selected]);
+}, [uuid]);
 
-// And just display doctors as is:
-const filteredDoctors = doctors; // no extra filtering needed
 
+
+// Client-side filter when selected toggle changes
+useEffect(() => {
+  if (!selected) {
+    setDoctors(allDoctors);
+  } else {
+    let mode = "";
+    if (selected === "video") mode = "Video Consultation";
+    if (selected === "clinic") mode = "Clinic Visit";
+
+    const filtered = allDoctors.filter(
+      (doc) => doc.consultationMode === mode || doc.consultationMode === "Both"
+    );
+    setDoctors(filtered);
+  }
+}, [selected, allDoctors]);
 
   useEffect(() => {
     function handleResize() {
@@ -84,6 +99,14 @@ const filteredDoctors = doctors; // no extra filtering needed
       [category]: prev[category].filter((v) => v !== value),
     }));
   };
+    // if (loading) return <p>Loading doctors...</p>;
+  const handleSelect = (type) => {
+  const newValue = selected === type ? "" : type;
+  setSelected(newValue);
+  localStorage.setItem("selectedConsultationType", newValue);
+};
+
+
     if (loading) return <p>Loading doctors...</p>;
 
 
@@ -104,7 +127,7 @@ const filteredDoctors = doctors; // no extra filtering needed
       {/* Header */}
       <div className="d-flex justify-content-between align-items-center mb-4">
         <div className=" d-none  align-items-center gap-3 text">
-          <img src={Cardiology} alt="Cardiology Icon" width={32} height={32} />
+          <img src={Category} alt="Orthopedic Icon" width={52} height={52} />
           <div>
 <h2 className="mb-1">{categorySlug?.replace(/-/g, " ")}</h2>
             <p className="text-muted mb-0 d-flex" style={{fontSize:'1.12rem'}}>
@@ -183,7 +206,7 @@ const filteredDoctors = doctors; // no extra filtering needed
               color: selected === "video" ? "white" : "#8E8E8E",
             }}
             className="btn fw-semibold px-4 py-2 rounded-pill d-flex"
-  onClick={() => setSelected(selected === "video" ? "" : "video")} // toggle off
+  onClick={() => handleSelect("video")}
           >
             <span className="me-2"><img src={video} height={24} width={24} className="toggle-images"/></span>
             Video Consultant
@@ -194,7 +217,7 @@ const filteredDoctors = doctors; // no extra filtering needed
               color: selected === "clinic" ? "white" : "#8E8E8E",
             }}
             className="btn1 fw-semibold  rounded-pill d-flex"
-  onClick={() => setSelected(selected === "clinic" ? "" : "clinic")} // toggle off
+  onClick={() => handleSelect("clinic")}
           >
             <span className="me-1 ps-4"><img src={walk} height={14} width={24} className="toggle-images"/></span>
             Clinic Visit
@@ -206,7 +229,7 @@ const filteredDoctors = doctors; // no extra filtering needed
       {/* Selected Filters */}
 <div className="d-flex flex-wrap align-items-center mb-4">
   {/* Show Clear Filters button only if total selected filters >= 2 */}
-  {Object.values(selectedFilters).flat().length >= 2 && (
+{Object.values(selectedFilters).flat().length >= 2 && (
     <span
       className="badge rounded-pill text-bg-light me-2 mb-2 d-inline-flex align-items-center px-3 py-2"
       style={{
@@ -236,17 +259,16 @@ const filteredDoctors = doctors; // no extra filtering needed
         />
       </span>
     ))
-  )}
-</div>
+  )}</div>
 
 
       {/* Doctor Cards */}
 
 
       <div className="row">
-                        {filteredDoctors.length === 0 && <p>No doctors available for this consultation type.</p>}
+                        {doctors.length === 0 && <p>No doctors available for this consultation type.</p>}
 
-        {filteredDoctors.map((doc, index) => (
+        {doctors.map((doc, index) => (
           <div key={index} className="col-md-4 col-sm-6 mb-4">
             <div className="card shadow-sm rounded-4 border-0 h-100">
               <div className="card-body px-4 py-4 d-flex flex-column justify-content-between h-100">
@@ -276,7 +298,7 @@ const filteredDoctors = doctors; // no extra filtering needed
                           style={{ color: "#FFC300", marginRight: 6 }}
                           alt="star"
                         />
-                        {doc.rating} 4.5
+                        {doc.averageRating} 
                       </div>
                     </div>
 
@@ -290,9 +312,9 @@ const filteredDoctors = doctors; // no extra filtering needed
                         className="d-flex speciality mb-3"
                       >
                         <img
-                          src={specialityImage}
+                          src={Category}
                           className="me-1"
-                          alt="Speciality"
+                          alt="Speciality" style={{width:'15px',height:'15px'}}
                         />
                         {doc.speciality} <span className="ms-1"> | {doc.experience} Years</span>
                       </div>
@@ -310,7 +332,7 @@ const filteredDoctors = doctors; // no extra filtering needed
                           style={{ color: "#FFC300" }}
                           alt="star"
                         />{" "}
-                        {doc.rating} 4.5
+                        {doc.averageRating} 
                       </div>
                     </div>
                     {/* Desktop: profile + name + speciality row */}
@@ -384,7 +406,9 @@ onClick={() => {
     navigate("/user/category/bookappointment", {
       state: { 
         doctorId: doc._id,
-        consultationType: selected === "video" ? "Video" : "Clinic"
+        consultationType: selected === "video" ? "Video" : "Clinic",
+        selectedType: selected // 🔥 keep the selected mode for when you come back
+
       }
     });
   }}                >
