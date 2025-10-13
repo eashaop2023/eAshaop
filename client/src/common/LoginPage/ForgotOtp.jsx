@@ -1,15 +1,19 @@
-import React, { useState } from "react";
+import React, { useState,useEffect } from "react";
 import "bootstrap/dist/css/bootstrap.min.css";
 // import logo from "../.././assets/eAshalogo.png";
 import logo from "../.././assets/eAshalogo.png";
 import { useNavigate, useLocation } from "react-router-dom";
 import { toast } from "react-toastify";
 import { API_BASE_URL } from "../../api-config";
+import LoaderOverlay from "../../commonComponents/FadeLoader";
 
 const ForgotOtp = () => {
   const [otp, setOtp] = useState(["", "", "", ""]);
   const [error, setError] = useState(false);
   const [loading, setLoading] = useState(false);
+    const [attempts, setAttempts] = useState(0); // Track OTP attempts
+  const [resendCooldown, setResendCooldown] = useState(0); // Seconds before resending
+
   const navigate = useNavigate();
   const location = useLocation();
   const doctorId = location.state?.doctorId || null;  // ✅ capture doctorId
@@ -17,6 +21,13 @@ const ForgotOtp = () => {
   const identifier = location.state?.identifier || ""; 
   const role = location.state?.role || "user"; // 'doctor' or 'user'
 
+  useEffect(() => {
+    let timer;
+    if (resendCooldown > 0) {
+      timer = setTimeout(() => setResendCooldown(resendCooldown - 1), 1000);
+    }
+    return () => clearTimeout(timer);
+  }, [resendCooldown]);
 
   const handleChange = (e, index) => {
     const value = e.target.value;
@@ -50,8 +61,15 @@ const verifyOTP = async () => {
   const enteredOtp = otp.join("");
   if (enteredOtp.length < 4) {
     setError(true);
+        toast.error("Please enter the 4-digit OTP.", { position: "top-center" });
+
     return;
   }
+
+  if (attempts >= 3) {
+      toast.error("Maximum attempts reached. Please resend OTP.", { position: "top-center" });
+      return;
+    }
 
   setLoading(true);
   try {
@@ -72,7 +90,13 @@ headers: {
       });
 
     const data = await res.json();
-    if (!res.ok) throw new Error(data.message || "Invalid OTP");
+if (!res.ok) {
+      // increment attempts first
+      setAttempts(prev => prev + 1);
+      setError(true);
+      setOtp(["", "", "", ""]); // clear input fields
+      throw new Error(data.message || "Invalid OTP");
+    }
 
     setError(false);
 
@@ -100,6 +124,11 @@ headers: {
 
 const resendOTP = async () => {
 
+  if (resendCooldown > 0) {
+      toast.info(`Please wait ${resendCooldown} seconds before resending OTP.`, { position: "top-center" });
+      return;
+    }
+
   setLoading(true);
   try {
     const verifyBy = identifier.includes("@") ? "email" : "mobile";
@@ -119,9 +148,11 @@ const resendOTP = async () => {
     const data = await res.json();
     if (!res.ok) throw new Error(data.message || "Failed to resend OTP");
 
-    toast.success(`OTP resent to your ${verifyBy}`);
-  } catch (err) {
-    toast.error(err.message);
+toast.success(`OTP resent to your ${verifyBy}.`, { position: "top-center" });
+      setAttempts(0); // reset attempts after resend
+      setResendCooldown(60); // 60s cooldown  } catch (err) {
+      } catch (err) {
+      toast.error(err.message, { position: "top-center" });
   } finally {
     setLoading(false);
   }};
@@ -133,6 +164,7 @@ const resendOTP = async () => {
 
   return (
     <>
+    <LoaderOverlay loading={loading} /> 
     <style>{`
         .logo-wrapper {
           position: absolute;
@@ -282,12 +314,12 @@ const resendOTP = async () => {
       >
         <p>Didn't receive the code?</p>
         <button
-          className="btn btn-link p-0"
-          style={{ fontWeight: 400, fontSize: "1.125rem", color: "#00A99D" }}
+          className="btn"
+          style={{ fontWeight: 400, fontSize: "1.125rem",backgroundColor:"#00A99D",padding:"8px 16px",borderRadius:"20px",border:"none",color:"#fff" }}
           onClick={resendOTP}
-          disabled={loading}
+          disabled={loading || resendCooldown > 0}
         >
-          {loading ? "Resending..." : "Resend Code"}
+          {resendCooldown > 0 ? `Resend in ${resendCooldown}s` : "Resend Code"}
         </button>
       </div>
     </div>

@@ -1,4 +1,5 @@
 import React from "react";
+import { useState } from "react";
 import { Formik, Form, Field, ErrorMessage } from "formik";
 import * as Yup from "yup";
 import { useNavigate } from "react-router-dom";
@@ -7,6 +8,7 @@ import { useLocation } from "react-router-dom";
 import { toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import { API_BASE_URL } from "../../api-config";
+import LoaderOverlay from "../../commonComponents/FadeLoader";
 
 
 const Forgotpassword = () => {
@@ -14,6 +16,8 @@ const Forgotpassword = () => {
   const params = new URLSearchParams(location.search);
   const role = params.get("role") || "user"; // Default to 'user' if not specified
   const navigate = useNavigate();
+    const [loading, setLoading] = useState(false); // ✅ Loader state
+
 
   // Validation schema for phone or email in one field
   const validationSchema = Yup.object({
@@ -40,6 +44,7 @@ const Forgotpassword = () => {
 
   return (
     <div className="position-relative min-vh-100 d-flex justify-content-center align-items-center bg-white px-3">
+      <LoaderOverlay loading={loading} />
       <style>{`
         .logo-img {
           height: 4.563rem;
@@ -95,43 +100,83 @@ const Forgotpassword = () => {
           validationSchema={validationSchema}
 onSubmit={async (values, { setSubmitting }) => {
   try {
-    const verifyBy = values.identifier.includes("@") ? "email" : "phone";
+    const input = values.identifier.trim();
 
-    const payload = { verifyBy, value: values.identifier };
+    // 1️⃣ Check if input is empty
+    if (!input) {
+      toast.error("Please enter a phone number or email", { position: "top-center" });
+      setSubmitting(false);
+      return;
+    }
 
+    // 2️⃣ Determine verifyBy and validate input format
+    let verifyBy;
+    if (input.includes("@")) {
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      if (!emailRegex.test(input)) {
+        toast.error("Invalid email format", { position: "top-center" });
+        setSubmitting(false);
+        return;
+      }
+      verifyBy = "email";
+    } else {
+      // Assume phone
+      const phoneRegex = /^\+91\d{10}$/;
+      if (!phoneRegex.test(input)) {
+        toast.error("Invalid phone number. Include country code +91", { position: "top-center" });
+        setSubmitting(false);
+        return;
+      }
+      verifyBy = "phone";
+    }
+
+    // 3️⃣ Prepare payload
+    const payload = { verifyBy, value: input };
+    setLoading(true); // Show loader
+    console.log("Sending payload:", payload);
+
+    // 4️⃣ Call backend API
     const res = await fetch(apiBase, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(payload),
     });
 
-    const data = await res.json(); // Parse JSON first
+    const data = await res.json();
+    console.log("Response from backend:", res.status, data);
 
-    // STOP navigation if user/doctor not found
-if (!res.ok) {
-  toast.error(data.message || "Failed to send OTP");
-} else {
-  navigate("/forgot-otp", {
-    state: {
-      from: "forgot-password",
-      identifier: values.identifier,
-      userId: data.userId || null,
-      doctorId: data.doctorId || null,
-      role,
+    // 5️⃣ Handle backend errors
+    if (!res.ok) {
+      if (data.message?.toLowerCase().includes("not found")) {
+        toast.error("Invalid email or phone number", { position: "top-center" });
+      } else {
+        toast.error(data.message || "Failed to send OTP", { position: "top-center" });
+      }
+      setSubmitting(false);
+      return;
+    }
+    toast.success("OTP sent successfully!", { position: "top-center", autoClose: 1500 });
 
-    },
-    
-  });
-  console.log("Response status:", res.status, "ok:", res.ok, "data:", data);
-
-}}
- catch (error) {
-    toast.error(error.message);
+setTimeout(() => {
+    // 6️⃣ Suess → Navigate to OTP page
+    navigate("/forgot-otp", {
+      state: {
+        from: "forgot-password",
+        identifier: input,
+        userId: data.userId || null,
+        doctorId: data.doctorId || null,
+        role,
+      },
+    });
+}, 1000); // Navigate after 2 seconds
+  } catch (error) {
+    console.error("Forgot Password Error:", error);
+    toast.error("Something went wrong. Please try again.", { position: "top-center" });
   } finally {
     setSubmitting(false);
+    setLoading(false);
   }
 }}
-
         >
           {({ setFieldValue }) => (
             <Form autoComplete="off">

@@ -5,8 +5,13 @@ import { Formik, Form, Field, ErrorMessage } from "formik";
 import * as Yup from "yup";
 import { FaEye, FaEyeSlash } from "react-icons/fa";
 import { API_BASE_URL } from "../../api-config";
-// import schema from '../commonComponents/LoginValidation';
 
+import { toast } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
+import LoaderOverlay from "../../commonComponents/FadeLoader";
+
+
+// import schema from '../commonComponents/LoginValidation';
 
 const SignUpSchema = Yup.object().shape({
   fullName: Yup.string()
@@ -23,9 +28,24 @@ const SignUpSchema = Yup.object().shape({
   email: Yup.string()
     .email("Invalid email address")
     .required("Email is required"),
-  dob: Yup.date()
-  .max(new Date(), "Date of birth cannot be in the future")
-  .required("Date of birth is required"),
+dob: Yup.string()
+  .required("Date of birth is required")
+  .test("valid-format", "Date must be in YYYY-MM-DD format", (value) => {
+    if (!value) return false;
+    // Matches 4-digit year, 2-digit month, 2-digit day
+    return /^\d{4}-\d{2}-\d{2}$/.test(value);
+  })
+  .test("valid-year", "Year must be 4 digits and ≤ 9999", (value) => {
+    if (!value) return false;
+    const year = parseInt(value.split("-")[0], 10);
+    return year >= 1000 && year <= 9999;
+  })
+  .test("not-future", "Date of birth cannot be in the future", (value) => {
+    if (!value) return false;
+    return new Date(value) <= new Date();
+  }),
+
+
   gender: Yup.string().required("Gender is required"),
   password: Yup.string()
     .required("Password is required")
@@ -44,6 +64,8 @@ function SignUp() {
   const navigate = useNavigate();
   const [showPassword, setShowPassword] = React.useState(true);
   const [showP, setShowP] = React.useState(true);
+  const [loading, setLoading] = React.useState(false);
+
 
   return (
     <>
@@ -102,7 +124,7 @@ function SignUp() {
         /* Fix password toggle button alignment */
         .password-toggle {
           position: absolute;
-          top: 70%;
+          top: 50%;
           right: 15px;
           transform: translateY(-50%);
           border: none;
@@ -112,6 +134,8 @@ function SignUp() {
         }
         `}
       </style>
+
+      <LoaderOverlay loading={loading} />
 
       <div className="container-fluid min-vh-100 d-flex align-items-center bg-white signup-wrapper">
         <div
@@ -127,7 +151,7 @@ function SignUp() {
                   phone: "+91",
                   email: "",
                   dob: "",
-                  gender: "",
+                  gender: "Male",
                   password: "",
                   confirmPassword: "",
                   acceptTerms: false,
@@ -141,7 +165,8 @@ function SignUp() {
                 // }}
 
 
-                onSubmit={async (values, { setSubmitting, setErrors }) => {
+onSubmit={async (values, { setSubmitting, setErrors }) => {
+  setLoading(true)
   try {
     const payload = {
       full_name: values.fullName,
@@ -160,19 +185,37 @@ function SignUp() {
     });
 
     const data = await res.json();
-    if (!res.ok) throw new Error(data.message || "Registration failed");
+if (!res.ok) {
+      if (data.message?.includes("already registered")) {
+        toast.info(data.message, {
+          position: "top-center",
+          autoClose: 3000,
+        });
+        // Optional: redirect user to login
+        setTimeout(() => navigate("/login"), 2000);
+      } else {
+        toast.error(data.message || "Registration failed", {
+          position: "top-center",
+          autoClose: 3000,
+        });
+      }
 
-    // ✅ Navigate to OTP page with identifier
-    navigate("/otp-verification", {
-      state: { 
-        from: "signup",
-        verifyByValue: values.email || values.phone,
-      },
+      return;
+    }
+    toast.success("OTP sent successfully!");
+
+    setTimeout(() => {
+      navigate("/otp-verification", {
+        state: { from: "signup", verifyByValue: values.email || values.phone },
+      });
+    }, 1500);}
+       catch (err) {
+    toast.error(err.message || "Something went wrong", {
+      position: "top-center",
+      autoClose: 3000,
     });
-  } catch (err) {
-    console.error(err);
-    setErrors({ api: err.message });
   } finally {
+     setLoading(false);
     setSubmitting(false);
   }
 }}
@@ -244,11 +287,14 @@ function SignUp() {
                     <div className="row mb-2">
                       <div className="col">
                         <label className="form-label">Date of birth</label>
-                        <Field
-                          type="date"
-                          name="dob"
-                          className="form-control rounded-pill"
-                        />
+<Field
+    type="date"
+    name="dob"
+    className="form-control rounded-pill"
+    max={new Date().toISOString().split("T")[0]} // prevent future dates
+  />
+
+
                         <ErrorMessage
                           name="dob"
                           component="div"
@@ -262,7 +308,6 @@ function SignUp() {
                           name="gender"
                           className="form-select rounded-pill"
                         >
-                          <option value="">Select</option>
                           <option value="Male">Male</option>
                           <option value="Female">Female</option>
                           <option value="Other">Other</option>
@@ -276,31 +321,39 @@ function SignUp() {
                     </div>
 
                     {/* Password */}
-                    <div className="mb-2 position-relative">
-                      <label className="form-label">Password</label>
-                      <Field
-                        type={showPassword ? "password" : "text"}
-                        name="password"
-                        className="form-control rounded-pill"
-                        placeholder="Enter password"
-                      />
-                      <button
-                        type="button"
-                        onClick={() => setShowPassword(!showPassword)}
-                        className="password-toggle"
-                      >
-                        {showPassword ? <FaEyeSlash /> : <FaEye />}
-                      </button>
-                      <ErrorMessage
-                        name="password"
-                        component="div"
-                        className="text-danger small"
-                      />
-                    </div>
+{/* Password */}
+<div className="mb-2">
+  <label className="form-label">Password</label>
+  
+  {/* wrapper only for input + toggle */}
+  <div className="position-relative">
+    <Field
+      type={showPassword ? "password" : "text"}
+      name="password"
+      className="form-control rounded-pill"
+      placeholder="Enter password"
+    />
+    <button
+      type="button"
+      onClick={() => setShowPassword(!showPassword)}
+      className="password-toggle"
+    >
+      {showPassword ? <FaEyeSlash /> : <FaEye />}
+    </button>
+  </div>
+
+  {/* Error goes outside wrapper */}
+  <ErrorMessage
+    name="password"
+    component="div"
+    className="text-danger small"
+  />
+</div>
 
                     {/* Confirm Password */}
-                    <div className="mb-2 position-relative">
+                    <div className="mb-2 ">
                       <label className="form-label">Re-enter Password</label>
+                      <div className="position-relative">
                       <Field
                         type={showP ? "password" : "text"}
                         name="confirmPassword"
@@ -314,6 +367,7 @@ function SignUp() {
                       >
                         {showP ? <FaEyeSlash /> : <FaEye />}
                       </button>
+                      </div>
                       <ErrorMessage
                         name="confirmPassword"
                         component="div"

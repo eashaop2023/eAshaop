@@ -111,6 +111,8 @@ onSubmit={async (values, { setSubmitting }) => {
 if (!res.ok) {
   toast.error(data.message || "Failed to send OTP");
 } else {
+    toast.success("OTP sent successfully!", { position: "top-center", autoClose: 2000 });
+ setTimeout(()=>{
   navigate("/forgot-otp", {
     state: {
       from: "forgot-password",
@@ -122,6 +124,9 @@ if (!res.ok) {
     },
     
   });
+}, 2000); // Navigate after 2 seconds
+
+
   console.log("Response status:", res.status, "ok:", res.ok, "data:", data);
 
 }}
