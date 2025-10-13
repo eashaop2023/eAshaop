@@ -2,15 +2,20 @@
 // import axios from "axios";
 // import { API_BASE_URL } from "../../../api-config";
 
+// const PAGE_SIZE = 10; // 10 records per page
+
 // const Appointments = () => {
 //   const [upcomingAppointments, setUpcomingAppointments] = useState([]);
 //   const [pastAppointments, setPastAppointments] = useState([]);
 //   const [loading, setLoading] = useState(true);
 //   const [searchTerm, setSearchTerm] = useState("");
-//   const [filterDate, setFilterDate] = useState("");  // <-- New state for date filter
-//   const [cancellingIds, setCancellingIds] = useState([]); // Track cancelling states
-// //   const doctorId = "68c7dd67f82963547a55fc95"; // Replace with localStorage.getItem("doctorId") if needed
-//   const doctorId=localStorage.getItem("doctorId");
+//   const [filterDate, setFilterDate] = useState("");
+//   const [cancellingIds, setCancellingIds] = useState([]);
+//   const [upcomingPage, setUpcomingPage] = useState(1);
+//   const [pastPage, setPastPage] = useState(1);
+
+//   const doctorId = localStorage.getItem("doctorId");
+
 //   useEffect(() => {
 //     const fetchAppointments = async () => {
 //       try {
@@ -28,19 +33,17 @@
 //     };
 
 //     fetchAppointments();
-//   }, []);
+//   }, [doctorId]);
 
-//   // Cancel appointment handler
 //   const handleCancel = async (appointmentId) => {
 //     try {
 //       setCancellingIds((prev) => [...prev, appointmentId]);
-//     console.log("Cancelling appointment ID:", appointmentId);
+//       console.log("Cancelling appointment ID:", appointmentId);
 //       const res = await axios.patch(
 //         `${API_BASE_URL}/api/appointments/${appointmentId}/cancel`
 //       );
 //       console.log("Cancel response:", res.data);
 
-//       // Update appointment status locally
 //       setUpcomingAppointments((prev) =>
 //         prev.map((appt) =>
 //           appt._id === appointmentId ? { ...appt, status: "cancelled" } : appt
@@ -54,25 +57,27 @@
 //     }
 //   };
 
-//   // Filter appointments based on search term and date
 //   const filterData = (appointments) =>
 //     appointments.filter((appointment) => {
 //       const user = appointment.userId || {};
 
-//       // Match search term (case-insensitive)
 //       const matchesSearch =
 //         user.full_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
 //         user.email?.toLowerCase().includes(searchTerm.toLowerCase()) ||
 //         user.phone_number?.toLowerCase().includes(searchTerm.toLowerCase()) ||
 //         appointment._id?.toLowerCase().includes(searchTerm.toLowerCase());
 
-//       // Match date if filterDate is set, otherwise true
 //       const matchesDate = filterDate ? appointment.date === filterDate : true;
 
 //       return matchesSearch && matchesDate;
 //     });
 
-//   // Render table with optional Cancel button column for upcoming appointments
+//   // Paginate data slice
+//   const paginateData = (data, page) => {
+//     const startIndex = (page - 1) * PAGE_SIZE;
+//     return data.slice(startIndex, startIndex + PAGE_SIZE);
+//   };
+
 //   const renderTable = (appointments, showCancel = false) => (
 //     <table className="appointments-table">
 //       <thead>
@@ -93,7 +98,7 @@
 //             const user = appt.userId || {};
 //             const isCancelling = cancellingIds.includes(appt._id);
 //             return (
-//               <tr key={index}>
+//               <tr key={appt._id || index}>
 //                 <td>{user.full_name || "N/A"}</td>
 //                 {/* <td>{user.email || "N/A"}</td> */}
 //                 <td>{user.phone_number || "N/A"}</td>
@@ -143,8 +148,61 @@
 //     </table>
 //   );
 
+//   // Filtered datasets
 //   const filteredUpcoming = filterData(upcomingAppointments);
 //   const filteredPast = filterData(pastAppointments);
+
+//   // Paginated slices
+//   const paginatedUpcoming = paginateData(filteredUpcoming, upcomingPage);
+//   const paginatedPast = paginateData(filteredPast, pastPage);
+
+//   // Pagination controls
+//   const renderPagination = (currentPage, setPage, totalItems) => {
+//     const totalPages = Math.ceil(totalItems / PAGE_SIZE);
+//     return (
+//       <div style={{ marginTop: "10px", display: "flex", gap: 10, justifyContent: "center" }}>
+//         <button
+//           onClick={() => setPage(currentPage - 1)}
+//           disabled={currentPage === 1}
+//           style={{
+//             padding: "6px 12px",
+//             backgroundColor: currentPage === 1 ? "#ccc" : "#007bff",
+//             color: "white",
+//             border: "none",
+//             borderRadius: "4px",
+//             cursor: currentPage === 1 ? "not-allowed" : "pointer",
+//           }}
+//         >
+//           Previous
+//         </button>
+//         <span style={{ alignSelf: "center" }}>
+//           Page {currentPage} of {totalPages || 1}
+//         </span>
+//         <button
+//           onClick={() => setPage(currentPage + 1)}
+//           disabled={currentPage === totalPages || totalPages === 0}
+//           style={{
+//             padding: "6px 12px",
+//             backgroundColor:
+//               currentPage === totalPages || totalPages === 0 ? "#ccc" : "#007bff",
+//             color: "white",
+//             border: "none",
+//             borderRadius: "4px",
+//             cursor:
+//               currentPage === totalPages || totalPages === 0 ? "not-allowed" : "pointer",
+//           }}
+//         >
+//           Next
+//         </button>
+//       </div>
+//     );
+//   };
+
+//   // Reset pagination if filters change
+//   useEffect(() => {
+//     setUpcomingPage(1);
+//     setPastPage(1);
+//   }, [searchTerm, filterDate]);
 
 //   return (
 //     <>
@@ -256,38 +314,37 @@
 
 //       <div className="appointments-container">
 //         <h3 className="text-gray">Appointments</h3>
-// <div className="search-container">
-//   <input
-//     type="text"
-//     placeholder="Search by name, email or phone"
-//     value={searchTerm}
-//     onChange={(e) => setSearchTerm(e.target.value)}
-//     className="search-input"
-//   />
-//   <input
-//     type="date"
-//     value={filterDate}
-//     onChange={(e) => setFilterDate(e.target.value)}
-//     className="search-input"
-//   />
-//   {filterDate && (
-//     <button
-//       onClick={() => setFilterDate("")}
-//       style={{
-//         padding: "6px 12px",
-//         backgroundColor: "#dc3545",
-//         color: "white",
-//         border: "none",
-//         borderRadius: "4px",
-//         cursor: "pointer",
-//       }}
-//       title="Clear Date Filter"
-//     >
-//       Clear
-//     </button>
-//   )}
-// </div>
-
+//         <div className="search-container">
+//           <input
+//             type="text"
+//             placeholder="Search by name, email or phone"
+//             value={searchTerm}
+//             onChange={(e) => setSearchTerm(e.target.value)}
+//             className="search-input"
+//           />
+//           <input
+//             type="date"
+//             value={filterDate}
+//             onChange={(e) => setFilterDate(e.target.value)}
+//             className="search-input"
+//           />
+//           {filterDate && (
+//             <button
+//               onClick={() => setFilterDate("")}
+//               style={{
+//                 padding: "6px 12px",
+//                 backgroundColor: "#dc3545",
+//                 color: "white",
+//                 border: "none",
+//                 borderRadius: "4px",
+//                 cursor: "pointer",
+//               }}
+//               title="Clear Date Filter"
+//             >
+//               Clear
+//             </button>
+//           )}
+//         </div>
 
 //         <section className="appointment-section">
 //           <h3 className="section-title">Ongoing</h3>
@@ -306,18 +363,10 @@
 //             {loading ? (
 //               <p className="loading-text">Loading...</p>
 //             ) : (
-//               renderTable(filteredUpcoming, true) // show cancel button
-//             )}
-//           </div>
-//         </section>
-
-//         <section className="appointment-section">
-//           <h3 className="section-title">Past</h3>
-//           <div className="table-wrapper">
-//             {loading ? (
-//               <p className="loading-text">Loading...</p>
-//             ) : (
-//               renderTable(filteredPast)
+//               <>
+//                 {renderTable(paginatedUpcoming, true)}
+//                 {renderPagination(upcomingPage, setUpcomingPage, filteredUpcoming.length)}
+//               </>
 //             )}
 //           </div>
 //         </section>
@@ -328,11 +377,12 @@
 
 // export default Appointments;
 
+
 import React, { useState, useEffect } from "react";
 import axios from "axios";
 import { API_BASE_URL } from "../../../api-config";
 
-const PAGE_SIZE = 10; // 10 records per page
+const PAGE_SIZE = 10;
 
 const Appointments = () => {
   const [upcomingAppointments, setUpcomingAppointments] = useState([]);
@@ -352,7 +402,6 @@ const Appointments = () => {
         const response = await axios.get(
           `${API_BASE_URL}/api/appointments/doctor/${doctorId}`
         );
-        console.log("Fetched appointments:", response.data);
         setUpcomingAppointments(response.data.upcoming || []);
         setPastAppointments(response.data.past || []);
       } catch (error) {
@@ -368,11 +417,9 @@ const Appointments = () => {
   const handleCancel = async (appointmentId) => {
     try {
       setCancellingIds((prev) => [...prev, appointmentId]);
-      console.log("Cancelling appointment ID:", appointmentId);
       const res = await axios.patch(
         `${API_BASE_URL}/api/appointments/${appointmentId}/cancel`
       );
-      console.log("Cancel response:", res.data);
 
       setUpcomingAppointments((prev) =>
         prev.map((appt) =>
@@ -390,7 +437,6 @@ const Appointments = () => {
   const filterData = (appointments) =>
     appointments.filter((appointment) => {
       const user = appointment.userId || {};
-
       const matchesSearch =
         user.full_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
         user.email?.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -402,7 +448,6 @@ const Appointments = () => {
       return matchesSearch && matchesDate;
     });
 
-  // Paginate data slice
   const paginateData = (data, page) => {
     const startIndex = (page - 1) * PAGE_SIZE;
     return data.slice(startIndex, startIndex + PAGE_SIZE);
@@ -413,7 +458,6 @@ const Appointments = () => {
       <thead>
         <tr>
           <th>Full Name</th>
-          {/* <th>Email</th> */}
           <th>Phone</th>
           <th>Date</th>
           <th>Time</th>
@@ -430,7 +474,6 @@ const Appointments = () => {
             return (
               <tr key={appt._id || index}>
                 <td>{user.full_name || "N/A"}</td>
-                {/* <td>{user.email || "N/A"}</td> */}
                 <td>{user.phone_number || "N/A"}</td>
                 <td>{appt.date || "—"}</td>
                 <td>{appt.time || "—"}</td>
@@ -478,19 +521,16 @@ const Appointments = () => {
     </table>
   );
 
-  // Filtered datasets
   const filteredUpcoming = filterData(upcomingAppointments);
   const filteredPast = filterData(pastAppointments);
 
-  // Paginated slices
   const paginatedUpcoming = paginateData(filteredUpcoming, upcomingPage);
   const paginatedPast = paginateData(filteredPast, pastPage);
 
-  // Pagination controls
   const renderPagination = (currentPage, setPage, totalItems) => {
     const totalPages = Math.ceil(totalItems / PAGE_SIZE);
     return (
-      <div style={{ marginTop: "10px", display: "flex", gap: 10, justifyContent: "center" }}>
+      <div className="pagination-controls">
         <button
           onClick={() => setPage(currentPage - 1)}
           disabled={currentPage === 1}
@@ -519,7 +559,9 @@ const Appointments = () => {
             border: "none",
             borderRadius: "4px",
             cursor:
-              currentPage === totalPages || totalPages === 0 ? "not-allowed" : "pointer",
+              currentPage === totalPages || totalPages === 0
+                ? "not-allowed"
+                : "pointer",
           }}
         >
           Next
@@ -528,7 +570,6 @@ const Appointments = () => {
     );
   };
 
-  // Reset pagination if filters change
   useEffect(() => {
     setUpcomingPage(1);
     setPastPage(1);
@@ -628,6 +669,13 @@ const Appointments = () => {
           color: #777;
           font-style: italic;
         }
+        .pagination-controls {
+          margin-top: 10px;
+          display: flex;
+          gap: 10px;
+          justify-content: center;
+          flex-wrap: wrap;
+        }
         @media (max-width: 600px) {
           .appointments-table {
             font-size: 0.85rem;
@@ -638,6 +686,14 @@ const Appointments = () => {
           }
           .table-wrapper {
             padding-bottom: 10px;
+          }
+          .pagination-controls {
+            flex-direction: column;
+            align-items: center;
+          }
+          .pagination-controls button {
+            width: 100%;
+            max-width: 200px;
           }
         }
       `}</style>
@@ -682,7 +738,7 @@ const Appointments = () => {
             {loading ? (
               <p className="loading-text">Loading...</p>
             ) : (
-              renderTable([]) // no ongoing data provided in your code
+              renderTable([]) // No ongoing data
             )}
           </div>
         </section>
