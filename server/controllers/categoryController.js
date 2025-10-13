@@ -33,12 +33,15 @@ const createCategory = async (req, res) => {
 // @route   GET /api/categories
 const getAllCategories = async (req, res) => {
   try {
-    const categories = await Category.find();
+    const categories = await Category.find().populate({
+      path: "doctors",
+      match: { isActive: true, isApproved: true } // match active & approved
+    });
 
     const results = categories.map(cat => ({
       uuid: cat.uuid,
       name: cat.name,
-      doctorCount: cat.doctors.length, 
+      doctorCount: cat.doctors.length, // now only active & approved
       message: cat.doctors.length > 0 ? null : "Currently no doctors available"
     }));
 
