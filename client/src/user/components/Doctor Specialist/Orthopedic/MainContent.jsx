@@ -8,7 +8,7 @@ import Cardiology from "../../../assets/cardiologist/cardiology.png";
 import Category from "../../../assets/DBIcons/orthopedic.svg";
 import Doctoricon from "../../../assets/doctoricon.svg";
 // import profile from "../../../assets/cardiologist/profileone.png";
-import specialityImage from "../../../assets/cardiologist/life.png";
+// import specialityImage from "../../../assets/cardiologist/life.png";
 import arrowright from "../../../assets/cardiologist/arrowRight.png"
 import { Link } from "react-router-dom";
 import { useNavigate } from "react-router-dom";
@@ -314,7 +314,7 @@ useEffect(() => {
                         <img
                           src={Category}
                           className="me-1"
-                          alt="Speciality" style={{width:'15px',height:'15px'}}
+                          alt="Speciality" style={{width:'25px',height:'25px'}}
                         />
                         {doc.speciality} <span className="ms-1"> | {doc.experience} Years</span>
                       </div>
@@ -356,9 +356,9 @@ useEffect(() => {
                           className="d-flex speciality"
                         >
                           <img
-                            src={specialityImage}
+                            src={Category}
                             className="me-1"
-                            alt="Speciality"
+                            alt="Speciality" style={{width:'25px',height:'25px'}}
                           />
                           {doc.speciality} <span className="ms-1"> | {doc.experience} Years</span>
                         </div>
