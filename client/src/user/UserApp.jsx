@@ -277,7 +277,7 @@ function UserApp() {
           <Route path="appointment" element={<Appointments />} />
         </Route>
       </Routes>
-      <ToastContainer
+      {/* <ToastContainer
         position="top-right"
         autoClose={3000} // closes in 3 sec
         hideProgressBar={false}
@@ -288,7 +288,7 @@ function UserApp() {
         draggable
         pauseOnHover
         theme="colored" // "light", "dark", "colored"
-      />
+      /> */}
   
     </>
   );

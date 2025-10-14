@@ -7,6 +7,7 @@ import { useNavigate } from "react-router-dom";
 import { toast } from "react-toastify";
 import { useLocation } from "react-router-dom";
 import { API_BASE_URL } from "../../api-config";
+import LoaderOverlay from "../../commonComponents/FadeLoader";
 
 
 import EashaLogo from "../.././assets/eAshalogo.png";
@@ -19,6 +20,7 @@ const Createpassword = () => {
 const doctorId = location.state?.doctorId || localStorage.getItem("doctorId") || null;
   const [showNewPassword, setShowNewPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
 
   const validationSchema = Yup.object({
@@ -37,6 +39,7 @@ const doctorId = location.state?.doctorId || localStorage.getItem("doctorId") ||
 
   return (
     <div className="position-relative min-vh-100 d-flex justify-content-center align-items-center bg-white px-3">
+      <LoaderOverlay loading={loading} /> 
       <style>{`
         .logo-img {
           height: 4.563rem;
@@ -139,6 +142,7 @@ const doctorId = location.state?.doctorId || localStorage.getItem("doctorId") ||
           initialValues={{ newPassword: "", confirmPassword: "" }}
           validationSchema={validationSchema}
           onSubmit={async (values, { setSubmitting }) => {
+            setLoading(true);
             try {
               let apiUrl;
               let payload;
@@ -149,6 +153,7 @@ const doctorId = location.state?.doctorId || localStorage.getItem("doctorId") ||
                 // ✅ Doctor reset API
                 if (!doctorId) {
                   toast.error("Doctor ID missing. Please restart the process.");
+                  setSubmitting(false);
                   return;
                 }
                 apiUrl = `${API_BASE_URL}/api/doctors/forgot-password/reset`;
@@ -189,6 +194,7 @@ const doctorId = location.state?.doctorId || localStorage.getItem("doctorId") ||
             } catch (err) {
               toast.error(err.message);
             } finally {
+              setLoading(false);
               setSubmitting(false);
             }
           }}

@@ -52,7 +52,7 @@ const DoctorApp = () => {
         <Route path="*" element={<Navigate to="dashboard" replace />} />
       </Routes>
 
-      <ToastContainer position="top-center" autoClose={2000} />
+      {/* <ToastContainer position="top-center" autoClose={2000} /> */}
     </>
   );
 };
