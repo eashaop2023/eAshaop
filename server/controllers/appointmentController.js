@@ -278,6 +278,51 @@ exports.getDoctorAppointments = async (req, res) => {
     const { doctorId } = req.params;
     const now = new Date();
 
+    const userIds = await Appointment.distinct('userId', { doctorId, status: 'booked' });
+
+
+    let users = await User.find({ _id: { $in: userIds } }).select('-appointments');
+
+
+
+    const userAppointments = await Appointment.find({ doctorId, userId: { $in: userIds }, status: 'booked' });
+
+    const doctorAvailability = await DoctorAvailability.findOne({ doctor: doctorId });
+
+    if (!doctorAvailability) {
+      return res.status(404).json({ message: "Doctor availability not found" });
+    }
+
+    const slotDuration = doctorAvailability.slotDuration;
+
+    users = users.map(user => {
+      const appointment = userAppointments.find(app => app.userId.toString() === user._id.toString());
+      if (appointment) {
+        const start = appointment.time; // assuming time is in "HH:mm" format
+        const [hours, minutes] = start.split(":").map(Number);
+        const startDate = new Date();
+        startDate.setHours(hours, minutes, 0, 0);
+
+        const endDate = new Date(startDate.getTime() + slotDuration * 60000); // add slot duration
+
+        // Format back to "HH:mm"
+        const formatTime = date => date.toTimeString().slice(0, 5);
+
+        return {
+          _id: user._id,
+          profileImage: user.profileImage,
+          startTime: formatTime(startDate),
+          endTime: formatTime(endDate),
+        };
+        // return {
+        //   ...user.toObject(),
+        //   startTime: formatTime(startDate),
+        //   endTime: formatTime(endDate),
+        // };
+      }
+      return user;
+    });
+
     const upcoming = await Appointment.find({
       doctorId: doctorId, // make sure field matches schema
       date: { $gte: now }, // 'date' is the correct field
@@ -287,11 +332,12 @@ exports.getDoctorAppointments = async (req, res) => {
       doctorId: doctorId,
       date: { $lt: now },
     }).populate("userId", "full_name email phone_number");
-
+    const profileImage = await User.findById
     res.status(200).json({
       totalAppointments: past.length,
       upcoming,
       past,
+      users
     });
   } catch (error) {
     console.error("Get Doctor Appointments Error:", error);
