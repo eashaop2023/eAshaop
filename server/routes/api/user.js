@@ -32,6 +32,9 @@ router.post("/forgot-password/resend-otp", userController.resendForgotOTP);
 // Reset Password
 router.post("/reset-password", userController.resetPassword);
 
+// Change password
+router.put("/change-password/:id", userController.changePassword);
+
 // --- Profile Image Upload ---
 router.post(
   "/upload-profile-image/:id",
@@ -67,12 +70,15 @@ router.post(
 // Get all documents for a user
 router.get("/:userId/documents", userController.getDocuments);
 
+
 /* // Full documents array replacement
 router.put("/:userId/documents", upload.array("documents"), userController.updateDocument);
 
 // Single document update (within documents array)
 router.put("/:userId/documents/:public_id", upload.single("filename"), userController.updateDocument);
  */
+router.post("/dependent", userController.userDependent);
+
 module.exports = router;
 
 

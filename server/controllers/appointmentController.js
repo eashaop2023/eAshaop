@@ -290,7 +290,7 @@ exports.getDoctorAppointments = async (req, res) => {
 
     res.status(200).json({
       totalAppointments: past.length,
-
+      upcoming,
       past,
     });
   } catch (error) {
