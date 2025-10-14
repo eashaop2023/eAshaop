@@ -606,8 +606,6 @@ exports.forgotPasswordSendOTP = async (req, res) => {
   }
 };
 
-
-
 exports.resendForgotOTP = async (req, res) => {
   try {
     const { verifyBy, value } = req.body;
@@ -733,6 +731,36 @@ exports.resetPassword = async (req, res) => {
   }
 };
 
+exports.changePassword = async (req, res) => {
+  try {
+    const userId = req.params.id;
+    const { oldPassword, newPassword } = req.body;
+
+    if (!oldPassword || !newPassword) {
+      return res.status(400).json({ message: "Old and new passwords are required" });
+    }
+
+    // Fetch user
+    const user = await User.findById(userId);
+    if (!user) return res.status(404).json({ message: "User not found" });
+
+    // Check old password
+    const isMatch = await bcrypt.compare(oldPassword, user.password);
+    if (!isMatch) return res.status(401).json({ message: "Old password is incorrect" });
+
+    // Hash new password
+    const hashedPassword = await bcrypt.hash(newPassword, 10);
+    user.password = hashedPassword;
+
+    await user.save();
+
+    res.status(200).json({ message: "Password changed successfully" });
+  } catch (error) {
+    console.error("Change Password Error:", error);
+    res.status(500).json({ message: "Server error" });
+  }
+};
+
 // === User Logout ===
 exports.user_logout = async (req, res) => {
   const response = await userServices.user_logout(req.body);
@@ -831,16 +859,31 @@ exports.updateUserProfile = async (req, res) => {
       userId,
       updateData
     );
+
+    if (req.query.application_android == "true" && updateData.profileImage) {
+      const updateProfileImage = await userServices.updateProfileImage(
+      userId,
+      updateData.profileImage
+      )
+    }
+
     if (!updatedUser)
       return res.status(404).json({ message: "User not found" });
 
-    res.status(200).json({
-      message: "User profile updated successfully",
-      user: updatedUser,
-    });
+    if (req.query.application_android == "true") {
+      res.status(200).json({
+        message: "User profile updated successfully",
+      });
+    } else {
+      res.status(200).json({
+        message: "User profile updated successfully",
+        user: updatedUser,
+      });
+    }
+
   } catch (error) {
-    res.status(500).json({ message: "Server error", error: error.message });
-  }
+    res.status(500).json({ message: "Server error", error: error.message });
+  }
 };
 
 // Upload multiple documents
