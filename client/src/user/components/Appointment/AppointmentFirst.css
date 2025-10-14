@@ -1,0 +1,188 @@
+.doctor-card {
+  border-radius: 20px;
+  transition: all 0.3s ease;
+  max-width: 560px;
+  width: 100%;
+}
+
+ .form-check-input[type="radio"] {
+  accent-color: #00A99D;
+  appearance: none !important;
+ -webkit-appearance: none !important;
+}
+
+.doctor-card:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.1);
+}
+
+.doctor-photo-wrapper {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.doctor-photo {
+  width: 140px;
+  height: 140px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 3px solid #00A99D;
+  box-shadow: 0 3px 8px rgba(0, 0, 0, 0.1);
+}
+
+.education-section {
+  margin-top: -10px !important;
+}
+
+/* Responsive doctor and appointment layout */
+@media (max-width: 1020px) {
+  .doctor-details,
+  .appointment-section {
+    flex: 0 0 100%;
+    max-width: 100%;
+    margin-left: 0 !important;
+  }
+  .doctor-details{
+    margin-left: -30px !important;
+  }
+  .appointment-section{
+    margin-top: -80px;
+    margin-left: 20px !important;
+  }
+}
+
+@media (min-width:930px) and (max-width: 1020px) {
+  .appointment-section{
+    margin-left: -20px !important;
+    margin-top: -70px;
+  }
+}
+
+/* Make both sections scroll independently on large screens */
+@media (min-width: 1021px) {
+  .doctor-details {
+    max-height: 100vh; /* adjust as needed */
+    overflow-y: auto;
+    padding-right: 16px;
+    width: 50% !important;
+  }
+
+  .doctor-details::-webkit-scrollbar {
+  width: 0px;
+  background: transparent;
+}
+
+   .appointment-section {
+    max-height: 100vh;
+    margin-top: -70px !important;
+    overflow-y: auto; /* scroll only if needed */
+    padding-left: 16px;
+  
+    width: 50% !important; 
+  }
+
+  .appointment-section::-webkit-scrollbar {
+  width: 0px;
+  background: transparent;
+}
+
+  .appointment-div {
+    position: relative; /* remove fixed/sticky */
+    overflow: visible;
+    max-height: none;
+  }
+}
+
+
+@media (max-width: 576px) {
+  .doctor-photo {
+    width: 100px;
+    height: 100px;
+  }
+
+  .doctor-card {
+    width: 100% /* up to 560px, but won’t overflow screen */
+  }
+
+  .doctor-details {
+   margin-left: -50px !important;
+   /* margin-right: 10px !important; */
+    width: 100% !important;
+    max-width: 560px !important;
+    }  
+  .appointment-section {
+    margin-left: 0 !important;
+    margin-right: 0 !important;
+    padding-right: 15px !important;
+    margin-top: -80px !important;
+  }
+  .doctor-about{
+    width: 100% !important;
+  }
+
+  .dependent input[type="radio"] {
+  width: 15px !important;   /* adjust as needed */
+  height: 15px !important;
+  border-radius: 50% !important;  /* adjust as needed */
+  color: #00A99D !important;
+}
+
+.dependent .form-check-input {
+  width: 16px;
+  height: 16px;
+}
+}
+
+/* Sticky appointment section on large screens */
+@media (min-width: 1021px) {
+  .appointment-div {
+    top: 60px;
+    width: 100%;
+    max-width: 550px;
+    overflow-y: auto;
+  }
+  .doctor-details{
+    overflow-y: auto;
+  }
+}
+
+@media screen and (max-width: 768px) {
+  .doctor-details{
+    margin-left: -30px !important;
+  }
+  .appointment-section{
+    margin-top: -80px;
+    margin-left: 20px !important;
+  }
+
+  .dependent input[type="radio"] {
+  width: 15px !important;   /* adjust as needed */
+  height: 15px !important;
+  border-radius: 50% !important;  /* adjust as needed */
+  accent-color: #00A99D !important;
+}
+
+
+.dependent .form-check-input {
+  width: 16px;
+  height: 16px;
+}
+
+
+}
+
+/* Slots & buttons */
+.slot-time {
+  cursor: pointer;
+  padding: 6px 12px;
+  border-radius: 50px;
+  transition: all 0.2s ease;
+}
+
+.slot-time:hover {
+  opacity: 0.85;
+}
+
+
+
