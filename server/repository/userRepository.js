@@ -1,6 +1,7 @@
 const User = require("../models/user");
 const { Vonage } = require("@vonage/server-sdk");
 const jwt = require("jsonwebtoken");
+const Dependent = require("../models/userDependent")
 
 // Vonage setup
 const vonage = new Vonage({
@@ -441,6 +442,11 @@ const getUserDocuments = async (userId) => {
 // ======================
 // EXPORT ALL FUNCTIONS
 // ======================
+
+const getDependentUserId = async (userId) => {
+  return await Dependent.find({ userId: userId });
+};
+
 module.exports = {
   //  registration_sendOtp,
   //registration_verifyOtp,
@@ -459,4 +465,5 @@ module.exports = {
   addDocuments,
   getUserDocuments,
   // updateDocument,
+  getDependentUserId
 };

@@ -141,6 +141,10 @@ const getDocuments = async (userId) => {
   }
 }; */
 
+const getDependentUserId = async (userId) => {
+  return await userRepository.getDependentUserId(userId);
+};
+
 module.exports = {
 //  registration_sendOtp,
 //  registration_verifyOtp,
@@ -160,4 +164,5 @@ module.exports = {
 
   getDocuments,
   // updateDocument,
+  getDependentUserId
 };
