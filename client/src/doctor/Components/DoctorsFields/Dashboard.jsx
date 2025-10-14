@@ -404,7 +404,8 @@ const Dashboard = () => {
   }, []);
 
   return (
-    <div className="overflow-y-hidden">
+    // <div className="overflow-y-hidden">
+       <div className="w-full overflow-x-hidden">
       <div className="ml-0 md:pl-[80px] lg:pl-[260px] xl:pl-[327px] mt-[75px] px-4 sm:px-6 font-urbanist">
         {/* Header */}
         <div className="flex flex-col sm:flex-row justify-between sm:items-center mb-6 gap-3">
@@ -412,39 +413,43 @@ const Dashboard = () => {
         </div>
 
         {/* Toggle + Call */}
-        <div className="mt-3 flex flex-wrap items-center gap-3 justify-between">
-          <div className="flex items-center gap-3">
-            <span className="text-sm font-medium">Status:</span>
-            <label className="relative inline-block w-12 h-6">
-              <input
+          <div className="mt-3 flex items-center gap-x-3 sm:gap-x-5">
+    {/* Status Toggle Content */}
+    <div className="flex items-center gap-x-2 sm:gap-x-3">
+        <span className="text-sm font-medium">Status:</span>
+        {/* Toggle is smaller on mobile */}
+        <label className="relative inline-block w-10 h-5 sm:w-12 sm:h-6">
+            <input
                 type="checkbox"
                 checked={isActive}
                 onChange={() => setIsActive(!isActive)}
-                className="sr-only"
-              />
-              <div
-                className={`w-full h-full rounded-full transition-colors duration-300 ${
-                  isActive ? "bg-[#00A99D]" : "bg-gray-300"
-                }`}
-              />
-              <div
-                className={`absolute left-1 top-1 w-4 h-4 bg-white rounded-full shadow transition-transform duration-300 ${
-                  isActive ? "translate-x-6" : "translate-x-0"
-                }`}
-              />
-            </label>
-            <span className="text-sm font-medium">{isActive ? "Active" : "Inactive"}</span>
-          </div>
+                className="sr-only peer"
+            />
+            <div className="w-full h-full rounded-full bg-gray-300 transition-colors duration-300 peer-checked:bg-[#00A99D]" />
+            <div 
+                className="absolute left-0.5 top-0.5 w-4 h-4 sm:left-1 sm:top-1 sm:w-4 sm:h-4 bg-white rounded-full shadow transition-transform duration-300 
+                           peer-checked:translate-x-[18px] sm:peer-checked:translate-x-6" 
+            />
+        </label>
+        {/* Text container is narrower on mobile */}
+        <span className="text-sm font-medium w-14 sm:w-16">{isActive ? "Active" : "Inactive"}</span>
+    </div>
 
-          <a
-            href="https://meet.jit.si/d6b3a8a3-128c-4f61-baef-f22e2713db51"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="px-4 py-2 bg-[#00A99D] text-white rounded-lg font-medium"
-          >
-            Join Call
-          </a>
-        </div>
+    {/* Join Call Button Content */}
+    <a
+        href="https://meet.jit.si/d6b3a8a3-128c-4f61-baef-f22e2713db51"
+        target="_blank"
+        rel="noopener noreferrer"
+        className="
+            bg-[#00A99D] text-white rounded-lg font-medium whitespace-nowrap
+            text-sm px-3 py-1.5
+            sm:px-4 sm:py-2
+        "
+        style={{ textDecoration: "none" }}
+    >
+        Join Call
+    </a>
+</div>
 
         {/* Layout */}
         <div className="flex flex-col xl:flex-row gap-6 mt-6">
@@ -455,7 +460,7 @@ const Dashboard = () => {
               <div className="rounded-xl shadow-sm px-6 py-4 bg-[#00A99D] text-white w-full">
                 <h2 className="text-sm sm:text-base md:text-lg font-medium">Total Earnings</h2>
                 <p className="text-xl sm:text-2xl md:text-3xl font-bold">
-                  ₹{totalEarnings.toLocaleString()}
+                  {/* ₹{totalEarnings.toLocaleString()} */}
                 </p>
                 <p className="text-xs sm:text-sm mt-1 italic text-white/80">
                   From completed appointments
