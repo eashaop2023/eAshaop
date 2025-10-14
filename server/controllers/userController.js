@@ -446,6 +446,8 @@ exports.login = async (req, res) => {
         full_name: user.full_name,
         phone_number: user.phone_number,
         email: user.email,
+        dob: user.dob,
+        gender: user.gender,
       },
     });
   } catch (err) {
