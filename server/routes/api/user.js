@@ -73,6 +73,8 @@ router.put("/:userId/documents", upload.array("documents"), userController.updat
 // Single document update (within documents array)
 router.put("/:userId/documents/:public_id", upload.single("filename"), userController.updateDocument);
  */
+router.post("/dependent", userController.userDependent);
+
 module.exports = router;
 
 

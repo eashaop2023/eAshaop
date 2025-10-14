@@ -7,6 +7,7 @@ const bcrypt = require("bcrypt");
 const User = require("../models/user.js");
 // const { generateOTP, sendOTP } = require("../utils/otpHelperUser.js"); 
 const { generateOTP, sendOTP } = require("../utils/otpHelper");
+const userDependent = require("../models/userDependent.js");
 
 exports.registerUserApp = async (req, res) => {
   try {
@@ -808,9 +809,10 @@ exports.getUserById = async (req, res) => {
   try {
     const userId = req.params.id;
     const user = await userServices.getUserById(userId);
+    const userDependent = await userServices.getDependentUserId(userId);
     if (!user) return res.status(404).json({ message: "User not found" });
 
-    res.status(200).json({ user });
+    res.status(200).json({ userDependent, user });
   } catch (error) {
     res.status(500).json({ message: "Server error", error: error.message });
   }
@@ -829,16 +831,31 @@ exports.updateUserProfile = async (req, res) => {
       userId,
       updateData
     );
+
+    if (req.query.application_android == "true" && updateData.profileImage) {
+      const updateProfileImage = await userServices.updateProfileImage(
+      userId,
+      updateData.profileImage
+      )
+    }
+
     if (!updatedUser)
       return res.status(404).json({ message: "User not found" });
 
-    res.status(200).json({
-      message: "User profile updated successfully",
-      user: updatedUser,
-    });
+    if (req.query.application_android == "true") {
+      res.status(200).json({
+        message: "User profile updated successfully",
+      });
+    } else {
+      res.status(200).json({
+        message: "User profile updated successfully",
+        user: updatedUser,
+      });
+    }
+
   } catch (error) {
-    res.status(500).json({ message: "Server error", error: error.message });
-  }
+    res.status(500).json({ message: "Server error", error: error.message });
+  }
 };
 
 // Upload multiple documents
@@ -918,3 +935,70 @@ exports.updateDocument = async (req, res) => {
   }
 }; */
 
+
+exports.userDependent = async (req, res) => {
+  try {
+    let { userId, full_name, phone_number, gender, email, dob, relation, address, pincode } = req.body;
+
+    // Validate required fields
+    if (!userId || !full_name || !phone_number || !gender || !relation || !email || !dob || !address || !pincode) {
+      return res.status(400).json({ message: "All fields are required" });
+    }
+
+    // Normalize values
+    const normalizedPhone = phone_number.replace(/\D/g, "");
+    const formattedPhone =
+      normalizedPhone.length === 10 ? `+91${normalizedPhone}` : `+${normalizedPhone}`;
+    const normalizedEmail = email.trim().toLowerCase();
+
+    // Check if dependent exists
+    let existingDependent = await userDependent.findOne({
+      $or: [
+        { phone_number: formattedPhone },
+        { email: normalizedEmail }
+      ],
+    });
+
+    if (existingDependent) {
+      // Update existing dependent
+      existingDependent.userId = userId;
+      existingDependent.full_name = full_name;
+      existingDependent.phone_number = formattedPhone;
+      existingDependent.gender = gender.toLowerCase();
+      existingDependent.email = normalizedEmail;
+      existingDependent.dob = dob;
+      existingDependent.relation = relation;
+      existingDependent.address = address;
+      existingDependent.pincode = pincode;
+      existingDependent.isDeleted = false;
+
+      await existingDependent.save();
+
+      return res.status(200).json({
+        message: "Existing dependent updated successfully",
+      });
+    }
+
+    const newDependent = new userDependent({
+      userId,
+      full_name,
+      phone_number: formattedPhone,
+      gender: gender.toLowerCase(),
+      email: normalizedEmail,
+      dob,
+      relation,
+      address,
+      pincode,
+      isDeleted: false,
+    });
+
+    await newDependent.save();
+
+    res.status(201).json({
+      message: "New dependent registered successfully",
+    });
+  } catch (err) {
+    console.error("Dependent registration error:", err);
+    res.status(500).json({ message: "Server error" });
+  }
+};
