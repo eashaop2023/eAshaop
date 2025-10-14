@@ -29,7 +29,7 @@ function LoginPage() {
   const [loading, setLoading] = useState(false);
 
 
-  const normalizeUser = (user) => {
+const normalizeUser = (user) => {
   const dob = user.dob || user.DOB || null;
   const gender = user.gender || "Not Provided";
 
@@ -50,7 +50,7 @@ function LoginPage() {
     email: user.email || "",
     phone_number: user.phone_number || "",
     dob,
-    gender,
+    sex: gender,
     age: calculateAge(dob)
   };
 };
