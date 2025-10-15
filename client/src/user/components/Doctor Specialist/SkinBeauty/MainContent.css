@@ -193,6 +193,37 @@
 }
 
 
+@media screen and (max-width : 403px) {
+  .toggle-buttons-container button{
+    font-size: 10px !important;
+    padding: 6px 10px !important;
+  }
+  .toggle-buttons-container{
+    height: 50px !important;
+  }
+  /* .outer-toggle{
+    height: 30px !important;
+  } */
+  .clinic-visit{
+    text-align: center !important;
+    padding-left: 30px !important;
+  }
+}
+
+@media screen and (max-width:1024px){
+  .clinic-visit{
+    text-align: center !important;
+    padding-left: 0px !important;
+  }
+  .toggle-buttons-container{
+    height: 60px !important;
+  }
+
+
+}
+
+
+
 
 
 

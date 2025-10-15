@@ -19,7 +19,7 @@ import { API_BASE_URL } from "../../../api-config";
 
 const staticCategories = [
   { name: "General healthcare", icon: generalHealthCare, path: "general-healthcare",uuid:"UqkGTNQTOD" },
-  { name: "Cardiologists", icon: cardiologist, path: "cardiologist",uuid:"bD1KuA_6pr" },
+  { name: "Cardiologist", icon: cardiologist, path: "cardiologist",uuid:"bD1KuA_6pr" },
   { name: "Orthopedic", icon: orthopedic, path: "orthopedic",uuid:"oybWOH7Ok8" },
   { name: "Neurologist", icon: neurologist, path: "neurologist",uuid:"r1ArfRKaU_" },
   { name: "Ophthalmology", icon: ophthalmology, path: "ophthalmology",uuid:"whHEP4Ba-m" },

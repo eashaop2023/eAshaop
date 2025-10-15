@@ -90,23 +90,38 @@ export default function AppointmentPage() {
 
   // Load user & dependents
 useEffect(() => {
-  const fetchMainUser = async () => {
+  const fetchUserAndDependents = async () => {
     const storedUser = JSON.parse(localStorage.getItem("user"));
     if (!storedUser) return;
 
     const mainUser = {
       name: storedUser.full_name || storedUser.name || "Unknown Patient",
       age: storedUser.age || "Not Provided",
-sex: storedUser.sex || storedUser.gender || "Not Provided",
+      sex: storedUser.sex || storedUser.gender || "Not Provided",
       isUser: true,
       _id: storedUser._id || storedUser.id,
     };
 
-    setMembers([mainUser]); // ✅ only main user initially
-    setSelectedMemberIndex(0); // select main user by default
+    try {
+      // Call backend to fetch dependents
+      const res = await axios.get(`${API_BASE_URL}/api/user/${mainUser._id}`);
+      const dependents = (res.data.userDependent || []).map(dep => ({
+        name: dep.full_name,
+        age: Math.floor((Date.now() - new Date(dep.dob).getTime()) / 31557600000),
+        sex: dep.gender,
+        isUser: false,
+        _id: dep._id,
+      }));
+
+      setMembers([mainUser, ...dependents]);
+      setSelectedMemberIndex(0);
+    } catch (err) {
+      console.error("Error fetching dependents:", err);
+      setMembers([mainUser]); // fallback
+    }
   };
 
-  fetchMainUser();
+  fetchUserAndDependents();
 }, []);
 
   // Add member

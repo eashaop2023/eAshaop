@@ -1,6 +1,6 @@
 export const categories = [
   { name: "General healthcare", uuid:"UqkGTNQTOD" },
-  { name: "Cardiologists",uuid:"bD1KuA_6pr" },
+  { name: "Cardiologist",uuid:"bD1KuA_6pr" },
   { name: "Orthopedic", uuid:"oybWOH7Ok8" },
   { name: "Neurologist",uuid:"r1ArfRKaU_" },
   { name: "Ophthalmology", uuid:"whHEP4Ba-m" },
