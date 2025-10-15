@@ -23,7 +23,18 @@ const ConfirmAppointment = () => {
   const locationState = location.state || JSON.parse(localStorage.getItem("appointmentData")) || {};
 
   const { doctor, slot, date, member, amount, consultationType,mainUser } =
-    locationState;
+    locationState || [];
+
+    if (slot && date) {
+    const [hours, minutes] = slot.split(":").map(Number);
+
+    date.setHours(hours);
+    date.setMinutes(minutes);
+    date.setSeconds(0);
+    date.setMilliseconds(0);
+
+    console.log("Updated date object with slot time:", date.toString());
+}
 
   // const paymentOptions = ["UPI", "Card"];
   // const upiOptions = [

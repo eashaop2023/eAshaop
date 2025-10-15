@@ -27,4 +27,5 @@ router.post(
 router.get("/", appointmentController.getAllAppointments); // admin
 router.get("/user/:userId", appointmentController.getUserAppointments);
 router.get("/doctor/:doctorId", appointmentController.getDoctorAppointments);
+router.get("/totalappointments/:doctorId", appointmentController.getDoctorAppointmentsForApp);
 module.exports = router;

@@ -90,43 +90,58 @@ export default function AppointmentPage() {
 
   // Load user & dependents
 useEffect(() => {
-    const fetchUserWithDependents = async () => {
-      const userId = JSON.parse(localStorage.getItem("user"))?._id;
-      if (!userId) return;
+  const fetchUserAndDependents = async () => {
+    const storedUser = JSON.parse(localStorage.getItem("user"));
+    if (!storedUser) return;
 
-      try {
-        const res = await axios.get(`${API_BASE_URL}/api/users/${userId}`);
-        const { user, userDependent } = res.data;
-
-        const normalizeMember = (m, isUser = false) => {
-          const dob = m.dob;
-          const gender = m.gender || "Not Provided";
-          const age = dob ? Math.floor((Date.now() - new Date(dob).getTime()) / 31557600000) : "Not Provided";
-          return {
-            name: m.full_name || m.name,
-            age,
-            sex: gender,
-            isUser,
-            _id: m._id || m.id
-          };
-        };
-
-        const mainUser = normalizeMember(user, true);
-        const dependents = (userDependent || []).map(d => normalizeMember(d));
-
-        setMembers([mainUser, ...dependents]);
-      } catch (err) {
-        console.error("Error fetching user dependents:", err);
-      }
+    const mainUser = {
+      name: storedUser.full_name || storedUser.name || "Unknown Patient",
+      age: storedUser.age || "Not Provided",
+      sex: storedUser.sex || storedUser.gender || "Not Provided",
+      isUser: true,
+      _id: storedUser._id || storedUser.id,
     };
 
-    fetchUserWithDependents();
-  }, []);
+    try {
+      // Call backend to fetch dependents
+      const res = await axios.get(`${API_BASE_URL}/api/user/${mainUser._id}`);
+      const dependents = (res.data.userDependent || []).map(dep => ({
+        name: dep.full_name,
+        age: Math.floor((Date.now() - new Date(dep.dob).getTime()) / 31557600000),
+        sex: dep.gender,
+        isUser: false,
+        _id: dep._id,
+      }));
+
+      setMembers([mainUser, ...dependents]);
+      setSelectedMemberIndex(0);
+    } catch (err) {
+      console.error("Error fetching dependents:", err);
+      setMembers([mainUser]); // fallback
+    }
+  };
+
+  fetchUserAndDependents();
+}, []);
+
   // Add member
   const handleAddMember = async (memberData) => {
     try {
-      const userId = JSON.parse(localStorage.getItem("user"))?._id;
-      if (!userId) return toast.error("User not found");
+const storedUser = JSON.parse(localStorage.getItem("user") || "{}");
+const userId = storedUser._id || storedUser.id;
+
+if (!userId) return toast.error("User not found");
+
+ if (!memberData.address || memberData.address.length < 10) {
+      return toast.error("Address must be at least 10 characters long");
+    }
+
+     // Convert DOB from "DD-MM-YYYY" to Date object
+    const [day, month, year] = memberData.dob.split("-");
+    const dobDate = new Date(year, month - 1, day);
+    if (isNaN(dobDate.getTime())) {
+      return toast.error("Invalid date of birth");
+    }
 
       const payload = {
         userId,
@@ -134,17 +149,15 @@ useEffect(() => {
         phone_number: memberData.mobileNumber,
         gender: memberData.gender,
         email: memberData.email,
-        dob: memberData.dob,
+        dob: dobDate,
         relation: memberData.relation,
         address: memberData.address,
         pincode: memberData.pinCode,
       };
 
-      const res = await axios.post(`${API_BASE_URL}/api/users/dependent`, payload);
+      const res = await axios.post(`${API_BASE_URL}/api/user/dependent`, payload);
       toast.success(res.data.message);
 
-      const [day, month, year] = memberData.dob.split("-");
-      const dobDate = new Date(year, month - 1, day);
       const age = Math.floor((Date.now() - dobDate.getTime()) / 31557600000);
 
       const newMember = {
@@ -155,23 +168,22 @@ useEffect(() => {
         _id: res.data.dependentId || null,
       };
 
-      setMembers(prev => [...prev, newMember]);
+      setMembers((prev) => [...prev, newMember]);
       setShowAddMember(false);
-
     } catch (err) {
       console.error("Error adding dependent:", err);
       toast.error(err.response?.data?.message || "Failed to add dependent");
     }
   };
 
-  // --- Remove dependent ---
+  // Remove dependent
   const removeDependent = async (index) => {
     const dep = members[index];
     if (!dep || dep.isUser) return;
 
     try {
       await axios.delete(`${API_BASE_URL}/api/users/dependent/${dep._id}`);
-      setMembers(prev => prev.filter((_, i) => i !== index));
+      setMembers((prev) => prev.filter((_, i) => i !== index));
       if (selectedMemberIndex === index) setSelectedMemberIndex(0);
       toast.success("Dependent removed");
     } catch (err) {

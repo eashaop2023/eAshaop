@@ -20,6 +20,7 @@ import { useParams } from "react-router-dom";
 import { API_BASE_URL } from "../../../../api-config";
 import "react-toastify/dist/ReactToastify.css";
 import { toast } from "react-toastify";
+import './MainContent.css'
 
 
 // const mockDoctors = Array(9).fill({
@@ -209,7 +210,7 @@ const [selected, setSelected] = useState(
               backgroundColor: selected === "video" ? "#00A99D" : "#ffffff",
               color: selected === "video" ? "white" : "#8E8E8E",
             }}
-            className="btn fw-semibold px-4 py-2 rounded-pill d-flex"
+            className="btn fw-semibold px-4 py-2 rounded-pill d-flex align-items-center"
             onClick={() => handleSelect("video")}
           >
             <span className="me-2"><img src={video} height={24} width={24} className="toggle-images"/></span>
@@ -220,10 +221,10 @@ const [selected, setSelected] = useState(
               backgroundColor: selected === "clinic" ? "#00A99D" : "#ffffff",
               color: selected === "clinic" ? "white" : "#8E8E8E",
             }}
-            className="btn1 fw-semibold  rounded-pill d-flex"
+            className="btn1 fw-semibold  rounded-pill d-flex align-items-center"
             onClick={() => handleSelect("clinic")}
           >
-            <span className="me-1 ps-4"><img src={walk} height={14} width={24} className="toggle-images"/></span>
+            <span className="clinic-visit me-1 ps-4"><img src={walk} height={14} width={24} className="toggle-images"/></span>
             Clinic Visit
           </button>
         </div>

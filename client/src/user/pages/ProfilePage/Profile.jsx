@@ -169,6 +169,10 @@ const handleSave = async () => {
     if (!res.ok) throw new Error("Failed to upload image");
     const data = await res.json();
     setProfileImage(data.imageUrl); // ✅ update state
+
+        const updatedUser = { ...storedUser, profileImage: { cloudinaryUrl: data.imageUrl } };
+    localStorage.setItem("user", JSON.stringify(updatedUser));
+
   } catch (err) {
     console.error(err);
     alert("Image upload failed");
@@ -210,7 +214,7 @@ const handleSave = async () => {
           {isMobileOrTablet && (
             <div
               className="d-flex justify-content-end align-items-end mb-1 px-2"
-              style={{ marginTop: "-50px",paddingLeft:"0px" }}
+              style={{ marginTop: "-20px",paddingLeft:"0px" }}
             >
               <div
                 className="rounded-circle border d-flex align-items-center justify-content-center"
@@ -355,12 +359,14 @@ const handleSave = async () => {
                           variant="light"
                           // onClick={() => setGender(g)}
                             onClick={() => handleChange("gender", g)}
+style={{
+  backgroundColor:
+    formData.gender.toLowerCase() === g.toLowerCase() ? "#00A99D" : "white",
+  color: formData.gender.toLowerCase() === g.toLowerCase() ? "white" : "#252525",
 
-                          style={{
-                            // backgroundColor: gender === g ? "#00A99D" : "white",
-                            // color: gender === g ? "white" : "#252525",
-                             backgroundColor: formData.gender === g.toLowerCase() ? "#00A99D" : "white",
-                             color: formData.gender === g.toLowerCase() ? "white" : "#252525",
+
+                            //  backgroundColor: formData.gender === g.toLowerCase() ? "#00A99D" : "white",
+                            //  color: formData.gender === g.toLowerCase() ? "white" : "#252525",
                             border: "none",
                             flex: 1,
                             fontWeight: "500",
@@ -485,7 +491,13 @@ const handleSave = async () => {
                       backgroundColor: "#F0F0F0",
                     }}
                   >
-                    {tag} <span style={{ cursor: "pointer", marginLeft: 8 }}>✕</span>
+{tag}{" "}
+<span
+  style={{ cursor: "pointer", marginLeft: 8 }}
+  onClick={() => handleRemoveHealthTag(index)}
+>
+  ✕
+</span>
                   </Badge>
                 ))}
               </div>
