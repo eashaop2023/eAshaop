@@ -842,8 +842,8 @@ const updateDoctorProfile = async (req, res) => {
         doctor.hospitalName = req.body.hospitalName;
         doctor.hospitalLocation = req.body.hospitalLocation;
       } else {
-        doctor.hospitalName = undefined;
-        doctor.hospitalLocation = undefined;
+        doctor.hospitalName = req.body.hospitalName;
+        doctor.hospitalLocation = req.body.hospitalLocation;
       }
     }
 
