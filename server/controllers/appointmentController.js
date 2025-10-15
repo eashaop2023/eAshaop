@@ -835,3 +835,99 @@ exports.bookAppointment = async (req, res) => {
 };
 
 
+
+exports.getDoctorAppointmentsForApp = async (req, res) => {
+  try {
+    const { doctorId } = req.params;
+    const now = new Date();
+
+    const userIds = await Appointment.distinct('userId', { doctorId, status: 'booked' });
+
+    let users = await User.find({ _id: { $in: userIds } }).select('-appointments');
+
+    const userAppointments = await Appointment.find({
+      doctorId,
+      // userId: { $in: userIds },
+      status: 'booked'
+    });
+
+    const doctorAvailability = await DoctorAvailability.findOne({ doctor: doctorId });
+    if (!doctorAvailability) {
+      return res.status(404).json({ message: "Doctor availability not found" });
+    }
+
+    const slotDuration = doctorAvailability.slotDuration;
+    const formatTime = date => date.toTimeString().slice(0, 5);
+
+    users = users.map(user => {
+      const appointment = userAppointments.find(app => app.userId.toString() === user._id.toString());
+      if (appointment) {
+        const start = appointment.time;
+        const [hours, minutes] = start.split(":").map(Number);
+        const startDate = new Date();
+        startDate.setHours(hours, minutes, 0, 0);
+        const endDate = new Date(startDate.getTime() + slotDuration * 60000);
+        return {
+          _id: user._id,
+          profileImage: user.profileImage,
+          startTime: formatTime(startDate),
+          endTime: formatTime(endDate),
+          status: user.status,
+          jitsiLink: user.jitsiLink,
+          type: User.type
+
+        };
+      }
+      return {
+        _id: user._id,
+        profileImage: user.profileImage,
+        startTime: null,
+        endTime: null,
+        status: user.status,
+        jitsiLink: user.jitsiLink,
+        type: User.type
+      };
+    });
+
+    let upcoming = await Appointment.find({
+      doctorId,
+      date: { $gte: now },
+    }).populate("userId", "full_name email phone_number");
+
+    let past = await Appointment.find({
+      doctorId,
+      date: { $lt: now },
+    }).populate("userId", "full_name email phone_number");
+
+    const attachUserDetails = (appointments) => {
+      return appointments.map(appointment => {
+        const obj = appointment.toObject();
+        const userId = obj.userId?._id?.toString() || obj.userId?.toString();
+        const userMatch = users.find(u => u._id.toString() === userId);
+
+        if (userMatch && typeof obj.userId === 'object') {
+          obj.userId.profileImage = userMatch.profileImage || {};
+          obj.userId.startTime = userMatch.startTime || null;
+          obj.userId.endTime = userMatch.endTime || null;
+          obj.userId.status = userMatch.status || null;
+          obj.userId.jitsiLink = userMatch.jitsiLink || null;
+          obj.userId.type = userMatch.type || null;
+        }
+        return obj;
+      });
+    };
+
+    past = attachUserDetails(past);
+    upcoming = attachUserDetails(upcoming);
+
+    res.status(200).json({
+      totalAppointments: past.length,
+      upcoming,
+      past,
+    });
+
+  } catch (error) {
+    console.error("Get Doctor Appointments Error:", error);
+    res.status(500).json({ message: error.message });
+  }
+};

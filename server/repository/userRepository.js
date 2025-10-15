@@ -354,11 +354,12 @@ const forgotPassword_resendOtp = async (body) => {
 //  Uploade profile image
 
 const uploadeProfileImage = async (userId, imageUrl) => {
-  return await User.findByIdAndUpdate(
+  const updatedUser = await User.findByIdAndUpdate(
     userId,
-    { profileImage: imageUrl },
+    { profileImage: { cloudinaryUrl: imageUrl } },
     { new: true }
   );
+  return updatedUser;
 };
 
 // Update profile image
