@@ -228,16 +228,16 @@ exports.getUserAppointments = async (req, res) => {
       amount: appt.amount,
       doctor: appt.doctorId
         ? {
-            name: appt.doctorId.name,
-            speciality: appt.doctorId.speciality,
-            education: appt.doctorId.education,
-            consultationMode: appt.doctorId.consultationMode,
-            hospitalName: appt.doctorId.hospitalName,
-            hospitalLocation: appt.doctorId.hospitalLocation,
-            email: appt.doctorId.email,
-            mobile: appt.doctorId.mobile,
-            profileImage: appt.doctorId.profileImage,
-          }
+          name: appt.doctorId.name,
+          speciality: appt.doctorId.speciality,
+          education: appt.doctorId.education,
+          consultationMode: appt.doctorId.consultationMode,
+          hospitalName: appt.doctorId.hospitalName,
+          hospitalLocation: appt.doctorId.hospitalLocation,
+          email: appt.doctorId.email,
+          mobile: appt.doctorId.mobile,
+          profileImage: appt.doctorId.profileImage,
+        }
         : null,
       dependent: appt.dependent || null,
       jitsiLink: appt.jitsiLink || null,
@@ -844,12 +844,17 @@ exports.getDoctorAppointmentsForApp = async (req, res) => {
     const userIds = await Appointment.distinct('userId', { doctorId, status: 'booked' });
 
     let users = await User.find({ _id: { $in: userIds } }).select('-appointments');
+    let totalAmount = 0;
 
     const userAppointments = await Appointment.find({
       doctorId,
       // userId: { $in: userIds },
       status: 'booked'
     });
+    for (let i = 0; i < userAppointments.length; i++) {
+      totalAmount += Number(userAppointments[i].amount)
+    }
+
 
     const doctorAvailability = await DoctorAvailability.findOne({ doctor: doctorId });
     if (!doctorAvailability) {
@@ -923,8 +928,8 @@ exports.getDoctorAppointmentsForApp = async (req, res) => {
           obj.userId.jitsiLink = userMatch.jitsiLink || null;
           obj.userId.type = userMatch.type || null;
           obj.userId.gender = userMatch.gender || null,
-          obj.userId.lastVisit = userMatch.startDate || null,
-          obj.userId.age = userMatch.age || null
+            obj.userId.lastVisit = userMatch.startDate || null,
+            obj.userId.age = userMatch.age || null
 
         }
         return obj;
@@ -935,8 +940,24 @@ exports.getDoctorAppointmentsForApp = async (req, res) => {
     upcoming = attachUserDetails(upcoming);
     total = attachUserDetails(total);
 
+
+    function isToday(dateString) {
+      const date = new Date(dateString);
+      const today = new Date();
+      return (
+        date.getFullYear() === today.getFullYear() &&
+        date.getMonth() === today.getMonth() &&
+        date.getDate() === today.getDate()
+      );
+    }
+
+    const todayPatient = upcoming.filter(item => isToday(item.date));
+
     res.status(200).json({
-      totalAppointments: past.length,
+      totalAmount: totalAmount,
+      totalUpcoming: upcoming.length,
+      totalAppointments: total.length,
+      todayPatient : todayPatient.length,
       upcoming,
       past,
       total
