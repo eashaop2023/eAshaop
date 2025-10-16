@@ -330,7 +330,9 @@ const handleLogin = async (e) => {
         localStorage.setItem("user", JSON.stringify(normalizedUser));
         localStorage.setItem("userId", normalizedUser.id);
       }
-
+        if (role === "doctor" && data.doctor?.id) {
+        localStorage.setItem("doctorId", data.doctor.id);
+      }
       toast.success("Login successful!");
       setTimeout(() => {
       if (role === "doctor") {
