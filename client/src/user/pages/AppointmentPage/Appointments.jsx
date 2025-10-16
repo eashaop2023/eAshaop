@@ -292,6 +292,7 @@ const Appointments = () => {
               appointments.upcoming
                 .filter(
                   (a) =>
+                    a.status === "booked" &&
                     (a.type === "video" && activeTab === "virtual") ||
                     (a.type === "clinic" && activeTab === "clinic")
                 )
@@ -310,6 +311,7 @@ const Appointments = () => {
 appointments.past
   .filter(
     (a) =>
+       a.status==="booked"&&
       (a.type === "video" && activeTab === "virtual") ||
       (a.type === "clinic" && activeTab === "clinic")
   )

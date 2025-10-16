@@ -6,6 +6,7 @@ import { FaEye, FaEyeSlash } from "react-icons/fa";
 import { toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import { API_BASE_URL } from "../../api-config";
+import LoaderOverlay from "../../commonComponents/FadeLoader";
 
 // const API_BASE_URL = "${API_BASE_URL}";
 
@@ -25,8 +26,10 @@ function LoginPage() {
   const [countdown, setCountdown] = useState(60);
   const [resendCount, setResendCount] = useState(0);
   const [otpSent, setOtpSent] = useState(false);
+  const [loading, setLoading] = useState(false);
 
-  const normalizeUser = (user) => {
+
+const normalizeUser = (user) => {
   const dob = user.dob || user.DOB || null;
   const gender = user.gender || "Not Provided";
 
@@ -47,7 +50,7 @@ function LoginPage() {
     email: user.email || "",
     phone_number: user.phone_number || "",
     dob,
-    gender,
+    sex: gender,
     age: calculateAge(dob)
   };
 };
@@ -73,6 +76,7 @@ function LoginPage() {
   };
 
 const sendOtp = async () => {
+  setLoading(true);
   try {
     const isEmail = identifier.includes("@");
     const payload = {
@@ -103,12 +107,22 @@ const data = await res.json();
     setOtpSent(true);
     toast.success("OTP sent successfully!");
   } catch (error) {
-    toast.error(error.message);
+    // Friendly error message instead of backend "User not found"
+    if (error.message?.toLowerCase().includes("user not found")) {
+      toast.error("Email or phone number is incorrect");
+    } else {
+      toast.error(error.message);
+    }
+  throw error}
+    finally {
+      setLoading(false);
+    
   }
 };
 
 
 const resendOtp = async () => {
+  setLoading(true);
   try {
     const doctorId = localStorage.getItem("doctorId"); 
 
@@ -142,7 +156,11 @@ verifyBy: isEmail ? "email" : "mobile",
     toast.success("OTP resent successfully!");
   } catch (error) {
     toast.error(error.message);
+    throw error;
   }
+  finally {
+      setLoading(false);
+    }
 };
 
 
@@ -150,6 +168,7 @@ verifyBy: isEmail ? "email" : "mobile",
 
 
 const verifyOtp = async () => {
+  setLoading(true);
   try {
     const doctorId = localStorage.getItem("doctorId"); 
 
@@ -194,23 +213,34 @@ const verifyOtp = async () => {
     }
 
     toast.success("Login successful!");
-
+    setTimeout(() => {
     if (role === "doctor") {
       navigate("/doctor/dashboard");
     } else {
       navigate("/user/dashboard");
     }
+  }, 1000);
   } catch (error) {
     toast.error(error.message);
   }
+  finally {
+      setLoading(false);
+    }
 };
 
   //Handle Send/Resend OTP
-  const handleSendOrResendOtp = () => {
-    if (!otpSent) sendOtp();
-    else resendOtp();
+const handleSendOrResendOtp = async () => {
+  setOtp(["", "", "", ""]);
+  setOtpSentVisible(false); // reset popup
 
-    setOtp(["", "", "", ""]);
+  try {
+    if (!otpSent) {
+      await sendOtp(); // Wait for success
+    } else {
+      await resendOtp(); // Wait for success
+    }
+
+    // Only after success
     setOtpSentVisible(true);
     setResendDisabled(true);
     setCountdown(60);
@@ -227,7 +257,11 @@ const verifyOtp = async () => {
         return prev - 1;
       });
     }, 1000);
-  };
+  } catch (error) {
+    // Already handled in sendOtp / resendOtp with toast
+    setResendDisabled(false); // make sure button stays enabled
+  }
+};
 
   //Handle Login
 const handleLogin = async (e) => {
@@ -240,6 +274,7 @@ const handleLogin = async (e) => {
     setIdentifierError("Please enter a valid phone number or email");
     return;
   }
+  setLoading(true);
 
   try {
     if (loginWithOtp) {
@@ -266,13 +301,24 @@ const handleLogin = async (e) => {
 
       const data = await res.json();
       if (!res.ok) {
-        toast.error(data.message || "Login failed");
-        return;
-      }
+  // Customize error messages based on backend response
+  if (data.message?.toLowerCase().includes("user not found")) {
+    toast.error("Email or password is incorrect");
+  } else if (data.message?.toLowerCase().includes("invalid password")) {
+    toast.error("Incorrect password");
+  } else if (data.message?.toLowerCase().includes("invalid credentials")) {
+    toast.error("Email or password is incorrect");
+  } else {
+    toast.error(data.message || "Login failed. Please try again.");
+  }
+  return;
+}
+
 
       const authToken = data.authToken || data.token;
+
       if (!authToken) {
-        toast.error("No token received!");
+    toast.error(data.message || "Email or password is incorrect");
         return;
       }
 
@@ -284,18 +330,22 @@ const handleLogin = async (e) => {
         localStorage.setItem("user", JSON.stringify(normalizedUser));
         localStorage.setItem("userId", normalizedUser.id);
       }
-
+      if (role === "doctor" && data.doctor?.id) {
+        localStorage.setItem("doctorId", data.doctor.id);
+      }
       toast.success("Login successful!");
-
+      setTimeout(() => {
       if (role === "doctor") {
         navigate("/doctor/dashboard");
       } else {
         navigate("/user/dashboard");
       }
-    }
-  } catch {
-    toast.error("Something went wrong");
-  }
+    },2000);
+  } }catch (error) {
+  toast.error(error.message || "Network error. Please try again.");
+} finally{
+  setLoading(false);
+}
 };
   
 
@@ -310,7 +360,8 @@ const handleLogin = async (e) => {
         /* Responsive logo */
         .img-logo {
           width: 100%;
-          height: 100%;
+          height: auto;
+          object-fit: contain;
         }
 
         @media (min-width: 768px) and (max-width: 1023px) {
@@ -319,6 +370,13 @@ const handleLogin = async (e) => {
           height: 50%;
         }
         }
+
+       @media (max-width: 767px) {
+  .form-check-input[type="radio"] {
+    width: 15px !important;
+    height: 15px !important;
+    border-radius: 50% !important;
+        }}
 
         @media (max-width: 768px) {
           .img-logo {
@@ -337,6 +395,9 @@ const handleLogin = async (e) => {
 
       <div className="login-wrapper min-vh-100 d-flex justify-content-center align-items-center bg-white">
         <div className="row w-100 mx-0" style={{ maxWidth: "1100px" }}>
+{loading && <LoaderOverlay loading={loading} />}
+
+
           {/* Left Section */}
           <div className="col-12 col-md-6 d-flex justify-content-center align-items-center p-4 p-lg-5 order-2 order-lg-1 form">
             <div style={{ maxWidth: "464px", width: "100%" }}>
@@ -439,6 +500,7 @@ const handleLogin = async (e) => {
           </div>
 
           {/* Right Section */}
+          <div></div>
           <div className="col-12 col-md-6 d-flex justify-content-center align-items-center p-5 order-1 order-md-2">
             <img src={logo} alt="eAsha Healthcare" className="img-fluid img-logo" />
           </div>

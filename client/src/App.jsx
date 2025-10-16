@@ -4,10 +4,22 @@ import Forgotpassword from "./common/LoginPage/Forgotpassword";
 import UserApp from "./user/UserApp";
 import DoctorApp from "./doctor/DoctorApp";
 import LoginFlow from "./common/LoginPage/LoginFlow";
+import { ToastContainer } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
+
 
 function App() {
   return (
     <Router>
+      <ToastContainer
+        position="top-center"
+        autoClose={3000}
+        hideProgressBar={false}
+        newestOnTop={true}
+        closeOnClick
+        pauseOnHover
+        draggable
+      />
       <Routes>
         {/* Common Login Page */}
         <Route path="/*" element={<LoginFlow />} />

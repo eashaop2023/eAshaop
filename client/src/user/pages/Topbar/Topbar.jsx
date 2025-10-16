@@ -4,18 +4,29 @@ import dp from '../../assets/bookreading.png';
 import notification from '../../assets/notification.svg'
 import { useNavigate } from 'react-router-dom';
 import styles from "../../pages/ProfilePage/Profile.module.css"
-import {FiLogOut} from "react-icons/fi"
+import {FiLogOut, FiMenu, FiX} from "react-icons/fi"
 import { API_BASE_URL } from '../../../api-config';
 
-const Topbar = () => {
-  const [isMobile, setIsMobile] = useState(false);
+const Topbar = ({ toggleSidebar: propToggleSidebar, isMobile: propIsMobile } = {}) => {
+  const [calculatedIsMobile, setCalculatedIsMobile] = useState(window.innerWidth < 992);
 
   useEffect(() => {
-    const handleResize = () => setIsMobile(window.innerWidth < 992);
-    handleResize(); // Check on mount
+    const handleResize = () => setCalculatedIsMobile(window.innerWidth < 992);
     window.addEventListener('resize', handleResize);
     return () => window.removeEventListener('resize', handleResize);
   }, []);
+
+  const toggleSidebar = propToggleSidebar;
+  const isMobile = propIsMobile !== undefined ? propIsMobile : calculatedIsMobile;
+  const [profileImage, setProfileImage] = useState(dp);
+
+   useEffect(() => {
+    const storedUser = JSON.parse(localStorage.getItem("user"));
+    if (storedUser?.profileImage?.cloudinaryUrl) {
+      setProfileImage(storedUser.profileImage.cloudinaryUrl);
+    }
+  }, []);
+
 
   const navigate = useNavigate();
 
@@ -56,13 +67,21 @@ const Topbar = () => {
       className={` ${styles.topBarContainer}  w-100 d-flex justify-content-between align-items-center px-3 px-lg-4 py-2 border-bottom bg-white`}
       style={{ border: '1px solid #F7F7F7', position: 'fixed', zIndex: 1050 }}
     >
-      {/* Left: Logo */}
+      {/* Left: Logo and Menu Icon */}
       <div
         className="d-flex align-items-center"
         style={{
           marginLeft: isMobile ? '16px' : '25px',
         }}
       >
+        {isMobile && (
+          <FiMenu
+            size={24}
+            style={{ cursor: "pointer", marginRight: '15px' }}
+            onClick={toggleSidebar}
+            title="Menu"
+          />
+        )}
         <img
           src={logo}
           alt="Logo"
@@ -92,7 +111,7 @@ const Topbar = () => {
         />
        
         <img
-          src={dp}
+          src={profileImage}
           alt="User"
           className="rounded-circle hover:cursor-pointer"
           style={{ width: '48px', height: '48px', objectFit: 'cover' }}

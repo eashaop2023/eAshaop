@@ -5,11 +5,12 @@ import { useNavigate, useLocation } from "react-router-dom";
 import { toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import { API_BASE_URL } from "../../api-config";
-
+import LoaderOverlay from "../../commonComponents/FadeLoader";  
 
 const OtpRegister = () => {
   const [otp, setOtp] = useState(["", "", "", ""]);
   const [error, setError] = useState(false);
+  const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
   const location = useLocation();
   const [showPopup, setShowPopup] = useState(false);
@@ -49,7 +50,7 @@ const OtpRegister = () => {
 const handleSubmit = async (e) => {
   e.preventDefault();
   const enteredOtp = otp.join("").trim();  
-
+  setLoading(true);
   try {
     const res = await fetch(`${API_BASE_URL}/api/doctors/verify-otp`, {
       method: "POST",
@@ -66,11 +67,14 @@ const handleSubmit = async (e) => {
     });
 
     setShowPopup(true);
-  } catch (error) {
-    setError(true);
-  }
-};
-
+    setError(false);
+  } catch (err) {
+      setError(true);
+      toast.error(err.message || "Invalid OTP", { position: "top-center" });
+    } finally {
+      setLoading(false); // ✅ Stop loader
+    }
+  };
 
 // ✅ Resend OTP
 const handleResend = async () => {
@@ -85,6 +89,8 @@ const handleResend = async () => {
     doctorId,
     verifyBy: identifier.includes("@") ? "email" : "mobile",
   });
+
+  setLoading(true);
   try {
     const res = await fetch(`${API_BASE_URL}/api/doctors/resend-verification-otp`, {
       method: "POST",
@@ -108,9 +114,10 @@ body: JSON.stringify({ doctorId, verifyBy: identifier.includes("@") ? "email" : 
       position: "top-center",
       autoClose: 2000,
     });
-  }
-};
-
+  } finally {
+      setLoading(false); // ✅ Stop loader
+    }
+  };
 const handleOkClick = () => {
     setShowPopup(false);
     navigate("/login");
@@ -119,6 +126,7 @@ const handleOkClick = () => {
     
   return (
     <>
+    <LoaderOverlay loading={loading} />
       <style>{`
         .logo-wrapper {
           position: absolute;

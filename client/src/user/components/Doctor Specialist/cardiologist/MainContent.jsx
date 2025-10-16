@@ -2,11 +2,14 @@ import React, { useEffect, useState } from "react";
 import { FiSearch, FiMic, FiX } from "react-icons/fi";
 import { FaStar } from "react-icons/fa";
 import { useParams } from "react-router-dom";
+import "react-toastify/dist/ReactToastify.css";
+import { toast } from "react-toastify";
 
 import Cardiology from "../../../assets/cardiologist/cardiology.png";
 import Doctoricon from "../../../assets/doctoricon.svg";
-import profile from "../../../assets/cardiologist/profileone.png";
-import specialityImage from "../../../assets/cardiologist/life.png";
+// import profile from "../../../assets/cardiologist/profileone.png";
+// import specialityImage from "../../../assets/cardiologist/life.png";
+import specialityImage from "../../../assets/cardiologist/life.png"
 import arrowright from "../../../assets/cardiologist/arrowRight.png"
 import { Link } from "react-router-dom";
 import { useNavigate } from "react-router-dom";
@@ -18,6 +21,7 @@ import video from '../../../assets/confirmappointmenticons/video.svg'
 import walk from '../../../assets/walking_icon.svg'
 import Star from '../../../assets/icons/star.png'
 import { API_BASE_URL } from "../../../../api-config";
+import './MainContent.css';
 
 // const mockDoctors = Array(9).fill({
 //   name: "Dr. Nithish Jagannatham",
@@ -33,32 +37,37 @@ import { API_BASE_URL } from "../../../../api-config";
 const MainContent = ({ selectedFilters, setSelectedFilters, clearAllFilters, onToggleSidebar,categorySlug }) => {
   const navigate = useNavigate();
   const { uuid } = useParams();
-  const [selected, setSelected] = useState("");
+const [selected, setSelected] = useState(
+  sessionStorage.getItem("selectedConsultationType") || ""
+);
+
+  // useEffect(() => {
+  //   localStorage.setItem("consultationType", selected);
+  // }, [selected]);
+
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [isMobileView, setIsMobileView] = useState(window.innerWidth <= 1439);
   const [doctors, setDoctors] = useState([]);
   const [loading, setLoading] = useState(true);
+      const [allDoctors, setAllDoctors] = useState([]);
+  
   
 
 useEffect(() => {
-  if(!uuid) return;
+  if (!uuid) return;
 
   async function fetchDoctors() {
     setLoading(true);
     try {
-      let url = `${API_BASE_URL}/api/categories/${uuid}/doctors`;
-      if (selected) {
-        const mode = selected === "video" ? "Video" : "Clinic";
-        url += `?consultationMode=${mode}`;
-      }
-
+      const url = `${API_BASE_URL}/api/categories/${uuid}/doctors`;
       const res = await fetch(url);
       if (!res.ok) throw new Error("Failed to fetch doctors");
-
       const data = await res.json();
-      setDoctors(data.doctors || []);
+      setAllDoctors(data.doctors || []);
+      setDoctors(data.doctors || []); // show all initially
     } catch (err) {
       console.error("Error fetching doctors:", err);
+      setAllDoctors([]);
       setDoctors([]);
     } finally {
       setLoading(false);
@@ -66,10 +75,25 @@ useEffect(() => {
   }
 
   fetchDoctors();
-}, [uuid, selected]);
+}, [uuid]);
 
-// And just display doctors as is:
-const filteredDoctors = doctors; // no extra filtering needed
+
+
+// Client-side filter when selected toggle changes
+useEffect(() => {
+  if (!selected) {
+    setDoctors(allDoctors);
+  } else {
+              let mode = selected === "video" ? "Video Consultation" : "Clinic Visit";
+
+    const filtered = allDoctors.filter(
+      (doc) => doc.consultationMode === mode || doc.consultationMode === "Both"
+    );
+    setDoctors(filtered);
+  }
+}, [selected, allDoctors]);
+
+
   useEffect(() => {
     function handleResize() {
       setIsMobileView(window.innerWidth <= 1439);
@@ -78,12 +102,20 @@ const filteredDoctors = doctors; // no extra filtering needed
     return () => window.removeEventListener("resize", handleResize);
   }, []);
 
+
+
   const handleRemoveFilter = (category, value) => {
     setSelectedFilters((prev) => ({
       ...prev,
       [category]: prev[category].filter((v) => v !== value),
     }));
   };
+
+  const handleSelect = (type) => {
+  const newValue = selected === type ? "" : type;
+  setSelected(newValue);
+  sessionStorage.setItem("selectedConsultationType", newValue);
+};
   if (loading) return <p>Loading doctors...</p>;
 // const filteredDoctors = doctors.filter(doc => {
 //   if (!selected) return true;
@@ -187,8 +219,8 @@ const filteredDoctors = doctors; // no extra filtering needed
               backgroundColor: selected === "video" ? "#00A99D" : "#ffffff",
               color: selected === "video" ? "white" : "#8E8E8E",
             }}
-            className="btn fw-semibold px-4 py-2 rounded-pill d-flex"
-  onClick={() => setSelected(selected === "video" ? "" : "video")} // toggle off
+            className="btn fw-semibold px-4 py-2 rounded-pill d-flex align-items-center"
+            onClick={() => handleSelect("video")}
           >
             <span className="me-2"><img src={video} height={24} width={24} className="toggle-images"/></span>
             Video Consultant
@@ -198,10 +230,10 @@ const filteredDoctors = doctors; // no extra filtering needed
               backgroundColor: selected === "clinic" ? "#00A99D" : "#ffffff",
               color: selected === "clinic" ? "white" : "#8E8E8E",
             }}
-            className="btn1 fw-semibold  rounded-pill d-flex"
-  onClick={() => setSelected(selected === "clinic" ? "" : "clinic")} // toggle off
+            className="btn1 fw-semibold  rounded-pill d-flex align-items-center "
+            onClick={() => handleSelect("clinic")}
           >
-            <span className="me-1 ps-4"><img src={walk} height={14} width={24} className="toggle-images"/></span>
+            <span className=" clinic-visit me-1 ps-4"><img src={walk} height={14} width={24} className="toggle-images"/></span>
             Clinic Visit
           </button>
         </div>
@@ -249,9 +281,9 @@ const filteredDoctors = doctors; // no extra filtering needed
 
 
       <div className="row">
-                {filteredDoctors.length === 0 && <p>No doctors available for this consultation type.</p>}
+                {doctors.length === 0 && <p>No doctors available for this consultation type.</p>}
 
-        {filteredDoctors.map((doc, index) => (
+        {doctors.map((doc, index) => (
           <div key={index} className="col-md-4 col-sm-6 mb-4">
             <div className="card shadow-sm rounded-4 border-0 h-100">
               <div className="card-body px-4 py-4 d-flex flex-column justify-content-between h-100">
@@ -295,9 +327,9 @@ const filteredDoctors = doctors; // no extra filtering needed
                         className="d-flex speciality mb-3"
                       >
                         <img
-                          src={doc.specialityImage}
+                          src={specialityImage}
                           className="me-1"
-                          alt="Speciality"
+                          alt="Speciality" 
                         />
                         {doc.speciality} <span className="ms-1"> | {doc.experience} Years</span>
                       </div>
@@ -380,19 +412,22 @@ const filteredDoctors = doctors; // no extra filtering needed
 
                 <button
                   className="btn w-100 rounded-pill"
-                  style={{ backgroundColor: "#00B2A9", color: "white", fontSize: '14px' }}
+                  style={{ backgroundColor: "#00B2A9", color: "white", fontSize: "14px" }}
 onClick={() => {
     if (!selected) {
-      alert("Please select a consultation type before booking a slot.");
-      return;
-    }
-    navigate("/user/category/bookappointment", {
-      state: { 
-        doctorId: doc._id,
-        consultationType: selected === "video" ? "Video" : "Clinic"
-      }
-    });
-  }}                >
+      toast.warning("Please select consultation type before booking a slot", {
+        position: "top-center",
+        autoClose: 3000,
+      });
+      return; // stop navigation
+    }                    navigate("/user/category/bookappointment", {
+                      state: {
+                        doctorId: doc._id,
+                        consultationType: selected === "video" ? "Video" : "Clinic",
+                      },
+                    });
+                  }}
+                >
                   Book a slot
                 </button>
               </div>

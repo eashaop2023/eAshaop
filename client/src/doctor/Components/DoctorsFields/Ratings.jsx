@@ -66,74 +66,7 @@ const ReviewsPage = () => {
       </div>
 
       {/* Ratings and Insights */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        {/* Rating Overview */}
-        <div className="col-span-2">
-          <div className="flex flex-col sm:flex-row sm:items-center gap-3 mb-4">
-            <span className="text-4xl font-bold">{avgRating}</span>
-            <div className="flex text-yellow-400">
-              {[...Array(5)].map((_, i) => (
-                <FaStar key={i} />
-              ))}
-            </div>
-            <span className="text-gray-600">({totalReviews} Reviews)</span>
-          </div>
-          {ratingsData.map((item, idx) => (
-            <div key={idx} className="flex items-center mb-2">
-              <span className="w-6 text-gray-600">{item.stars}</span>
-              <div className="flex-1 bg-gray-200 rounded-full h-3 mx-2">
-                <div
-                  className="bg-teal-500 h-3 rounded-full"
-                  style={{
-                    width: `${(item.count / totalReviews) * 100}%`,
-                  }}
-                />
-              </div>
-            </div>
-          ))}
-        </div>
-
-        {/* Quick Insights */}
-        <div className="border border-[#F7F7F7] rounded-lg p-4">
-          <h2 className="text-lg font-medium mb-3">Quick Insights</h2>
-          <p className="flex items-center gap-2 text-gray-700 mb-2">
-            <FaRegStar /> Average Rating: {avgRating}/5
-          </p>
-          <p className="flex items-center gap-2 text-gray-700">
-            <FaRegCommentDots /> Reviews this week: 7
-          </p>
-        </div>
-      </div>
-
-      {/* Review Cards - 2 per row */}
-      <div className="mt-8 grid grid-cols-1 md:grid-cols-2 gap-4">
-        {reviews.map((r, idx) => (
-          <div
-            key={idx}
-            className="border border-[#F7F7F7] rounded-lg p-4 flex flex-col sm:flex-row gap-4 items-start"
-          >
-            <img
-              src={r.avatar}
-              alt={r.name}
-              className="w-12 h-12 rounded-full"
-            />
-            <div className="flex-1">
-              <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center mb-1">
-                <span className="font-medium">{r.name}</span>
-                <span className="flex items-center gap-2 text-sm text-gray-500 mt-1 sm:mt-0">
-                  <div className="flex text-yellow-400">
-                    {[...Array(r.rating)].map((_, i) => (
-                      <FaStar key={i} size={14} />
-                    ))}
-                  </div>
-                  {r.date}
-                </span>
-              </div>
-              <p className="text-gray-700 text-sm sm:text-base">{r.review}</p>
-            </div>
-          </div>
-        ))}
-      </div>
+     
     </div>
   );
 };

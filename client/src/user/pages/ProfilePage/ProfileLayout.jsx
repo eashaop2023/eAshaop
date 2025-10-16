@@ -8,7 +8,8 @@ export default function ProfileLayout() {
 
   const location = useLocation();
   const [hideTopbar, setHideTopbar] = useState(false);
-   
+  const [isSidebarOpen, setIsSidebarOpen] = useState(window.innerWidth >= 992);
+
 const paths = [
   "/profile/security-and-login",
   "/profile"
@@ -21,7 +22,8 @@ useEffect(() => {
     // ✅ Any match?
     const isSecurityPanel = paths.some(p => location.pathname === p);
 
-    setHideTopbar(isSecurityPanel && (w <= 425 || (w > 425 && w <= 768)));
+    setHideTopbar(isSecurityPanel && w >= 425);
+    setIsSidebarOpen(w >= 992);
   };
 
   checkWidth(); // Run once on mount + whenever pathname changes
@@ -29,12 +31,14 @@ useEffect(() => {
   return () => window.removeEventListener("resize", checkWidth);
 }, [location.pathname]); // ✅ Will re-run on route change
 
+  const toggleSidebar = () => {
+    setIsSidebarOpen(prev => !prev);
+  };
 
   return (
     <>
-      {/* <Topbar /> */}
-      {!hideTopbar && <Topbar />}
-      <Sidebar />
+      {!hideTopbar && <Topbar toggleSidebar={toggleSidebar} />}
+      <Sidebar isOpen={isSidebarOpen} setIsOpen={setIsSidebarOpen} />
       <Outlet />
     </>
   );

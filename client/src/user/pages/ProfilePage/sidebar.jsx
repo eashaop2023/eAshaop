@@ -17,18 +17,17 @@ const sidebarOptions = [
   { label: "User details", icon: User, path: "/user/profile" }, 
   { label: "Security and Login", icon: Security, path: "/user/profile/security-and-login" },
   { label: "Payment and Billing", icon: Payment, path: "/user/profile/payment-and-billing" },
-  { label: "Family Members", icon: Family, path: "/user/profile/family-members" },
+  // { label: "Family Members", icon: Family, path: "/user/profile/family-members" },
   { label: "Legal", icon: Legal, path: "/user/profile/legal" },
 ];
 
-export default function Sidebar() {
+export default function Sidebar({ isOpen, setIsOpen }) {
   const navigate = useNavigate();
   const location = useLocation();
 
   // breakpoint: widths < 992px considered mobile/tablet
   const [isMobile, setIsMobile] = useState(window.innerWidth < 992);
   // desktop starts open; mobile starts closed (feel free to invert)
-  const [isOpen, setIsOpen] = useState(window.innerWidth >= 992);
   const [currPath, setCurrPath] = useState(location.pathname);
 
   useEffect(() => setCurrPath(location.pathname), [location.pathname]);
@@ -45,11 +44,7 @@ export default function Sidebar() {
     return () => window.removeEventListener("resize", handleResize);
   }, []);
 
-  // Only allow toggle on mobile/tablet
-  const toggleSidebar = () => {
-    if (!isMobile) return; // NO toggle on desktop
-    setIsOpen((v) => !v);
-  };
+
 
   const handleNavigate = (path) => {
     navigate(path);
@@ -107,17 +102,7 @@ export default function Sidebar() {
         </ListGroup>
       </div>
 
-      {/* Toggle button — render only for mobile/tablet */}
-      {isMobile && (
-        <button
-          onClick={toggleSidebar}
-          className="sb-toggle-btn"
-          title={isOpen ? "Collapse" : "Expand"}
-          aria-label="Toggle sidebar"
-        >
-          {isOpen ? <FiX size={22} /> : <FiMenu size={22} />}
-        </button>
-      )}
+
     </>
   );
 }

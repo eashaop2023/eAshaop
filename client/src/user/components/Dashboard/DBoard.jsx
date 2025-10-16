@@ -24,6 +24,7 @@ import eashalog from "../../assets/eashalog.png";
 import bookread from "../../assets/bookreading.png";
 import { useNavigate } from "react-router-dom";
 import styles from './DBoard.module.css';
+import axios from "axios";
 import { API_BASE_URL } from "../../../api-config";
 
 
@@ -103,35 +104,35 @@ const reminders = [
   },
 ];
 
-const appointments = [
-  {
-    name: "Dr. Jacob Jone",
-    designation: "MD. Physiotherapist",
-    type: "Hospital visit",
-    time: "10:20 am | 26 July 2025",
-    action: "Details",
-    alt: "Cancel",
-    alter: "Hide",
-  },
-  {
-    name: "Dr. Jacob Jone",
-    designation: "MD. Physiotherapist",
-    type: "Hospital visit",
-    time: "11:00 am | 26 July 2025",
-    action: "Details",
-    alt: "Cancel",
-    alter: "Hide ",
-  },
-  {
-    name: "Dr. Jacob Jone",
-    designation: "MD. Physiotherapist",
-    type: "",
-    time: "Today 10:20 am | 26 July 2025",
-    action: "Join",
-    alt: "Cancel",
-    alter: "Hide",
-  },
-];
+// const appointments = [
+//   {
+//     name: "Dr. Jacob Jone",
+//     designation: "MD. Physiotherapist",
+//     type: "Hospital visit",
+//     time: "10:20 am | 26 July 2025",
+//     action: "Details",
+//     alt: "Cancel",
+//     alter: "Hide",
+//   },
+//   {
+//     name: "Dr. Jacob Jone",
+//     designation: "MD. Physiotherapist",
+//     type: "Hospital visit",
+//     time: "11:00 am | 26 July 2025",
+//     action: "Details",
+//     alt: "Cancel",
+//     alter: "Hide ",
+//   },
+//   {
+//     name: "Dr. Jacob Jone",
+//     designation: "MD. Physiotherapist",
+//     type: "",
+//     time: "Today 10:20 am | 26 July 2025",
+//     action: "Join",
+//     alt: "Cancel",
+//     alter: "Hide",
+//   },
+// ];
 
 const prescriptions = [
   { title: "Prescription - 1", subtitle: "Dr. Jackob Jones" },
@@ -158,6 +159,7 @@ function DBoard() {
 
   const [doctors, setDoctors] = useState([]);
   const navigate = useNavigate();
+  const [appointments,setAppointments]=useState([]);
 
 useEffect(() => {
   const storedUser = JSON.parse(localStorage.getItem("user"));
@@ -168,7 +170,24 @@ useEffect(() => {
     setLoading(false);
     return;
   }
-
+   const userId = localStorage.getItem("userId");
+    
+        const fetchAppointments = async () => {
+          try {
+            const res = await axios.get(
+              `${API_BASE_URL}/api/appointments/user/${userId}`
+            );
+            console.log("response from backend",res)
+            setAppointments({
+              upcoming: res.data.upcoming || [],
+              past: res.data.past || [],
+            });
+          } catch (err) {
+            console.error("Error fetching appointments:", err);
+          } finally {
+            setLoading(false);
+          }
+        };
   // Show stored user immediately
   setUser(storedUser);
 
@@ -184,8 +203,31 @@ useEffect(() => {
       console.error("Error fetching user:", err);
     })
     .finally(() => setLoading(false));
+
+        // if (userId) fetchAppointments();
+     
 }, []);
+
 useEffect(() => {
+   const userId = localStorage.getItem("userId");
+    
+        const fetchAppointments = async () => {
+          try {
+            const res = await axios.get(
+              `${API_BASE_URL}/api/appointments/user/${userId}`
+            );
+            console.log("response from backend",res)
+            setAppointments({
+              upcoming: res.data.upcoming || [],
+              past: res.data.past || [],
+            });
+          } catch (err) {
+            console.error("Error fetching appointments:", err);
+          } finally {
+            setLoading(false);
+          }
+        };
+        fetchAppointments();
   fetch(`${API_BASE_URL}/api/doctors/all`)
     .then((res) => res.json())
    .then((data) => {
@@ -300,10 +342,10 @@ useEffect(() => {
             <div className="flex justify-between items-center mb-3">
               <h2 className="sec-header text-[#252525]">Medicine reminder</h2>
               <button
-                className="text-[18px] text-[#494949] leading-[120%] hover:cursor-pointer hover:underline"
-                onClick={() => {
-                  navigate("/medication");
-                }}
+                className="text-[18px] text-[#494949] leading-[120%]"
+                // onClick={() => {
+                //   navigate("/medication");
+                // }}
               >
                 View all
               </button>
@@ -348,73 +390,71 @@ useEffect(() => {
                 View all
               </button>
             </div>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              {appointments.map((a, i) => {
-                const isShown = shownIndex === i;
-                return (
-                  <div
-                    key={i}
-                    className="bg-white p-4 rounded-lg border flex flex-col justify-between"
-                  >
-                    <div>
-                      <div className={`${styles.profileContainer} flex justify-between sm:flex sm:justify-between sm:gap-1 items-start`}>
-                        <div>
-                          <h3 className="docname-header">{a.name}</h3>
-                          <div className={`${styles.stethcontainer} flex items-center gap-2`}>
-                            <img src={Stethoscope} alt="" />
-                            {a.designation && (
-                              <p className="text-[14px] pt-2 text-[#8E8E8E] leading-[120%] mt-1">
-                                {a.designation}
-                              </p>
-                            )}
-                          </div>
-                        </div>
-                        <div className={` h-[55px] w-[55px] sm:h-[45px] xl:h-[55px] rounded-full flex items-center justify-center bg-[#F7F7F7]`} >
-                          <img
-                            src={profile}
-                            alt=""
-                            className="h-[32px] w-[32px]"
-                           
-                          />
-                        </div>
-                      </div>
-                      {a.type && (
-                        <p className={`${styles.docType} text-[14px] text-[#8E8E8E] leading-[120%] mt-1"`}>
-                          {a.type}
-                        </p>
-                      )}
-                      <div className={`${styles.calendarContainer} flex items-center mt-2 gap-2`}>
-                        <CalendarDays className="w-6 h-6 text-gray-400" />
-                        <span>
-                          <p className={`${styles.timepara} text-[14px] pt-3 text-[#8E8E8E] leading-[120%]`}>
-                            {a.time}
-                          </p>
-                        </span>
-                      </div>
-                    </div>
+           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+  {appointments.upcoming?.map((a, i) => {
+    const isShown = shownIndex === i;
+    const dateObj = new Date(a.date);
+    const formattedDate = dateObj.toLocaleDateString("en-GB", {
+      day: "2-digit",
+      month: "short",
+      year: "numeric",
+    });
 
-                    <div className={`${styles.dashBtn} mt-4 w-86 md:w-70 xl:w-[368px] justify-end flex gap-5 space-x-2`}>
-                      <button className="text-[15px] text-[#8E8E8E] font-normal pr-3 leading-[120%] hover:cursor-pointer hover:underline">
-                        {a.alt}
-                      </button>
-                      <button
-                        className={`appointment-btn ${
-                          isShown ? "bg-blue-950" : "bg-[#00A99D]"
-                        } text-[#FFFFFF] hover:cursor-pointer font-normal leading-[120%] px-4 py-2 rounded-[28px]`}
-                        onClick={() => {
-                          setShowContent((prev) => !prev);
-                          setShownIndex((prevIndex) =>
-                            prevIndex === i ? null : i
-                          );
-                        }}
-                      >
-                        {isShown ? a.alter : a.action}
-                      </button>
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
+   return (
+  <div
+    key={i}
+    className="bg-white p-3 rounded-md border flex flex-col justify-between text-sm"
+  >
+    <div>
+      <div className="flex justify-between items-start">
+        <div className="space-y-1">
+          <p className="text-[#333]">
+            <strong>Doctor Name:</strong> {a.doctor.name}
+          </p>
+          <p className="text-[#555]">
+            <strong>Speciality:</strong> {a.doctor.speciality}
+          </p>
+          <p className="text-[#555]">
+            <strong>Consultation Mode:</strong> {a.doctor.consultationMode}
+          </p>
+          <p className="text-[#555]">
+            <strong>Hospital:</strong> {a.doctor.hospitalName}
+          </p>
+        </div>
+
+        <div className="h-[45px] w-[45px] rounded-full flex items-center justify-center bg-[#F7F7F7]">
+          <img
+            src={profile}
+            alt="Doctor"
+            className="h-[28px] w-[28px]"
+          />
+        </div>
+      </div>
+
+      <div className="flex items-center mt-2 gap-2">
+        <CalendarDays className="w-5 h-5 text-gray-400" />
+        <p className="text-[#555]">
+          <strong>Date:</strong> {formattedDate} | <strong>Time:</strong> {a.time}
+        </p>
+      </div>
+    </div>
+
+    <div className="mt-3 flex justify-end">
+      <button
+                className="text-[#494949] text-[18px] font-normal hover:cursor-pointer hover:underline"
+                onClick={() => {
+                  navigate("/user/appointment");
+                }}
+              >
+                View details
+              </button>
+    </div>
+  </div>
+);
+
+  })}
+</div>
+
 
             {showContent && (
               <div className="mt-4 grid grid-cols-1 lg:grid-cols-[350px_2fr] items-center p-4 bg-white rounded-lg border">
@@ -445,9 +485,9 @@ useEffect(() => {
                 </h2>
                 <button
                   className={`${styles.viewallBtn} text-[18px] font-normal leading-[120%] hover:cursor-pointer text-[#494949]`}
-                  onClick={() => {
-                    navigate("/lab");
-                  }}
+                  // onClick={() => {
+                  //   navigate("/lab");
+                  // }}
                 >
                   View all
                 </button>
