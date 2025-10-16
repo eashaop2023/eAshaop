@@ -958,6 +958,7 @@ exports.getDoctorAppointmentsForApp = async (req, res) => {
       totalUpcoming: upcoming.length,
       totalAppointments: total.length,
       todayPatient : todayPatient.length,
+      rating : "3.5",
       upcoming,
       past,
       total
