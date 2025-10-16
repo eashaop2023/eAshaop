@@ -462,7 +462,7 @@ const handleLogin = async (e) => {
                   <div className="form-check form-switch mb-0">
                     <input className="form-check-input" type="checkbox" id="loginWithOtp" checked={loginWithOtp}
                       onChange={() => { setLoginWithOtp(!loginWithOtp); setPasswordError(""); setOtpSentVisible(false); setResendDisabled(false); }} />
-                    <label className="form-check-label" htmlFor="loginWithOtp">{loginWithOtp ? "Login with OTP" : "Login with Password"}</label>
+                    <label className="form-check-label" htmlFor="loginWithOtp">{loginWithOtp ? "Login with Password" : "Login with OTP"}</label>
                   </div>
                   {!loginWithOtp ? (
 <Link to={`/forgot-password?role=${role}`} style={{ color: "#00A99D" }}>Forgot your password?</Link>
