@@ -269,13 +269,16 @@ const DoctorProfilePage = () => {
         const text = await res.text();
         data = { message: text };
       }
-
-      if (!res.ok) throw new Error(data.message || "Failed to update profile");
+      console.log(data)
+      if (!res.ok) {
+        toast.error(data.error)
+        return;
+      }
 
       toast.success("Profile updated successfully!");
       fetchProfile(); // Re-fetch to get the latest data
     } catch (err) {
-      console.error(err);
+      console.error(err.message);
       toast.error(err.message || "An error occurred while updating.");
       setError(err.message);
     }
