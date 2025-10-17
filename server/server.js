@@ -3,6 +3,7 @@ const dotenv = require("dotenv");
 const mongoose = require("mongoose");
 const bodyParser = require("body-parser");
 const cors = require("cors");
+const multer=require("multer")
 
 dotenv.config();
 console.log("Loaded CLOUD_NAME:", process.env.CLOUDINARY_CLOUD_NAME);
@@ -128,6 +129,14 @@ app.listen(PORT, () => {
 
 // -------------------- ERROR HANDLER --------------------
 app.use((err, req, res, next) => {
-  console.error(err.stack);
-  res.status(500).json({ error: "Something broke!" });
+  if (err instanceof multer.MulterError) {
+    return res.status(400).json({ error: err.message });
+  } else if (err && err.message.includes("Invalid file type")) {
+    return res.status(400).json({ error: err.message });
+  } else if (err) {
+    console.error("Unexpected error:", err);
+    return res.status(500).json({ error: "Something went wrong" });
+  }
+  next();
 });
+
