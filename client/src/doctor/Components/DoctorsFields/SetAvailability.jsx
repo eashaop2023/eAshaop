@@ -52,11 +52,14 @@ const CalendarAndSlots = () => {
       return;
     }
 
-    const dateOnly = new Date(
+    const dateOnlyUTC = new Date(
       selectedDate.getFullYear(),
       selectedDate.getMonth(),
       selectedDate.getDate()
-    ).toISOString();
+    ); 
+
+    dateOnlyUTC.setMinutes(dateOnlyUTC.getMinutes() + 330);
+    const dateOnly = dateOnlyUTC.toISOString().split('T')[0];
 
     const payload = {
       date: dateOnly,
@@ -66,6 +69,7 @@ const CalendarAndSlots = () => {
     };
 
     try {
+      console.log(payload)
       const response = await fetch(
         `${API_BASE_URL}/api/doctors/${doctorId}/availability`,
         {
@@ -77,6 +81,11 @@ const CalendarAndSlots = () => {
 
       const data = await response.json();
       if (response.ok) {
+        let newDate = new Date();
+        newDate.setHours(0, 0, 0, 0);
+        setSelectedDate(newDate)
+        setSlot({start:"",end:"",duration:""});
+        
         toast.success("Availability saved for " + selectedDate.toDateString());
       } else {
         toast.error(data.message || "Error saving availability");
