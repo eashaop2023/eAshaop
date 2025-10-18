@@ -6,6 +6,7 @@ import styles from "../../pages/ProfilePage/Profile.module.css";
 import { API_BASE_URL } from "../../../api-config";
 import { toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
+import LoaderOverlay from "../../../commonComponents/FadeLoader";
 
 function useIsMobileOrTablet() {
   const [isMobileOrTablet, setIsMobileOrTablet] = useState(window.innerWidth < 1024);
@@ -119,6 +120,8 @@ const handleSave = async () => {
     return;
   }
 
+   setLoading(true);
+
   try {
     const storedUser = JSON.parse(localStorage.getItem("user"));
     const payload = {
@@ -146,10 +149,10 @@ const handleSave = async () => {
   } catch (error) {
     console.error("Update error:", error);
     toast.error("Something went wrong while updating profile.");
-
+  } finally {
+    setLoading(false); // 👈 Hide loader
   }
 };
-
   const handleImageChange = async (e) => {
     const file = e.target.files[0];
     if (!file) return;
@@ -159,6 +162,7 @@ const handleSave = async () => {
     formDataObj.append("profileImage", file);
 
     try {
+      setLoading(true);
     const res = await fetch(
       `${API_BASE_URL}/api/user/update-profile-image/${storedUser.id}`, // ✅ PUT route
       {
@@ -172,10 +176,13 @@ const handleSave = async () => {
 
         const updatedUser = { ...storedUser, profileImage: { cloudinaryUrl: data.imageUrl } };
     localStorage.setItem("user", JSON.stringify(updatedUser));
+        toast.success("Profile image updated successfully!"); // ✅ better UX
 
   } catch (err) {
-    console.error(err);
-    alert("Image upload failed");
+    console.error("Image upload error:", err);
+    toast.error("Image upload failed!");
+  } finally {
+    setLoading(false); // 👈 hide loader
   }
 };
 
@@ -194,10 +201,11 @@ const handleSave = async () => {
 
 
 
-  if (loading) return <p>Loading profile...</p>;
+if (loading) return <LoaderOverlay loading={true} />;
   return (
-    
-    
+      <>
+         <LoaderOverlay loading={loading} />
+
     <Container
       fluid
       className="px-3 px-md-5"
@@ -525,5 +533,6 @@ style={{
         </Col>
       </Row>
     </Container>
+    </>
   );
 }

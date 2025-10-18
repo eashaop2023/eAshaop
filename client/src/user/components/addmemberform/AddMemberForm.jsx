@@ -30,12 +30,13 @@ const AddMemberForm = ({ onClose,onAdd }) => {
         if (!value) return "Full name is required.";
         if (!/^[a-zA-Z\s]+$/.test(value)) return "Name can only contain letters and spaces.";
         return "";
-      case "dob":
+      case "dob":{
         if (!value) return "Date of birth is required.";
         const parsedDate = parse(value, "dd-MM-yyyy", new Date());
         if (!isValid(parsedDate)) return "Invalid date format. Use DD-MM-YYYY.";
         if (isAfter(parsedDate, new Date())) return "Date of birth cannot be in the future.";
         return "";
+      }
       case "mobileNumber":
         if (!value) return "Mobile number is required.";
         if (!/^\d{10}$/.test(value)) return "Mobile number must be 10 digits.";
@@ -154,7 +155,13 @@ const AddMemberForm = ({ onClose,onAdd }) => {
   };
 
   return (
-    <div className={`${styles.mainContainer} d-flex justify-content-center align-items-center vh-100`}>
+    <div className={`${styles.mainContainer} d-flex justify-content-center  `}
+     style={{
+      overflowY:'auto',
+      marginTop:'60px'
+      
+     }}
+    >
       <div className="bg-white rounded-4 p-5" style={{ width: "90%", maxWidth: "800px" }}>
         <div className="d-flex justify-content-between align-items-center mb-3">
           <h5 className="mb-0">Add New Member</h5>

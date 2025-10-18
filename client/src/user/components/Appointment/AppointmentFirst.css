@@ -73,13 +73,16 @@
   background: transparent;
 }
 
+.appointment-section::-webkit-scrollbar {
+  width: 0px !important;
+  background: transparent !important;
+}
+
    .appointment-section {
-    max-height: 100vh;
     margin-top: -70px !important;
-    overflow-y: auto; /* scroll only if needed */
     padding-left: 16px;
-  
-    width: 50% !important; 
+    overflow-y: auto;
+    width: 50% !important;
   }
 
   .appointment-section::-webkit-scrollbar {
@@ -90,10 +93,7 @@
   .appointment-div {
     position: relative; /* remove fixed/sticky */
     overflow: visible;
-    max-height: none;
   }
-}
-
 
 @media (max-width: 576px) {
   .doctor-photo {
@@ -185,4 +185,39 @@
 }
 
 
+html,body{
+  overflow-y: overlay;
+}
 
+.doctor-details,.appointment-section{
+  scrollbar-width: none !important;
+  -ms-overflow-style:none !important;
+}
+
+.doctor-details::-webkit-scrollbar,
+.appointment-section::-webkit-scrollbar{
+  width: 0 !important;
+  height: 0 !important;
+  display: none !important;
+}
+}
+
+
+.dependents-container {
+  max-height: calc(3 * 72px + 24px); /* height of 3 items + gaps (adjust 72px per item) */
+  overflow-y: auto;
+}
+
+/* Optional: hide scrollbar but allow scrolling */
+.dependents-container::-webkit-scrollbar {
+  width: 0px;
+}
+
+.dependents-container::-webkit-scrollbar-thumb {
+  background-color: rgba(0, 169, 157, 0.5);
+  border-radius: 3px;
+}
+
+.dependents-container::-webkit-scrollbar-track {
+  background: transparent;
+}

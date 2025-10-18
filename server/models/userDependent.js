@@ -49,6 +49,7 @@ const userDependentSchema = new Schema(
       enum: ["male", "female", "intersex", "other"],
       set: (v) => v.toLowerCase(),
     },
+    isDeleted: { type: Boolean, default: false },
     address: { type: String, trim: true, minlength: 10 },
     pincode: {
       type: String,

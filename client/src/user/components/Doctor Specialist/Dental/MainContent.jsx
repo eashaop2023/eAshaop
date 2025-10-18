@@ -8,7 +8,7 @@ import Doctoricon from "../../../assets/doctoricon.svg";
 // import specialityimage from "../../../assets/cardiologist/life.png";
 import arrowright from "../../../assets/cardiologist/arrowRight.png"
 import { Link } from "react-router-dom";
-import { useNavigate,useParams } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import { API_BASE_URL } from "../../../../api-config";
 import './MainContent.css'
 
@@ -21,6 +21,10 @@ import walk from '../../../assets/walking_icon.svg'
 import Star from '../../../assets/icons/star.png'
 import { toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
+import { useParams } from "react-router-dom";
+import "react-toastify/dist/ReactToastify.css";
+import './MainContent.css';
+
 
 // const mockDoctors = Array(9).fill({
 //   name: "Dr. Nithish Jagannatham",
@@ -36,7 +40,9 @@ import "react-toastify/dist/ReactToastify.css";
 const MainContent = ({ selectedFilters, setSelectedFilters, clearAllFilters, onToggleSidebar,categorySlug }) => {
   const navigate = useNavigate();
   const { uuid } = useParams();
-  const [selected, setSelected] = useState(sessionStorage.getItem("selectedConsultation") || "");
+const [selected, setSelected] = useState(
+  sessionStorage.getItem("selectedConsultation") || ""
+);
   // const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [isMobileView, setIsMobileView] = useState(window.innerWidth <= 1439);
   const [doctors, setDoctors] = useState([]);
@@ -74,9 +80,7 @@ const MainContent = ({ selectedFilters, setSelectedFilters, clearAllFilters, onT
       if (!selected) {
         setDoctors(allDoctors);
       } else {
-        let mode = "";
-        if (selected === "video") mode = "Video Consultation";
-        if (selected === "clinic") mode = "Clinic Visit";
+                        let mode = selected === "video" ? "Video Consultation" : "Clinic Visit";
     
         const filtered = allDoctors.filter(
           (doc) => doc.consultationMode === mode || doc.consultationMode === "Both"
