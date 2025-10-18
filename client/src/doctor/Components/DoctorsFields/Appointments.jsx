@@ -1482,7 +1482,7 @@ const Appointments = () => {
         @media (max-width: 768px) {
           .appointments-container {
             padding: 15px;
-            margin-top: 20px;
+            margin-top: 100px;
           }
           .controls-container {
             flex-direction: column;
