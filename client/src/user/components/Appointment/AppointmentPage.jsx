@@ -127,6 +127,10 @@ useEffect(() => {
   // Add member
   const handleAddMember = async (memberData) => {
     try {
+
+       if (members.length >= 5) {
+      return toast.error("You can add a maximum of 4 dependents per user.");
+    }
 const storedUser = JSON.parse(localStorage.getItem("user") || "{}");
 const userId = storedUser._id || storedUser.id;
 
@@ -275,7 +279,7 @@ if (!userId) return toast.error("User not found");
             <h5 className="fw-medium mb-3">Book Appointment</h5>
 
             {/* Members */}
-            <div className="mb-3">
+            <div className="mb-3 dependents-container">
               {members.map((member, idx) => (
                 <div key={idx} className="d-flex justify-content-between align-items-center p-3 rounded-pill mb-3 border dependent">
                   <div>
@@ -286,8 +290,10 @@ if (!userId) return toast.error("User not found");
                   <Form.Check type="radio" name="patient" checked={selectedMemberIndex === idx} onChange={() => setSelectedMemberIndex(idx)} />
                 </div>
               ))}
-              <a href="#" onClick={(e) => { e.preventDefault(); setShowAddMember(true); }} style={{ color: '#00A99D', fontSize: '0.9rem' }}>Add dependent</a>
             </div>
+                          <a href="#" onClick={(e) => { e.preventDefault(); setShowAddMember(true); }} style={{ color: '#00A99D', fontSize: '0.9rem' }}>Add dependent</a>
+
+
 
             {/* Calendar */}
             <div className="d-flex align-items-center justify-content-between mb-3 flex-wrap calendar-days-container">
