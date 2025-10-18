@@ -5,8 +5,8 @@ export const categories = [
   { name: "Neurologist",uuid:"r1ArfRKaU_" },
   { name: "Ophthalmology", uuid:"whHEP4Ba-m" },
   { name: "ENT", uuid:"4A31RiqS_M" },
-  { name: "Dental", uuid:"u3bp-C0G4f" },
+  { name: "Dentist", uuid:"u3bp-C0G4f" },
   { name: "Women health", uuid:"EGGSWzg5RE" },
-  { name: "Skin Beauty", uuid:"_jCoVKpbHK" },
+  { name: "Skin & Beauty", uuid:"_jCoVKpbHK" },
   { name: "Mental health",uuid:"QWonnSUTJw" },
 ];

@@ -73,7 +73,7 @@ export default function AppointmentPage() {
             : true;
         });
 
-        slots = slots.slice(0, 8);
+        // slots = slots.slice(0, 8);
         setAvailableSlots(slots);
         setSelectedSlot((prev) => (!prev && slots.length > 0 ? slots[0].start : prev));
       } catch (err) {
@@ -181,20 +181,30 @@ if (!userId) return toast.error("User not found");
   };
 
   // Remove dependent
-  const removeDependent = async (index) => {
-    const dep = members[index];
-    if (!dep || dep.isUser) return;
+// Remove dependent
+const removeDependent = async (index) => {
+  const dep = members[index];
+  if (!dep || dep.isUser) return;
 
-    try {
-      await axios.delete(`${API_BASE_URL}/api/users/dependent/${dep._id}`);
-      setMembers((prev) => prev.filter((_, i) => i !== index));
-      if (selectedMemberIndex === index) setSelectedMemberIndex(0);
-      toast.success("Dependent removed");
-    } catch (err) {
-      console.error("Error removing dependent:", err);
-      toast.error("Failed to remove dependent");
-    }
-  };
+  try {
+    console.log("Removing dependent:", dep);
+
+    const res = await axios.post(
+      `${API_BASE_URL}/api/user/dependent`, // endpoint
+      { _id: dep._id },                     // body
+      { params: { removeDependent: true } } // query params
+    );
+
+    // Update state
+    setMembers((prev) => prev.filter((_, i) => i !== index));
+    if (selectedMemberIndex === index) setSelectedMemberIndex(0);
+
+    toast.success(res.data.message || "Dependent removed successfully");
+  } catch (err) {
+    console.error("Error removing dependent:", err);
+    toast.error(err.response?.data?.message || "Failed to remove dependent");
+  }
+};
 
 
   const handleDateChange = (date) => {

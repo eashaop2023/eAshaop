@@ -1002,29 +1002,33 @@ exports.updateDocument = async (req, res) => {
 
 exports.userDependent = async (req, res) => {
   try {
-    let { userId, full_name, phone_number, gender, email, dob, relation, address, pincode } = req.body;
+    const { userId, full_name, phone_number, gender, email, dob, relation, address, pincode, _id } = req.body;
 
-    // Validate required fields
+    if (req.query.removeDependent == "true") {
+      if (!_id) return res.status(400).json({ message: "Dependent _id is required for removal" });
+
+      let dependent = await userDependent.findById(_id);
+      if (!dependent) return res.status(404).json({ message: "Dependent not found" });
+
+      dependent.isDeleted = true;
+      await dependent.save();
+
+      return res.status(200).json({ message: "Dependent deleted successfully" });
+    }
+
     if (!userId || !full_name || !phone_number || !gender || !relation || !email || !dob || !address || !pincode) {
       return res.status(400).json({ message: "All fields are required" });
     }
 
-    // Normalize values
     const normalizedPhone = phone_number.replace(/\D/g, "");
-    const formattedPhone =
-      normalizedPhone.length === 10 ? `+91${normalizedPhone}` : `+${normalizedPhone}`;
+    const formattedPhone = normalizedPhone.length === 10 ? `+91${normalizedPhone}` : +`${normalizedPhone}`;
     const normalizedEmail = email.trim().toLowerCase();
 
-    // Check if dependent exists
     let existingDependent = await userDependent.findOne({
-      $or: [
-        { phone_number: formattedPhone },
-        { email: normalizedEmail }
-      ],
+      $or: [{ phone_number: formattedPhone }, { email: normalizedEmail }],
     });
 
     if (existingDependent) {
-      // Update existing dependent
       existingDependent.userId = userId;
       existingDependent.full_name = full_name;
       existingDependent.phone_number = formattedPhone;
@@ -1038,9 +1042,7 @@ exports.userDependent = async (req, res) => {
 
       await existingDependent.save();
 
-      return res.status(200).json({
-        message: "Existing dependent updated successfully",
-      });
+      return res.status(200).json({ message: "Existing dependent updated successfully" });
     }
 
     const newDependent = new userDependent({
@@ -1058,11 +1060,8 @@ exports.userDependent = async (req, res) => {
 
     await newDependent.save();
 
-    res.status(201).json({
-      message: "New dependent registered successfully",
-    });
+    res.status(201).json({ message: "New dependent registered successfully" });
   } catch (err) {
-    console.error("Dependent registration error:", err);
-    res.status(500).json({ message: "Server error" });
+    res.status(500).json({ message: "Server error", err });
   }
 };
