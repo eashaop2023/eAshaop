@@ -853,7 +853,7 @@ const sliderSettings = {
     {
       breakpoint: 1024, // For tablets and smaller desktops
       settings: {
-        slidesToShow: 2,
+        slidesToShow: 1,
         arrows: true, // Keep arrows for mid-size screens
       },
     },
