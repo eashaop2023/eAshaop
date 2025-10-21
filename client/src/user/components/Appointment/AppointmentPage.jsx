@@ -5,6 +5,7 @@ import axios from "axios";
 import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
 import { API_BASE_URL } from "../../../api-config";
+import "./AppointmentFirst.css";
 
 import Profile from "../../assets/confirmappointmenticons/doctor.jpg";
 import Call from "../../assets/confirmappointmenticons/call.svg";
@@ -14,42 +15,29 @@ import AddMemberForm from "../addmemberform/AddMemberForm";
 import { toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 
-
 export default function AppointmentPage() {
   const [startDate, setStartDate] = useState(() => {
     const d = new Date();
     d.setHours(0, 0, 0, 0);
     return d;
   });
-const [selectedSlot, setSelectedSlot] = useState(() => {
-  return sessionStorage.getItem("selectedSlot") || null;
-});
+  const [selectedSlot, setSelectedSlot] = useState(() => {
+    return sessionStorage.getItem("selectedSlot") || null;
+  });
   const [availableSlots, setAvailableSlots] = useState([]);
-
   const [members, setMembers] = useState([]);
   const [selectedMemberIndex, setSelectedMemberIndex] = useState(0);
   const [showAddMember, setShowAddMember] = useState(false);
   const [doctor, setDoctor] = useState(null);
-  const [isMobile, setIsMobile] = useState(window.innerWidth <= 1020);
 
   const datePickerRef = useRef(null);
-  const bottomRef = useRef(null);
-
   const navigate = useNavigate();
   const location = useLocation();
   const { doctorId, consultationType } = location.state || {};
 
-  // Responsive
-  useEffect(() => {
-    const handleResize = () => setIsMobile(window.innerWidth <= 1020);
-    window.addEventListener("resize", handleResize);
-    return () => window.removeEventListener("resize", handleResize);
-  }, []);
-
-  // Fetch doctor details
+  // Fetch doctor
   useEffect(() => {
     if (!doctorId) return;
-
     const fetchDoctor = async () => {
       try {
         const res = await axios.get(`${API_BASE_URL}/api/doctors/${doctorId}`);
@@ -58,7 +46,6 @@ const [selectedSlot, setSelectedSlot] = useState(() => {
         console.error("Error fetching doctor:", err);
       }
     };
-
     fetchDoctor();
   }, [doctorId]);
 
@@ -69,31 +56,28 @@ const [selectedSlot, setSelectedSlot] = useState(() => {
     const fetchSlots = async () => {
       try {
         const dateStr = startDate.toLocaleDateString("en-CA");
-        const res = await axios.get(`${API_BASE_URL}/api/doctors/${doctorId}/availability/${dateStr}`);
+        const res = await axios.get(
+          `${API_BASE_URL}/api/doctors/${doctorId}/availability/${dateStr}`
+        );
         let slots = res.data.slots || [];
 
         const today = new Date();
         today.setHours(0, 0, 0, 0);
 
-        slots = slots.filter(slot => {
+        slots = slots.filter((slot) => {
           const [hour, minute] = slot.start.split(":").map(Number);
           const slotTime = new Date(startDate);
           slotTime.setHours(hour, minute, 0, 0);
-
           return startDate.toDateString() === today.toDateString()
             ? slotTime >= new Date()
             : true;
         });
 
-        slots = slots.slice(0, 8); // Limit next 8 slots
+        // slots = slots.slice(0, 8);
         setAvailableSlots(slots);
-setSelectedSlot(prev => {
-        if (!prev && slots.length > 0) {
-          return slots[0].start;
-        }
-        return prev; // keep previously saved one
-      });
-    } catch (err) {        console.error("Error fetching slots:", err);
+        setSelectedSlot((prev) => (!prev && slots.length > 0 ? slots[0].start : prev));
+      } catch (err) {
+        console.error("Error fetching slots:", err);
         setAvailableSlots([]);
         setSelectedSlot(null);
       }
@@ -104,75 +88,126 @@ setSelectedSlot(prev => {
     return () => clearInterval(interval);
   }, [doctorId, startDate]);
 
-  // Load user & dependents from localStorage
-  useEffect(() => {
-    const storedUser = localStorage.getItem("user");
+  // Load user & dependents
+useEffect(() => {
+  const fetchUserAndDependents = async () => {
+    const storedUser = JSON.parse(localStorage.getItem("user"));
     if (!storedUser) return;
 
-    const user = JSON.parse(storedUser);
-//     const calculateAge = dob => {
-//   if (!dob) return "Not Provided"; // handle missing DOB
-//   const birthDate = new Date(dob);
-//   if (isNaN(birthDate.getTime())) return "Not Provided"; // invalid date
-//   const today = new Date();
-//   let age = today.getFullYear() - birthDate.getFullYear();
-//   const monthDiff = today.getMonth() - birthDate.getMonth();
-//   if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birthDate.getDate())) age--;
-//   return age;
-// };
-
-
     const mainUser = {
-  name: user.full_name || user.name || "Unknown Patient",
-  age: user.age || "Not Provided", // use age from localStorage
-  sex: user.gender || user.sex || "Not Provided", // fallback to stored gender
-  isUser: true,
-  _id: user._id || user.id
+      name: storedUser.full_name || storedUser.name || "Unknown Patient",
+      age: storedUser.age || "Not Provided",
+      sex: storedUser.sex || storedUser.gender || "Not Provided",
+      isUser: true,
+      _id: storedUser._id || storedUser.id,
+    };
+
+    try {
+      // Call backend to fetch dependents
+      const res = await axios.get(`${API_BASE_URL}/api/user/${mainUser._id}`);
+      const dependents = (res.data.userDependent || []).map(dep => ({
+        name: dep.full_name,
+        age: Math.floor((Date.now() - new Date(dep.dob).getTime()) / 31557600000),
+        sex: dep.gender,
+        isUser: false,
+        _id: dep._id,
+      }));
+
+      setMembers([mainUser, ...dependents]);
+      setSelectedMemberIndex(0);
+    } catch (err) {
+      console.error("Error fetching dependents:", err);
+      setMembers([mainUser]); // fallback
+    }
+  };
+
+  fetchUserAndDependents();
+}, []);
+
+  // Add member
+  const handleAddMember = async (memberData) => {
+    try {
+
+       if (members.length >= 5) {
+      return toast.error("You can add a maximum of 4 dependents per user.");
+    }
+const storedUser = JSON.parse(localStorage.getItem("user") || "{}");
+const userId = storedUser._id || storedUser.id;
+
+if (!userId) return toast.error("User not found");
+
+ if (!memberData.address || memberData.address.length < 10) {
+      return toast.error("Address must be at least 10 characters long");
+    }
+
+     // Convert DOB from "DD-MM-YYYY" to Date object
+    const [day, month, year] = memberData.dob.split("-");
+    const dobDate = new Date(year, month - 1, day);
+    if (isNaN(dobDate.getTime())) {
+      return toast.error("Invalid date of birth");
+    }
+
+      const payload = {
+        userId,
+        full_name: memberData.fullName,
+        phone_number: memberData.mobileNumber,
+        gender: memberData.gender,
+        email: memberData.email,
+        dob: dobDate,
+        relation: memberData.relation,
+        address: memberData.address,
+        pincode: memberData.pinCode,
+      };
+
+      const res = await axios.post(`${API_BASE_URL}/api/user/dependent`, payload);
+      toast.success(res.data.message);
+
+      const age = Math.floor((Date.now() - dobDate.getTime()) / 31557600000);
+
+      const newMember = {
+        name: memberData.fullName,
+        age,
+        sex: memberData.gender,
+        isUser: false,
+        _id: res.data.dependentId || null,
+      };
+
+      setMembers((prev) => [...prev, newMember]);
+      setShowAddMember(false);
+    } catch (err) {
+      console.error("Error adding dependent:", err);
+      toast.error(err.response?.data?.message || "Failed to add dependent");
+    }
+  };
+
+  // Remove dependent
+// Remove dependent
+const removeDependent = async (index) => {
+  const dep = members[index];
+  if (!dep || dep.isUser) return;
+
+  try {
+    console.log("Removing dependent:", dep);
+
+    const res = await axios.post(
+      `${API_BASE_URL}/api/user/dependent`, // endpoint
+      { _id: dep._id },                     // body
+      { params: { removeDependent: true } } // query params
+    );
+
+    // Update state
+    setMembers((prev) => prev.filter((_, i) => i !== index));
+    if (selectedMemberIndex === index) setSelectedMemberIndex(0);
+
+    toast.success(res.data.message || "Dependent removed successfully");
+  } catch (err) {
+    console.error("Error removing dependent:", err);
+    toast.error(err.response?.data?.message || "Failed to remove dependent");
+  }
 };
 
 
-    setMembers([mainUser, ...(user.dependents || [])]);
-
-    console.log("Loaded user from localStorage:", user);
-  console.log("Main user object used in appointment page:", mainUser)
-  }, []);
-
-  // Handle adding a dependent
-  const handleAddMember = memberData => {
-    const [day, month, year] = memberData.dob.split("-");
-    const dobDate = new Date(year, month - 1, day);
-    const age = Math.floor((Date.now() - dobDate.getTime()) / 31557600000);
-
-    const newMember = { name: memberData.fullName, age, sex: memberData.gender, isUser: false };
-    setMembers(prev => {
-      const updated = [...prev, newMember];
-      const storedUser = JSON.parse(localStorage.getItem("user")) || {};
-      const dependents = storedUser.dependents || [];
-      const isDuplicate = dependents.some(d => d.name === newMember.name && d.age === newMember.age && d.sex === newMember.sex);
-      if (!isDuplicate) {
-        storedUser.dependents = [...dependents, newMember];
-        localStorage.setItem("user", JSON.stringify(storedUser));
-      }
-      return updated;
-    });
-    setShowAddMember(false);
-  };
-
-  // Remove a dependent
-  const removeDependent = index => {
-    setMembers(prev => {
-      const updated = prev.filter((m, i) => i !== index || m.isUser);
-      const storedUser = JSON.parse(localStorage.getItem("user")) || {};
-      storedUser.dependents = updated.filter(m => !m.isUser);
-      localStorage.setItem("user", JSON.stringify(storedUser));
-
-      if (selectedMemberIndex === index) setSelectedMemberIndex(0);
-      return updated;
-    });
-  };
-
-  // Handle date change
-  const handleDateChange = date => {
+  const handleDateChange = (date) => {
     if (!date) return;
     const normalized = new Date(date);
     normalized.setHours(0, 0, 0, 0);
@@ -181,7 +216,6 @@ setSelectedSlot(prev => {
 
   const handleCalendarClick = () => {
     if (datePickerRef.current) datePickerRef.current.setOpen(true);
-    setTimeout(() => window.scrollBy({ top: -120, behavior: "smooth" }), 120);
   };
 
   const weekDays = Array.from({ length: 7 }).map((_, i) => {
@@ -191,72 +225,71 @@ setSelectedSlot(prev => {
     return d;
   });
 
-
   useEffect(() => {
-  if (selectedSlot) {
-    sessionStorage.setItem("selectedSlot", selectedSlot);
-  }
-}, [selectedSlot]);
+    if (selectedSlot) sessionStorage.setItem("selectedSlot", selectedSlot);
+  }, [selectedSlot]);
 
-  const mainUser = members.find(m => m.isUser);
   const selectedMember = members[selectedMemberIndex];
 
   return (
     <Container fluid className="p-4 doctor-details-container main-container" style={{ fontFamily: "Urbanist, sans-serif" }}>
       <Row className="doctor-info">
-        {/* Left Column: Doctor Details */}
-        <Col xs={12} lg={4} className="pe-lg-5 mb-4 mb-lg-0 doctor-details">
-          <div style={{ padding: "0 16px", width: "100%", display: "flex", flexDirection: "column", gap: "24px", marginTop: "80px", marginLeft: "40px" }}>
-            <button onClick={() => navigate(-1)} className="btn btn-link d-flex align-items-lg-center text-decoration-none mb-3 d-inline-block book-btn" style={{ color: "#00A99D", fontWeight: 500, fontSize: "18px", paddingTop: "10px", marginLeft: "0px" }}>
-              <img src={Arrowleft} alt="Back" style={{ width: "24px", height: "24px", marginRight: "8px", verticalAlign: "middle" }} />
+        {/* Left: Doctor Details */}
+        <Col xs={12} lg={4} className=" mb-4 mb-lg-0 doctor-details" style={{width:'100%'}}>
+          <div style={{ padding: "0 16px", display: "flex", flexDirection: "column", gap: "24px", marginTop: "80px", marginLeft: "40px" }}>
+            <button onClick={() => navigate(-1)} className="btn btn-link d-flex align-items-center text-decoration-none mb-3" style={{ color: "#00A99D", fontWeight: 500, fontSize: "18px" }}>
+              <img src={Arrowleft} alt="Back" style={{ width: "24px", height: "24px", marginRight: "8px" }} />
               Doctors
             </button>
 
-            <div className="mb-3 doctor-img-data w-100">
-              <div className="d-flex justify-content-center w-100 bottom-2 mb-3">
-                <img src={doctor?.profileImage || Profile} alt={`Dr. ${doctor?.name}`} className="rounded-circle appointment-image" style={{ height: '120px', width: '120px', objectFit: 'cover' }} />
+            <div className="doctor-img-data w-100">
+              <div className="d-flex justify-content-center w-100 mb-3">
+                <img src={doctor?.profileImage || Profile} alt={doctor?.name} className="rounded-circle appointment-image" style={{ height: '120px', width: '120px', objectFit: 'cover' }} />
               </div>
               <div className="doctor-data d-flex flex-column gap-2">
                 <h5 className="mt-3 mb-0 fw-bold text-[22px]">{doctor?.name} <small className="fw-medium text-[18px]">{doctor?.education}</small></h5>
                 <p className="text-muted fw-medium text-[18px] mb-0">♡ {doctor?.speciality}</p>
-                <div className="d-flex align-items-center fw-medium text-[18px] gap-1 text-muted"><span style={{ color: "#FDCB02", fontSize: "16px" }}>★</span><span>{doctor?.averageRating} / 5</span></div>
+                <div className="d-flex align-items-center fw-medium text-[18px] gap-1 text-muted">
+                  <span style={{ color: "#FDCB02", fontSize: "16px" }}>★</span><span>{doctor?.averageRating} / 5</span>
+                </div>
               </div>
             </div>
 
-            <div className="d-flex w-100 justify-content-between mb-3 button-group-mobile">
-              <Button variant="outline" className="w-100 fw-normal text-[18px] call-btn" style={{ backgroundColor: "#EDFFFE", color: "#00A99D", borderRadius: "28px", height: "72px", width: "272px", display: "flex", alignItems: "center", justifyContent: "center", gap: "10px" }}>
+            <div className="d-flex w-100 justify-content-between mb-3">
+<Button variant="outline" className="w-100 fw-normal text-[18px] call-btn" style={{ backgroundColor: "#EDFFFE", color: "#00A99D", borderRadius: "28px", height: "72px", width: "272px", display: "flex", alignItems: "center", justifyContent: "center", gap: "10px" }}>
                 <img src={Call} alt="call" className="h-8 w-8 text-[18px]" /> <span className="fw-normal text-[20px]">Call</span>
               </Button>
             </div>
 
             <div className="heading w-100">
-              <h6 className="fw-bold w-100" style={{ fontSize: "18px" }}>About</h6>
-              <p className="text-muted small w-100" style={{ fontSize: "17px" }}>{doctor?.about}</p>
-
+              <h6 className="fw-bold" style={{ fontSize: "18px" }}>About</h6>
+              <p className="text-muted small doctor-about" style={{ fontSize: "17px" }}>{doctor?.about}</p>
               <h6 className="fw-bold" style={{ fontSize: "18px" }}>Languages</h6>
-              <p className="text-muted small" style={{ fontSize: "17px" }}>{doctor?.languages?.join(', ')}</p>
-
+              <p className="text-muted small" style={{ fontSize: "17px" }}>{doctor?.languages?.join(", ")}</p>
               <h6 className="fw-bold" style={{ fontSize: "18px" }}>Areas of Expertise</h6>
-              <div className="d-flex flex-wrap gap-3" style={{ fontSize: "18px" }}>
-                {doctor?.areaOfInterest?.split(',').map(item => (
-                  <span key={item} className="badge bg-light text-dark rounded-pill" style={{ width: 'auto', padding: '10px 15px', height: '37px', fontWeight: 400 }}>{item}</span>
+              <div className="d-flex flex-wrap gap-3">
+                {doctor?.areaOfInterest?.split(",").map((item) => (
+                  <span key={item} className="badge bg-light text-dark rounded-pill" style={{ padding: '10px 15px', height: '37px', fontWeight: 400,fontSize:'14px' }}>{item}</span>
                 ))}
               </div>
+            </div>
 
-              <h6 className="fw-bold" style={{ fontSize: "18px" }}>Education & Training</h6>
+            <div className="education-section">
+              <h6 className="fw-bold education-heading" style={{ fontSize: "18px" }}>Education & Training</h6>
               <p className="text-muted small mb-1" style={{ fontSize: "17px" }}>Degree: {doctor?.education} from {doctor?.university}</p>
               <p className="text-muted small" style={{ fontSize: "17px" }}>Works at: {doctor?.hospitalName}</p>
+
             </div>
           </div>
         </Col>
 
-        {/* Right Column: Appointment Section */}
-        <Col xs={12} lg={8} className="appointment-section" style={{ display: "flex", alignItems: "center", justifyContent: "center" }}>
-          <div className="appointment-div mx-auto fixed lg:static md-w-[400px] sm:w-[100%] lg:w-[600px]" style={{ height: 604.5, position: isMobile ? "static" : "fixed", top: isMobile ? "auto" : "60px", gap: "24px" }}>
+        {/* Right: Appointment */}
+        <Col xs={12} lg={8} className="appointment-section d-flex justify-content-center">
+          <div className="appointment-div mx-auto" style={{ gap: "24px", marginTop: "80px" }}>
             <h5 className="fw-medium mb-3">Book Appointment</h5>
 
             {/* Members */}
-            <div className="mb-3">
+            <div className="mb-3 dependents-container">
               {members.map((member, idx) => (
                 <div key={idx} className="d-flex justify-content-between align-items-center p-3 rounded-pill mb-3 border dependent">
                   <div>
@@ -267,9 +300,10 @@ setSelectedSlot(prev => {
                   <Form.Check type="radio" name="patient" checked={selectedMemberIndex === idx} onChange={() => setSelectedMemberIndex(idx)} />
                 </div>
               ))}
-
-              <a href="#" onClick={e => { e.preventDefault(); setShowAddMember(true); }} style={{ color: '#00A99D', fontSize: '0.9rem' }}>Add dependent</a>
             </div>
+                          <a href="#" onClick={(e) => { e.preventDefault(); setShowAddMember(true); }} style={{ color: '#00A99D', fontSize: '0.9rem' }}>Add dependent</a>
+
+
 
             {/* Calendar */}
             <div className="d-flex align-items-center justify-content-between mb-3 flex-wrap calendar-days-container">
@@ -288,17 +322,15 @@ setSelectedSlot(prev => {
               <div className="d-flex flex-column align-items-center gap-0 text-muted mt-2 mt-sm-0">
                 <img src={Calender} alt="calendar" style={{ width: 32, height: 32, cursor: 'pointer' }} onClick={handleCalendarClick} />
                 <div style={{ fontSize: '14px', fontWeight: 500, color: '#252525' }}>{startDate.toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' })}</div>
-
                 <DatePicker
                   ref={datePickerRef}
                   selected={startDate}
                   onChange={handleDateChange}
                   minDate={new Date()}
                   popperPlacement="top-start"
+                  showPopperArrow={false}
                   popperClassName="custom-datepicker-popper"
                   calendarClassName="calendar-wrapper"
-                  showPopperArrow={false}
-                  popperModifiers={[{ name: 'offset', options: { offset: [0, -10] } }, { name: 'preventOverflow', options: { altAxis: true } }]}
                   customInput={<div style={{ display: 'none' }} />}
                 />
               </div>
@@ -308,15 +340,14 @@ setSelectedSlot(prev => {
             <div className="d-flex flex-wrap gap-3 mb-3 slot-section">
               {availableSlots.length > 0 ? (
                 availableSlots.map(slot => (
-                  <div key={`${slot.start}-${slot.end}`} className="px-3 py-2 rounded-pill slot-time" style={{ backgroundColor: selectedSlot === slot.start ? "#00A99D" : "#F0F0F0", color: selectedSlot === slot.start ? "white" : "black", cursor: "pointer" }} onClick={() => setSelectedSlot(slot.start)}>
+                  <div key={`${slot.start}-${slot.end}`} className="px-3 py-2 rounded-pill slot-time" style={{ backgroundColor: selectedSlot === slot.start ? "#00A99D" : "#F0F0F0", color: selectedSlot === slot.start ? "white" : "black" }} onClick={() => setSelectedSlot(slot.start)}>
                     {slot.start} - {slot.end}
                   </div>
                 ))
               ) : <p className="text-muted">No slots available for this date.</p>}
             </div>
 
-            {/* Book Button */}
-            <div className="d-flex flex-column flex-sm-row align-items-stretch align-items-sm-center gap-2 mb-3 book-button">
+<div className="d-flex align-items-center gap-2 mb-3 book-button" style={{ flexWrap: "nowrap" }}>
               <div className="d-flex align-items-center gap-2 px-3 py-2 border rounded-pill w-100 book-time" style={{ color: '#00A99D', border: '1px solid #00A99D' }}>
                 <span>{startDate.toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' })}</span>
                 <div style={{ width: 1, height: 20, backgroundColor: '#00A99D' }} />
@@ -324,32 +355,22 @@ setSelectedSlot(prev => {
               </div>
 
 <Button
-  style={{ backgroundColor: "#00A99D", borderColor: "#00A99D", borderRadius: 999, padding: "6px 16px", minWidth: 102 }}
-  onClick={async () => {
-if (!selectedMember) {
-      toast.error("Please select a patient.");
-      return;
-    }
-    if (!selectedSlot) {
-      toast.error("Please select a time slot.");
-      return;
-    }
+  style={{
+    backgroundColor: "#00A99D",
+    borderColor: "#00A99D",
+    borderRadius: 999,
+    padding: "6px 10px",
+    flexShrink: 0,
+  }}
+  onClick={() => {
     try {
-      // Check if slot is already booked
-  //     const res = await axios.post("${API_BASE_URL}/api/doctors/check-slot", {
-  //       doctorId,
-  // date: startDate.toISOString().split("T")[0], // YYYY-MM-DD
-  //       slot: availableSlots.find(s => s.start === selectedSlot)
-  //     });
+      if (!selectedMember) return toast.error("Please select a patient.");
+      if (!selectedSlot) return toast.error("Please select a time slot.");
 
-  //     if (res.data.exists) {
-  //       return alert("This slot is already reserved. Please select another slot.");
-  //     }
-
-  const [slotHours, slotMinutes] = selectedSlot.split(":").map(Number);
       const appointmentDateTime = new Date(startDate);
-      appointmentDateTime.setHours(slotHours, slotMinutes, 0, 0);
-      // Navigate to confirm/payment page
+      const [hours, minutes] = selectedSlot.split(":").map(Number);
+      appointmentDateTime.setHours(hours, minutes, 0, 0);
+
       const appointmentData = {
         member: selectedMember,
         slot: selectedSlot,
@@ -357,20 +378,21 @@ if (!selectedMember) {
         doctor,
         amount: doctor?.consultationFee,
         consultationType,
-        mainUser
       };
+
       localStorage.setItem("appointmentData", JSON.stringify(appointmentData));
-toast.success(`You have selected slot at ${selectedSlot} Redirecting...`, {
-  autoClose: 1000,
-  position: "top-center"
-});
 
-      // ✅ Navigate to confirm appointment page
-      setTimeout(() => navigate("/user/category/confirmappointment"), 1000,{state:appointmentData});
+      toast.success(`Selected slot at ${selectedSlot} Redirecting...`, {
+        autoClose: 1000,
+        position: "top-center",
+      });
 
+      setTimeout(
+        () => navigate("/user/category/confirmappointment", { state: appointmentData }),
+        1000
+      );
 
-      // Optionally, remove slot locally so user can't click again
-      setAvailableSlots(prev => prev.filter(s => s.start !== selectedSlot));
+      setAvailableSlots((prev) => prev.filter((s) => s.start !== selectedSlot));
       setSelectedSlot(null);
     } catch (err) {
       console.error("Slot check error:", err);
@@ -381,8 +403,6 @@ toast.success(`You have selected slot at ${selectedSlot} Redirecting...`, {
   Book slot
 </Button>
             </div>
-
-            <div ref={bottomRef} style={{ height: '100px' }} />
           </div>
         </Col>
       </Row>
@@ -390,8 +410,8 @@ toast.success(`You have selected slot at ${selectedSlot} Redirecting...`, {
       {showAddMember && (
         <>
           <div className='outerAddmember' style={{ position: 'fixed', top: 0, left: 0, width: '100vw', height: '100vh', backgroundColor: 'rgba(0,0,0,0.5)', zIndex: 1000 }} />
-          <div style={{ position: 'fixed', top: 50, left: 0, width: '100vw', height: '100vh', zIndex: 1001, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-            <AddMemberForm onClose={() => setShowAddMember(false)} onAdd={handleAddMember} />
+          <div style={{ position: 'fixed', top: 50, left: 0, width: '100vw', height: '100vh', zIndex: 1001, overflowY: 'auto' }}>
+<AddMemberForm onClose={() => setShowAddMember(false)} onAdd={handleAddMember} />
           </div>
         </>
       )}

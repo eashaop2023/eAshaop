@@ -89,11 +89,13 @@ exports.registerUser = async (req, res) => {
 
     // ⿢ Normalize phone and email
     let normalizedPhone = phone_number.replace(/\D/g, "").trim();
-    if (normalizedPhone.length === 10) normalizedPhone = `+91${normalizedPhone}`;
-    else if (normalizedPhone.length === 12 && normalizedPhone.startsWith("91"))
+    if (normalizedPhone.length === 10) {
+      normalizedPhone = `+91${normalizedPhone}`;
+    } else if (normalizedPhone.length === 12 && normalizedPhone.startsWith("91")) {
       normalizedPhone = `+${normalizedPhone}`;
-    else
+    } else {
       return res.status(400).json({ message: "Invalid phone number format" });
+    }
 
     const normalizedEmail = email?.trim().toLowerCase();
 
@@ -102,61 +104,93 @@ exports.registerUser = async (req, res) => {
     if (normalizedEmail) query.push({ email: normalizedEmail });
     if (normalizedPhone) query.push({ phone_number: normalizedPhone });
 
-    let existingUser = null;
+    let existingVerifiedUser = null;
+    let existingUnverifiedUser = null;
+
     if (query.length > 0) {
-      existingUser = await User.findOne({ $or: query });
-    }
+      existingVerifiedUser = await User.findOne({
+        $and: [
+          { $or: query },
+          { otp_verified: true }
+        ]
+      });
 
-    if (existingUser) {
-      return res.status(400).json({ message: "User already exists with this email or phone" });
-    }
-
-    // ⿤ Hash password
-    const hashedPassword = await bcrypt.hash(password.trim(), 10);
-
-    // ⿥ Generate 4-digit OTP (Always 4 digits)
-    const otp = String(Math.floor(1000 + Math.random() * 9000)).padStart(4, "0");
-    const expires = new Date(Date.now() + 10 * 60 * 1000); // 10 minutes expiry
-
-    // ⿦ Create user
-    const user = new User({
-      full_name,
-      phone_number: normalizedPhone,
-      dob,
-      gender,
-      password: hashedPassword,
-      email: normalizedEmail,
-      registration_otp: { code: otp, expires },
-    });
-
-    await user.save();
-
-    // ⿧ Send OTP (Email or SMS)
-    try {
-      if (method === "email") {
-        await sendOTP({ verifyBy: "email", email: normalizedEmail, otp });
-      } else {
-        await sendOTP({ verifyBy: "phone", mobile: normalizedPhone, otp });
+      if (!existingVerifiedUser) {
+        existingUnverifiedUser = await User.findOne({
+          $and: [
+            { $or: query },
+            { otp_verified: false }
+          ]
+        });
       }
-    } catch (err) {
-      console.error("OTP sending error:", err.message);
-      // Continue even if OTP fails
     }
 
-    // ⿨ Success Response
-    res.status(201).json({
-      message: `OTP sent successfully to your ${method}`,
-      user: {
-        id: user._id,
-        full_name: user.full_name,
-        phone_number: user.phone_number,
-        email: user.email,
-      },
-    });
+    if (existingVerifiedUser) {
+      return res.status(400).json({ message: "User already exists with this email or phone" });
+    } else if (existingUnverifiedUser) {
+      const hashedPassword = await bcrypt.hash(password.trim(), 10);
+      const otp = String(Math.floor(1000 + Math.random() * 9000)).padStart(4, "0");
+      const expires = new Date(Date.now() + 10 * 60 * 1000); // 10 minutes expiry
+
+      existingUnverifiedUser.full_name = full_name;
+      existingUnverifiedUser.phone_number = normalizedPhone;
+      existingUnverifiedUser.dob = dob;
+      existingUnverifiedUser.gender = gender;
+      existingUnverifiedUser.password = hashedPassword;
+      existingUnverifiedUser.email = normalizedEmail;
+      existingUnverifiedUser.registration_otp = { code: otp, expires };
+
+      await existingUnverifiedUser.save();
+      
+      try {
+        if (method === "email") {
+          await sendOTP({ verifyBy: "email", email: normalizedEmail, otp });
+        } else {
+          await sendOTP({ verifyBy: "phone", mobile: normalizedPhone, otp });
+        }
+      } catch (err) {
+        console.error("OTP sending error:", err.message);
+      }
+
+      return res.status(200).json({
+        message: `OTP resent successfully to your ${method}`,
+      });
+
+    } else {
+      const hashedPassword = await bcrypt.hash(password.trim(), 10);
+      const otp = String(Math.floor(1000 + Math.random() * 9000)).padStart(4, "0");
+      const expires = new Date(Date.now() + 10 * 60 * 1000); // 10 minutes expiry
+
+      const newUser = new User({
+        full_name,
+        phone_number: normalizedPhone,
+        dob,
+        gender,
+        password: hashedPassword,
+        email: normalizedEmail,
+        registration_otp: { code: otp, expires },
+      });
+      await newUser.save();
+
+      try {
+        if (method === "email") {
+          await sendOTP({ verifyBy: "email", email: normalizedEmail, otp });
+        } else {
+          await sendOTP({ verifyBy: "phone", mobile: normalizedPhone, otp });
+        }
+      } catch (err) {
+        console.error("OTP sending error:", err.message);
+      }
+
+      return res.status(201).json({
+        message: `OTP sent successfully to your ${method}`,
+      });
+    }
+
   } catch (err) {
     console.error("Registration Error:", err);
     res.status(500).json({ message: "Registration failed", error: err.message });
-  }
+  }
 };
 
 //  Verify OTP & Save User
@@ -446,6 +480,8 @@ exports.login = async (req, res) => {
         full_name: user.full_name,
         phone_number: user.phone_number,
         email: user.email,
+        dob: user.dob,
+        gender: user.gender,
       },
     });
   } catch (err) {
@@ -966,29 +1002,33 @@ exports.updateDocument = async (req, res) => {
 
 exports.userDependent = async (req, res) => {
   try {
-    let { userId, full_name, phone_number, gender, email, dob, relation, address, pincode } = req.body;
+    const { userId, full_name, phone_number, gender, email, dob, relation, address, pincode, _id } = req.body;
 
-    // Validate required fields
+    if (req.query.removeDependent == "true") {
+      if (!_id) return res.status(400).json({ message: "Dependent _id is required for removal" });
+
+      let dependent = await userDependent.findById(_id);
+      if (!dependent) return res.status(404).json({ message: "Dependent not found" });
+
+      dependent.isDeleted = true;
+      await dependent.save();
+
+      return res.status(200).json({ message: "Dependent deleted successfully" });
+    }
+
     if (!userId || !full_name || !phone_number || !gender || !relation || !email || !dob || !address || !pincode) {
       return res.status(400).json({ message: "All fields are required" });
     }
 
-    // Normalize values
     const normalizedPhone = phone_number.replace(/\D/g, "");
-    const formattedPhone =
-      normalizedPhone.length === 10 ? `+91${normalizedPhone}` : `+${normalizedPhone}`;
+    const formattedPhone = normalizedPhone.length === 10 ? `+91${normalizedPhone}` : +`${normalizedPhone}`;
     const normalizedEmail = email.trim().toLowerCase();
 
-    // Check if dependent exists
     let existingDependent = await userDependent.findOne({
-      $or: [
-        { phone_number: formattedPhone },
-        { email: normalizedEmail }
-      ],
+      $or: [{ phone_number: formattedPhone }, { email: normalizedEmail }],
     });
 
     if (existingDependent) {
-      // Update existing dependent
       existingDependent.userId = userId;
       existingDependent.full_name = full_name;
       existingDependent.phone_number = formattedPhone;
@@ -1002,9 +1042,7 @@ exports.userDependent = async (req, res) => {
 
       await existingDependent.save();
 
-      return res.status(200).json({
-        message: "Existing dependent updated successfully",
-      });
+      return res.status(200).json({ message: "Existing dependent updated successfully" });
     }
 
     const newDependent = new userDependent({
@@ -1022,11 +1060,8 @@ exports.userDependent = async (req, res) => {
 
     await newDependent.save();
 
-    res.status(201).json({
-      message: "New dependent registered successfully",
-    });
+    res.status(201).json({ message: "New dependent registered successfully" });
   } catch (err) {
-    console.error("Dependent registration error:", err);
-    res.status(500).json({ message: "Server error" });
+    res.status(500).json({ message: "Server error", err });
   }
 };

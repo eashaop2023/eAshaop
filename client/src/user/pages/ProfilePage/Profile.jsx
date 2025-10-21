@@ -6,6 +6,7 @@ import styles from "../../pages/ProfilePage/Profile.module.css";
 import { API_BASE_URL } from "../../../api-config";
 import { toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
+import LoaderOverlay from "../../../commonComponents/FadeLoader";
 
 function useIsMobileOrTablet() {
   const [isMobileOrTablet, setIsMobileOrTablet] = useState(window.innerWidth < 1024);
@@ -119,6 +120,8 @@ const handleSave = async () => {
     return;
   }
 
+   setLoading(true);
+
   try {
     const storedUser = JSON.parse(localStorage.getItem("user"));
     const payload = {
@@ -146,10 +149,10 @@ const handleSave = async () => {
   } catch (error) {
     console.error("Update error:", error);
     toast.error("Something went wrong while updating profile.");
-
+  } finally {
+    setLoading(false); // 👈 Hide loader
   }
 };
-
   const handleImageChange = async (e) => {
     const file = e.target.files[0];
     if (!file) return;
@@ -159,6 +162,7 @@ const handleSave = async () => {
     formDataObj.append("profileImage", file);
 
     try {
+      setLoading(true);
     const res = await fetch(
       `${API_BASE_URL}/api/user/update-profile-image/${storedUser.id}`, // ✅ PUT route
       {
@@ -169,9 +173,16 @@ const handleSave = async () => {
     if (!res.ok) throw new Error("Failed to upload image");
     const data = await res.json();
     setProfileImage(data.imageUrl); // ✅ update state
+
+        const updatedUser = { ...storedUser, profileImage: { cloudinaryUrl: data.imageUrl } };
+    localStorage.setItem("user", JSON.stringify(updatedUser));
+        toast.success("Profile image updated successfully!"); // ✅ better UX
+
   } catch (err) {
-    console.error(err);
-    alert("Image upload failed");
+    console.error("Image upload error:", err);
+    toast.error("Image upload failed!");
+  } finally {
+    setLoading(false); // 👈 hide loader
   }
 };
 
@@ -190,10 +201,11 @@ const handleSave = async () => {
 
 
 
-  if (loading) return <p>Loading profile...</p>;
+if (loading) return <LoaderOverlay loading={true} />;
   return (
-    
-    
+      <>
+         <LoaderOverlay loading={loading} />
+
     <Container
       fluid
       className="px-3 px-md-5"
@@ -210,7 +222,7 @@ const handleSave = async () => {
           {isMobileOrTablet && (
             <div
               className="d-flex justify-content-end align-items-end mb-1 px-2"
-              style={{ marginTop: "-50px",paddingLeft:"0px" }}
+              style={{ marginTop: "-20px",paddingLeft:"0px" }}
             >
               <div
                 className="rounded-circle border d-flex align-items-center justify-content-center"
@@ -355,12 +367,14 @@ const handleSave = async () => {
                           variant="light"
                           // onClick={() => setGender(g)}
                             onClick={() => handleChange("gender", g)}
+style={{
+  backgroundColor:
+    formData.gender.toLowerCase() === g.toLowerCase() ? "#00A99D" : "white",
+  color: formData.gender.toLowerCase() === g.toLowerCase() ? "white" : "#252525",
 
-                          style={{
-                            // backgroundColor: gender === g ? "#00A99D" : "white",
-                            // color: gender === g ? "white" : "#252525",
-                             backgroundColor: formData.gender === g.toLowerCase() ? "#00A99D" : "white",
-                             color: formData.gender === g.toLowerCase() ? "white" : "#252525",
+
+                            //  backgroundColor: formData.gender === g.toLowerCase() ? "#00A99D" : "white",
+                            //  color: formData.gender === g.toLowerCase() ? "white" : "#252525",
                             border: "none",
                             flex: 1,
                             fontWeight: "500",
@@ -485,7 +499,13 @@ const handleSave = async () => {
                       backgroundColor: "#F0F0F0",
                     }}
                   >
-                    {tag} <span style={{ cursor: "pointer", marginLeft: 8 }}>✕</span>
+{tag}{" "}
+<span
+  style={{ cursor: "pointer", marginLeft: 8 }}
+  onClick={() => handleRemoveHealthTag(index)}
+>
+  ✕
+</span>
                   </Badge>
                 ))}
               </div>
@@ -513,5 +533,6 @@ const handleSave = async () => {
         </Col>
       </Row>
     </Container>
+    </>
   );
 }

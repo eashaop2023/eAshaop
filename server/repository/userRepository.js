@@ -1,7 +1,7 @@
 const User = require("../models/user");
 const { Vonage } = require("@vonage/server-sdk");
 const jwt = require("jsonwebtoken");
-const Dependent = require("../models/userDependent")
+const Dependent = require("../models/userDependent");
 
 // Vonage setup
 const vonage = new Vonage({
@@ -354,11 +354,12 @@ const forgotPassword_resendOtp = async (body) => {
 //  Uploade profile image
 
 const uploadeProfileImage = async (userId, imageUrl) => {
-  return await User.findByIdAndUpdate(
+  const updatedUser = await User.findByIdAndUpdate(
     userId,
-    { profileImage: imageUrl },
+    { profileImage: { cloudinaryUrl: imageUrl } },
     { new: true }
   );
+  return updatedUser;
 };
 
 // Update profile image
@@ -444,7 +445,9 @@ const getUserDocuments = async (userId) => {
 // ======================
 
 const getDependentUserId = async (userId) => {
-  return await Dependent.find({ userId: userId });
+  return await Dependent.find({
+    $and: [{ userId: userId }, { isDeleted: 0}],
+  });
 };
 
 module.exports = {
@@ -465,5 +468,5 @@ module.exports = {
   addDocuments,
   getUserDocuments,
   // updateDocument,
-  getDependentUserId
+  getDependentUserId,
 };

@@ -18,10 +18,10 @@ const uuidToCategoryMap = {
   "oybWOH7Ok8": "Orthopedic",
   "whHEP4Ba-m": "Ophthalmology",
   "4A31RiqS_M": "ENT",
-  "u3bp-C0G4f": "Dental",
+  "u3bp-C0G4f": "Dentist",
   "QWonnSUTJw": "Mental Health",
   "EGGSWzg5RE":"Women Health",
-  "_jCoVKpbHK":"SkinBeauty",
+  "_jCoVKpbHK":"Skin & Beauty",
 
   // add all UUIDs for your categories here
 };
@@ -33,14 +33,14 @@ const DynamicDoctorCategory = (props) => {
     "General Healthcare": GeneralHealthcareMainContent,
     "Cardiologist": CardiologistMainContent,
     // "childhealth": ChildHealth,
-    "Dental":DentalMainContent ,
+    "Dentist":DentalMainContent ,
      "ENT": ENTMainContent,
      "Mental Health": MentalMainContent,
     "Neurologist": NeurologistMainContent,
 "Ophthalmology": OphthalmologyContent,
      "Orthopedic": OrthopedicMainContent,
     "Women Health": WomenMainContent,
-    "SkinBeauty":SkinBeautyMainContent
+    "Skin & Beauty":SkinBeautyMainContent
     // "skinbeauty": SkinBeauty,
   };
 

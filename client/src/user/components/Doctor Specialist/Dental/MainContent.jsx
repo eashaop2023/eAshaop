@@ -8,8 +8,9 @@ import Doctoricon from "../../../assets/doctoricon.svg";
 // import specialityimage from "../../../assets/cardiologist/life.png";
 import arrowright from "../../../assets/cardiologist/arrowRight.png"
 import { Link } from "react-router-dom";
-import { useNavigate,useParams } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import { API_BASE_URL } from "../../../../api-config";
+import './MainContent.css'
 
 import Filter from '../../../assets/filter-icon.svg'
 import "../../../components/Doctor Specialist/cardiologist/MainContent.css"
@@ -20,6 +21,10 @@ import walk from '../../../assets/walking_icon.svg'
 import Star from '../../../assets/icons/star.png'
 import { toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
+import { useParams } from "react-router-dom";
+import "react-toastify/dist/ReactToastify.css";
+import './MainContent.css';
+
 
 // const mockDoctors = Array(9).fill({
 //   name: "Dr. Nithish Jagannatham",
@@ -35,7 +40,9 @@ import "react-toastify/dist/ReactToastify.css";
 const MainContent = ({ selectedFilters, setSelectedFilters, clearAllFilters, onToggleSidebar,categorySlug }) => {
   const navigate = useNavigate();
   const { uuid } = useParams();
-  const [selected, setSelected] = useState(sessionStorage.getItem("selectedConsultation") || "");
+const [selected, setSelected] = useState(
+  sessionStorage.getItem("selectedConsultation") || ""
+);
   // const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [isMobileView, setIsMobileView] = useState(window.innerWidth <= 1439);
   const [doctors, setDoctors] = useState([]);
@@ -73,9 +80,7 @@ const MainContent = ({ selectedFilters, setSelectedFilters, clearAllFilters, onT
       if (!selected) {
         setDoctors(allDoctors);
       } else {
-        let mode = "";
-        if (selected === "video") mode = "Video Consultation";
-        if (selected === "clinic") mode = "Clinic Visit";
+                        let mode = selected === "video" ? "Video Consultation" : "Clinic Visit";
     
         const filtered = allDoctors.filter(
           (doc) => doc.consultationMode === mode || doc.consultationMode === "Both"
@@ -206,7 +211,7 @@ const MainContent = ({ selectedFilters, setSelectedFilters, clearAllFilters, onT
               backgroundColor: selected === "video" ? "#00A99D" : "#ffffff",
               color: selected === "video" ? "white" : "#8E8E8E",
             }}
-            className="btn fw-semibold px-4 py-2 rounded-pill d-flex"
+            className="btn fw-semibold px-4 py-2 rounded-pill d-flex align-items-center"
             onClick={() => setSelected("video")}
           >
             <span className="me-2"><img src={video} height={24} width={24} className="toggle-images"/></span>
@@ -217,10 +222,10 @@ const MainContent = ({ selectedFilters, setSelectedFilters, clearAllFilters, onT
               backgroundColor: selected === "clinic" ? "#00A99D" : "#ffffff",
               color: selected === "clinic" ? "white" : "#8E8E8E",
             }}
-            className="btn1 fw-semibold  rounded-pill d-flex"
+            className="btn1 fw-semibold  rounded-pill d-flex align-items-center"
             onClick={() => setSelected("clinic")}
           >
-            <span className="me-1 ps-4"><img src={walk} height={14} width={24} className="toggle-images"/></span>
+            <span className="clinic-visit me-1 ps-4"><img src={walk} height={14} width={24} className="toggle-images"/></span>
             Clinic Visit
           </button>
         </div>

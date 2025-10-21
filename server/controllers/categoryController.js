@@ -59,8 +59,10 @@ const getDoctorsByCategoryByUUID = async (req, res) => {
     const { uuid } = req.params;
 
     // Find category by UUID
-    const category = await Category.findOne({ uuid }).populate("doctors");
-
+const category = await Category.findOne({ uuid }).populate({
+      path: "doctors",
+      match: { isActive: true, isApproved: true } // ✅ filter same as getAllCategories
+    });
     if (!category) {
       return res.status(404).json({ message: "Category not found" });
     }

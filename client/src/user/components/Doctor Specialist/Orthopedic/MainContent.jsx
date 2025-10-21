@@ -8,7 +8,7 @@ import Cardiology from "../../../assets/cardiologist/cardiology.png";
 import Category from "../../../assets/DBIcons/orthopedic.svg";
 import Doctoricon from "../../../assets/doctoricon.svg";
 // import profile from "../../../assets/cardiologist/profileone.png";
-import specialityImage from "../../../assets/cardiologist/life.png";
+// import specialityImage from "../../../assets/cardiologist/life.png";
 import arrowright from "../../../assets/cardiologist/arrowRight.png"
 import { Link } from "react-router-dom";
 import { useNavigate } from "react-router-dom";
@@ -19,6 +19,7 @@ import Mic from '../../../assets/cardiologist/microphone.svg'
 import video from '../../../assets/confirmappointmenticons/video.svg'
 import walk from '../../../assets/walking_icon.svg'
 import Star from '../../../assets/icons/star.png'
+import './MainContent.css'
 
 // const mockDoctors = Array(9).fill({
 //   name: "Dr. Nithish Jagannatham",
@@ -197,7 +198,7 @@ useEffect(() => {
       {/* Toggle Buttons */}
       <div className="d-flex justify-content-center mt-3 mb-3 outer-toggle">
         <div
-          className="p-2 rounded-pill d-flex align-items-center bg-white toggle-buttons-container"
+          className="p-2 rounded-pill d-flex align-items-center bg-white toggle-buttons-container  radio-height"
           style={{ border: "1px solid #00A99D" }}
         >
           <button
@@ -205,7 +206,7 @@ useEffect(() => {
               backgroundColor: selected === "video" ? "#00A99D" : "#ffffff",
               color: selected === "video" ? "white" : "#8E8E8E",
             }}
-            className="btn fw-semibold px-4 py-2 rounded-pill d-flex"
+            className="btn fw-semibold px-4 py-2 rounded-pill d-flex align-items-center"
   onClick={() => handleSelect("video")}
           >
             <span className="me-2"><img src={video} height={24} width={24} className="toggle-images"/></span>
@@ -216,10 +217,10 @@ useEffect(() => {
               backgroundColor: selected === "clinic" ? "#00A99D" : "#ffffff",
               color: selected === "clinic" ? "white" : "#8E8E8E",
             }}
-            className="btn1 fw-semibold  rounded-pill d-flex"
+            className="btn1 fw-semibold  rounded-pill d-flex align-items-center"
   onClick={() => handleSelect("clinic")}
           >
-            <span className="me-1 ps-4"><img src={walk} height={14} width={24} className="toggle-images"/></span>
+            <span className="clinic-visit me-1 ps-4"><img src={walk} height={14} width={24} className="toggle-images"/></span>
             Clinic Visit
           </button>
         </div>
@@ -314,7 +315,7 @@ useEffect(() => {
                         <img
                           src={Category}
                           className="me-1"
-                          alt="Speciality" style={{width:'15px',height:'15px'}}
+                          alt="Speciality" style={{width:'25px',height:'25px'}}
                         />
                         {doc.speciality} <span className="ms-1"> | {doc.experience} Years</span>
                       </div>
@@ -356,9 +357,9 @@ useEffect(() => {
                           className="d-flex speciality"
                         >
                           <img
-                            src={specialityImage}
+                            src={Category}
                             className="me-1"
-                            alt="Speciality"
+                            alt="Speciality" style={{width:'25px',height:'25px'}}
                           />
                           {doc.speciality} <span className="ms-1"> | {doc.experience} Years</span>
                         </div>

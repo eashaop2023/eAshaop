@@ -1,11 +1,33 @@
 
-@media (min-width : 425px) {
+@media (max-width : 424px) {
 .mainContainer {
     width: 557px;
-    padding-top: 40px !important;
+    padding-top: 29px !important;
     margin-left: 50px !important;
     font-family: Urbanist, sans-serif !important;
-   
+
+}
+.mainWrapper {
+    width: 100% !important;
+    display: flex !important;
+    /* align-items: center !important; */
+    justify-content: center !important;
+ }
+ .secContainer {
+    width: 100% !important;
+ }
+ .secHeader {
+   margin-top: 2.5rem !important;
+ }
+}
+
+@media (min-width : 425px) and (max-width : 1023px) {
+.mainContainer {
+    width: 557px;
+    padding-top: 29px !important;
+    margin-left: 50px !important;
+    font-family: Urbanist, sans-serif !important;
+
 }
 .mainWrapper {
     width: 100% !important;

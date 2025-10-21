@@ -293,6 +293,9 @@
   .book-time {
     width: 60% !important;
   }
+  .AreasOfExpertise{
+    margin-bottom: 200px !important;
+  }
 }
 
 @media (min-width : 768px) {

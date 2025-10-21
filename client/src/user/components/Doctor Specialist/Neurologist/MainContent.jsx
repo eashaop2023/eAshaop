@@ -2,14 +2,14 @@ import React, { useEffect, useState } from "react";
 import { FiSearch, FiMic, FiX } from "react-icons/fi";
 import { useParams } from "react-router-dom";
 import { API_BASE_URL } from "../../../../api-config";
+import './MainContent.css'
 
 
 import { FaStar } from "react-icons/fa";
 import Cardiology from "../../../assets/cardiologist/cardiology.png";
 import Category from "../../../assets/DBIcons/neurologist.svg";
 import Doctoricon from "../../../assets/doctoricon.svg";
-// import profile from "../../../assets/cardiologist/profileone.png";
-import specialityimage from "../../../assets/cardiologist/life.png";
+import specialityImage from "../../../assets/cardiologist/life.png";
 import arrowright from "../../../assets/cardiologist/arrowRight.png"
 import { Link } from "react-router-dom";
 import { useNavigate } from "react-router-dom";
@@ -208,7 +208,7 @@ useEffect(() => {
               backgroundColor: selected === "video" ? "#00A99D" : "#ffffff",
               color: selected === "video" ? "white" : "#8E8E8E",
             }}
-            className="btn fw-semibold px-4 py-2 rounded-pill d-flex"
+            className="btn fw-semibold px-4 py-2 rounded-pill d-flex align-items-center"
   onClick={() => handleSelect("video")}
           >
             <span className="me-2"><img src={video} height={24} width={24} className="toggle-images"/></span>
@@ -219,10 +219,10 @@ useEffect(() => {
               backgroundColor: selected === "clinic" ? "#00A99D" : "#ffffff",
               color: selected === "clinic" ? "white" : "#8E8E8E",
             }}
-            className="btn1 fw-semibold  rounded-pill d-flex"
+            className="btn1 fw-semibold  rounded-pill d-flex align-items-center"
   onClick={() => handleSelect("clinic")}
           >
-            <span className="me-1 ps-4"><img src={walk} height={14} width={24} className="toggle-images"/></span>
+            <span className=" clinic-visit me-1 ps-4"><img src={walk} height={14} width={24} className="toggle-images"/></span>
             Clinic Visit
           </button>
         </div>
@@ -318,7 +318,7 @@ useEffect(() => {
                         <img
                           src={Category}
                           className="me-1"
-                          alt="Speciality"
+                          alt="Speciality" style={{width:'25px',height:'25px'}}
                         />
                         {doc.speciality} <span className="ms-1"> | {doc.experience} Years</span>
                       </div>

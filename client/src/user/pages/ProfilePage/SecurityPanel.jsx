@@ -76,7 +76,7 @@ function SecurityAndLogin() {
       {/* Sidebar Toggle Button (only for mobile/tablet ≤ 991px) */}
       {isMobile && (
         <button
-          className="btn btn-link p-0"
+          className="btn btn-link p-0 menu"
           style={{
             position: "fixed",
             top: "80px",
@@ -94,9 +94,10 @@ function SecurityAndLogin() {
         className={`${styles.mainContainer} container d-flex flex-column align-items-start`}
         style={{
           width: isMobile ? "100%" : "617px",
-          paddingTop: "110px",
+          paddingTop: isMobile ? "110px" : "110px",
           marginLeft: isMobile ? "0" : "430px",
           fontFamily: "Urbanist, sans-serif",
+          marginTop:isMobile?'80px':'30px'
         }}
       >
         <h2 className={` ${styles.secHeader}  mb-3 mt-5`} style={{ fontWeight: "500" }}>

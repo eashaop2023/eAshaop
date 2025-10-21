@@ -19,12 +19,12 @@ import { API_BASE_URL } from "../../../api-config";
 
 const staticCategories = [
   { name: "General healthcare", icon: generalHealthCare, path: "general-healthcare",uuid:"UqkGTNQTOD" },
-  { name: "Cardiologists", icon: cardiologist, path: "cardiologist",uuid:"bD1KuA_6pr" },
+  { name: "Cardiologist", icon: cardiologist, path: "cardiologist",uuid:"bD1KuA_6pr" },
   { name: "Orthopedic", icon: orthopedic, path: "orthopedic",uuid:"oybWOH7Ok8" },
   { name: "Neurologist", icon: neurologist, path: "neurologist",uuid:"r1ArfRKaU_" },
   { name: "Ophthalmology", icon: ophthalmology, path: "ophthalmology",uuid:"whHEP4Ba-m" },
   { name: "ENT", icon: ent, path: "ent",uuid:"4A31RiqS_M" },
-  { name: "Dental", icon: dental, path: "dental",uuid:"u3bp-C0G4f" },
+  { name: "Dentist", icon: dental, path: "dental",uuid:"u3bp-C0G4f" },
   { name: "Women health", icon: womenHealth, path: "women-health",uuid:"EGGSWzg5RE" },
   // { name: "Child health", icon: childHealth, path: "child-health" },
   { name: "Skin & Beauty", icon: skin, path: "skin-&-beauty",uuid:"_jCoVKpbHK" },
