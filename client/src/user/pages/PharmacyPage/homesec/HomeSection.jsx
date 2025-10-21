@@ -67,7 +67,7 @@ const handleMedicineClick = () => {
     <div style={{overflowX:'hidden'}}>
     <div
       style={{
-        marginLeft: "290px",
+        marginLeft: "10px",
         marginTop: "53px",
         overflowX: "hidden",
         width: "calc(100%)",
