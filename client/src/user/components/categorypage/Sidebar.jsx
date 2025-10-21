@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+import { FiMenu, FiX } from "react-icons/fi";
 import dashboard from "../../assets/icons/dashboard.svg";
 import doctor from "../../assets/icons/doctor.svg";
 import appointments from "../../assets/icons/appointments.svg";
@@ -9,11 +10,10 @@ import pharmacy from "../../assets/icons/pharmacy.svg";
 import close from "../../assets/icons/close.svg";
 import open from "../../assets/icons/open.svg";
 import { useLocation, useNavigate } from "react-router-dom";
-import { FiMenu, FiX } from "react-icons/fi";
-import { useSidebar } from '../SidebarContext';
 
 const Sidebar = () => {
-  const { isOpen, isMobile, toggleSidebar, closeSidebarOnMobile } = useSidebar();
+  const [isOpen, setIsOpen] = useState(window.innerWidth >= 992);
+  const [isMobile, setIsMobile] = useState(window.innerWidth < 992);
   const [selected, setSelected] = useState(null);
 
   const navigate = useNavigate();
@@ -39,7 +39,21 @@ const menuItems = [
     }
   }, [location.pathname]);
 
+  // --- Resize handling
+  useEffect(() => {
+    const handleResize = () => {
+      const mobile = window.innerWidth < 992;
+      setIsMobile(mobile);
+    };
+    window.addEventListener("resize", handleResize);
+    return () => window.removeEventListener("resize", handleResize);
+  }, []);
 
+  useEffect(() => {
+    const mobile = window.innerWidth < 992;
+    setIsMobile(mobile);
+    setIsOpen(!mobile);
+  }, []);
 
   // --- Track viewport width
   const [vw, setVw] = useState(
@@ -74,7 +88,9 @@ const menuItems = [
     ? `${Math.max(41, sidebarWidthNum - 30)}px`
     : "41px";
 
-
+  const toggleSidebar = () => {
+    setIsOpen((prev) => !prev);
+  };
 
   return (
     <>
@@ -118,8 +134,8 @@ const menuItems = [
               <li
                 key={index}
                 onClick={() => {
-                  navigate(item.path);
-                  closeSidebarOnMobile();
+navigate(item.path);
+                  if (isMobile) setIsOpen(false); // ✅ Auto-close on mobile
                 }}
                 className={`d-flex align-items-center mb-4 sidebar-item ${
                   isSelected ? "sidebar-active" : ""
