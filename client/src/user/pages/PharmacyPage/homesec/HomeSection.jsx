@@ -1,4 +1,4 @@
-import React, { useState, useRef } from "react";
+import React, { useState, useRef, useEffect } from "react";
 import "bootstrap/dist/css/bootstrap.min.css";
 import 'bootstrap/dist/js/bootstrap.bundle.min.js';
 import { Outlet, useNavigate } from "react-router-dom";
@@ -61,13 +61,31 @@ const handleMedicineClick = () => {
   navigate("filter"); // relative to /pharmacy
 };
 
+const [isMobile, setIsMobile] = useState(window.innerWidth < 992);
+
+  useEffect(() => {
+
+    const handleResize = () => {
+      const mobile = window.innerWidth < 992;
+      setIsMobile(mobile);
+    };
+    window.addEventListener("resize", handleResize);
+    return () => window.removeEventListener("resize", handleResize);
+  }, []);
+
+  useEffect(() => {
+    const mobile = window.innerWidth < 992;
+    setIsMobile(mobile);
+    //setIsOpen(!mobile);
+  }, []);
+
 
   return (
     <>
     <div style={{overflowX:'hidden'}}>
     <div
       style={{
-        marginLeft: "10px",
+        marginLeft: isMobile ? "10px" : "100px",
         marginTop: "53px",
         overflowX: "hidden",
         width: "calc(100%)",
