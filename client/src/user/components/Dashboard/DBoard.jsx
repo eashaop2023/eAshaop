@@ -840,22 +840,33 @@ const PrevArrow = ({ onClick }) => {
 
 
 const sliderSettings = {
-  dots: false,
-  infinite: true,
-  speed: 500,
-  slidesToShow: 2,
-  slidesToScroll: 1,
-  nextArrow: <NextArrow />,
-  prevArrow: <PrevArrow />,
-  autoplay: true,
-  autoplaySpeed: 4000,
+  dots: false,              // No navigation dots
+  infinite: true,           // Loop through slides infinitely
+  speed: 500,               // Animation speed
+  slidesToShow: 2,          // Show 2 slides on desktop
+  slidesToScroll: 1,        // Scroll one slide at a time
+  nextArrow: <NextArrow />, // Custom Next arrow component
+  prevArrow: <PrevArrow />, // Custom Previous arrow component
+  autoplay: true,           // Enable autoplay
+  autoplaySpeed: 4000,      // 4 seconds between slide changes
   responsive: [
     {
-      breakpoint: 768,
-      settings: { slidesToShow: 1 },
+      breakpoint: 1024, // For tablets and smaller desktops
+      settings: {
+        slidesToShow: 2,
+        arrows: true, // Keep arrows for mid-size screens
+      },
+    },
+    {
+      breakpoint: 768, // For mobile devices
+      settings: {
+        slidesToShow: 1, // Only show 1 slide
+        arrows: false,   // Hide arrows for mobile (optional for better UX)
+      },
     },
   ],
 };
+
 
 
 
