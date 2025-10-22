@@ -19,6 +19,24 @@ const Appointments = () => {
 
   const userId = localStorage.getItem("userId");
 
+  const [isMobile, setIsMobile] = useState(window.innerWidth < 992);
+    
+      useEffect(() => {
+    
+        const handleResize = () => {
+          const mobile = window.innerWidth < 992;
+          setIsMobile(mobile);
+        };
+        window.addEventListener("resize", handleResize);
+        return () => window.removeEventListener("resize", handleResize);
+      }, []);
+    
+      useEffect(() => {
+        const mobile = window.innerWidth < 992;
+        setIsMobile(mobile);
+        //setIsOpen(!mobile);
+      }, []);
+
   // ✅ Fetch appointments
   useEffect(() => {
     const fetchAppointments = async () => {
@@ -237,9 +255,19 @@ const Appointments = () => {
 
   if (loading) return <p className="text-center mt-5">Loading appointments...</p>;
 
+  
+
   return (
     <>
-      <div className={`${styles.mainContainer} d-flex`}>
+      <div   style={{
+        fontFamily: "Urbanist, sans-serif",
+        // marginTop: "120px",
+        paddingTop:"115px",
+        // marginLeft: "335px",
+        maxWidth: "1108px",
+           marginLeft: isMobile ? "10px" : "100px",
+      
+      }}>
         <div className="flex-grow-1 px-3">
           {/* <h5 className={`${styles.headerOne} mb-3`} style={{ fontSize: "24px" }}>
             Upcoming appointments

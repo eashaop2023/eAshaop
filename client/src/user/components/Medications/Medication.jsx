@@ -4,6 +4,8 @@ import "bootstrap/dist/css/bootstrap.min.css";
 import Pill from "../../assets/icons/paracetamol.png";
 import Treat from "../../assets/icons/treat.svg";
 import styles from '../../components/Medications/Medication.module.css'
+import { useEffect } from 'react';
+import { useState } from 'react';
 
 function Medication() {
           const timeSlots = [
@@ -96,19 +98,56 @@ function Medication() {
   }
 };
 
+ const [isMobile, setIsMobile] = useState(window.innerWidth < 992);
+  
+    useEffect(() => {
+  
+      const handleResize = () => {
+        const mobile = window.innerWidth < 992;
+        setIsMobile(mobile);
+      };
+      window.addEventListener("resize", handleResize);
+      return () => window.removeEventListener("resize", handleResize);
+    }, []);
+  
+    useEffect(() => {
+      const mobile = window.innerWidth < 992;
+      setIsMobile(mobile);
+      //setIsOpen(!mobile);
+    }, []);
+
 
   return (
     <Container
-    
+      // style={{
+      //   marginLeft: isMobile ? "10px" : "100px",
+      //   // marginTop: "53px",
+      //   overflowX: "hidden",
+      //   width: "calc(100%)",
+      //   backgroundColor: "#ffffff",
+      //   minHeight: "100vh",
+      // }}
       style={{
         fontFamily: "Urbanist, sans-serif",
         // marginTop: "120px",
         paddingTop:"115px",
         marginLeft: "335px",
         maxWidth: "1108px",
+           marginLeft: isMobile ? "10px" : "100px",
+      //   // marginTop: "53px",
+      //   overflowX: "hidden",
+      //   width: "calc(100%)",
+      //   backgroundColor: "#ffffff",
+      //   minHeight: "100vh",
+  //      display: "flex",
+  //  flexDirection: "column",
+  //  alignItems: "center",
+  //   position: "relative",
+  //   marginBottom: "0.5rem ",
+  //   paddingTop: "110px" 
       }}
 
-      className={`${styles.mainContainer}`}
+      // className={`${styles.mainContainer}`}
     >
 
       <h1 style={{ fontSize: "31px", fontWeight: 500, color: "#252525" }}

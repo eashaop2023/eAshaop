@@ -90,6 +90,9 @@ const menuItems = [
 
   const toggleSidebar = () => {
     setIsOpen((prev) => !prev);
+    setTimeout(() => {
+      setIsOpen(false);
+    }, 5000);
   };
 
   return (
@@ -110,77 +113,81 @@ const menuItems = [
       )}
 
       {/* Sidebar */}
-      <div
-        className="sidebarwidth"
-        style={{
-          position: "fixed",
-          top: isMobile ? (isOpen ? "100px" : "0px") : "77px",
-          left: isMobile ? (isOpen ? "0" : "-260px") : "0px",
-          width: sidebarWidth,
-          height: "calc(100vh - 78px)",
-          backgroundColor: "#fff",
-          borderRight: "1px solid #eee",
-          padding: isMobile ? (isOpen ? "25px" : "20px") : "40px 0px 0px 57px",
-          transition: "left 0.4s ease, width 0.4s ease",
-          overflowX: "hidden",
-          zIndex: 999,
-        }}
-      >
-        <ol className="list-unstyled m-0 mt-5">
-          {menuItems.map((item, index) => {
-            const isSelected = selected === item.label;
+      {!isMobile &&
+        <div
+          className="sidebarwidth"
+          style={{
+            position: "fixed",
+            top: isMobile ? (isOpen ? "100px" : "0px") : "77px",
+            left: isMobile ? (isOpen ? "0" : "-260px") : "0px",
+            width: sidebarWidth,
+            height: "calc(100vh - 78px)",
+            backgroundColor: "#fff",
+            borderRight: "1px solid #eee",
+            padding: isMobile ? (isOpen ? "25px" : "20px") : "40px 0px 0px 57px",
+            transition: "left 0.4s ease, width 0.4s ease",
+            overflowX: "hidden",
+            zIndex: 999,
+          }}
+        >
+          <ol className="list-unstyled m-0 mt-5">
+            {menuItems.map((item, index) => {
+              const isSelected = selected === item.label;
 
-            return (
-              <li
-                key={index}
-                onClick={() => {
-navigate(item.path);
-                  if (isMobile) setIsOpen(false); // ✅ Auto-close on mobile
-                }}
-                className={`d-flex align-items-center mb-4 sidebar-item ${
-                  isSelected ? "sidebar-active" : ""
-                }`}
-                style={{
-                  marginLeft: "8px",
-                  position: "relative",
-                  cursor: "pointer",
-                }}
-              >
-                {/* Active vertical line */}
-                {isSelected && (
-                  <div
-                    style={{
-                      position: "absolute",
-                      left: activeLineLeft,
-                      top: "-7px",
-                      width: "4px",
-                      height: "32px",
-                      borderRadius: "2px",
-                      backgroundColor: "#00A99D",
-                    }}
-                  />
-                )}
-
-                <img src={item.icon} alt={item.label} className="sidebar-icon" />
-
-                <span
-                  className="sidebar-label"
+              return (
+                <li
+                  key={index}
+                  onClick={() => {
+                    navigate(item.path);
+                    setTimeout(() => {
+                      setIsOpen(false)
+                    }, 5000);
+                    if (isMobile) setIsOpen(false); // ✅ Auto-close on mobile
+                  }}
+                  className={`d-flex align-items-center mb-4 sidebar-item ${isSelected ? "sidebar-active" : ""
+                    }`}
                   style={{
-                    marginLeft: "12px",
-                    whiteSpace: "nowrap",
-                    opacity: isOpen ? 1 : 0,
-                    width: isOpen ? "auto" : 0,
-                    overflow: "hidden",
-                    transition: "opacity 0.4s ease, width 0.4s ease",
+                    marginLeft: "8px",
+                    position: "relative",
+                    cursor: "pointer",
                   }}
                 >
-                  {item.label}
-                </span>
-              </li>
-            );
-          })}
-        </ol>
-      </div>
+                  {/* Active vertical line */}
+                  {isSelected && (
+                    <div
+                      style={{
+                        position: "absolute",
+                        left: activeLineLeft,
+                        top: "-7px",
+                        width: "4px",
+                        height: "32px",
+                        borderRadius: "2px",
+                        backgroundColor: "#00A99D",
+                      }}
+                    />
+                  )}
+
+                  <img src={item.icon} alt={item.label} className="sidebar-icon" />
+
+                  <span
+                    className="sidebar-label"
+                    style={{
+                      marginLeft: "12px",
+                      whiteSpace: "nowrap",
+                      opacity: isOpen ? 1 : 0,
+                      width: isOpen ? "auto" : 0,
+                      overflow: "hidden",
+                      transition: "opacity 0.4s ease, width 0.4s ease",
+                    }}
+                  >
+                    {item.label}
+                  </span>
+                </li>
+              );
+            })}
+          </ol>
+        </div>
+      }
 
       {/* Toggle button */}
       <button
@@ -199,11 +206,12 @@ navigate(item.path);
         }}
       >
         {isMobile ? (
-          isOpen ? (
-            <FiX size={24} color="#333" />
-          ) : (
-            <FiMenu size={24} color="#333" />
-          )
+          <></>
+          // isOpen ? (
+          //   <FiX size={24} color="#333" />
+          // ) : (
+          //   <FiMenu size={24} color="#333" />
+          // )
         ) : (
           <img
             src={isOpen ? close : open}

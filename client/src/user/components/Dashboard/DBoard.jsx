@@ -1047,11 +1047,35 @@ useEffect(() => {
     });
 }, []);
 
+const [isMobile, setIsMobile] = useState(window.innerWidth < 992);
+
+  useEffect(() => {
+
+    const handleResize = () => {
+      const mobile = window.innerWidth < 992;
+      setIsMobile(mobile);
+    };
+    window.addEventListener("resize", handleResize);
+    return () => window.removeEventListener("resize", handleResize);
+  }, []);
+
+  useEffect(() => {
+    const mobile = window.innerWidth < 992;
+    setIsMobile(mobile);
+    //setIsOpen(!mobile);
+  }, []);
 
 
   return (
     <div className={`${styles.dMainContainer} flex justify-end`}>
-      <div className={`${styles.dContainer} flex w-[1080px] mt-5 gap-10`}>
+      <div className={`${styles.dContainer} flex w-[1080px] mt-5 gap-10`}  style={{
+        marginLeft: isMobile ? "10px" : "100px",
+        marginTop: "53px",
+        overflowX: "hidden",
+        width: "calc(100%)",
+        backgroundColor: "#ffffff",
+        minHeight: "100vh",
+      }}>
         <div className={`container max-w-7xl mt-5 pt-6 space-y-6`}>
           <div className="grid grid-cols-[1fr] justify-between items-center">
             <div className={`${styles.dboardContainer}`} style={{marginTop:"1rem"}} >

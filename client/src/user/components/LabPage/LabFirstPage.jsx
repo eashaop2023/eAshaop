@@ -97,7 +97,7 @@ export default function LabCardsComponent() {
 
         <div
           className="d-lg-none position-fixed top-0 start-0 w-100 bg-white px-3 pt-1 pb-1"
-          style={{ zIndex:1060 , marginTop: "77.9px" }}
+          style={{ zIndex:0 , marginTop: "77.9px" }}
         >
           <h2 className="fw-medium mb-1" style={{ marginLeft: "52px", padding: "28px 0px 0px 0px" }}>Lab</h2>
           <div className="d-flex align-items-center gap-2">

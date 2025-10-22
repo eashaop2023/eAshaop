@@ -93,7 +93,14 @@ const Dashboard = () => {
 
 
   return (
-    <div className={styles.mainContainer}>
+    <div className={styles.mainContainer}  style={{
+        marginLeft: isMobile ? "10px" : "100px",
+        // marginTop: "53px",
+        overflowX: "hidden",
+        width: "calc(100%)",
+        backgroundColor: "#ffffff",
+        minHeight: "100vh",
+      }}>
       <h2 className={styles.heading}>Doctor Specialist</h2>
 
       <div className={`row ${styles.rowContainer}`}>

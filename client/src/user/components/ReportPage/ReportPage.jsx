@@ -2,6 +2,8 @@ import React from "react";
 import { Modal, Button, Row, Col, Card } from "react-bootstrap";
 import document from "../../assets/document-text.png";
 import styles from '../../components/ReportPage/ReportPage.module.css'
+import { useState } from "react";
+import { useEffect } from "react";
 
 const reports = {
   Today: [
@@ -60,20 +62,49 @@ const ReportCard = ({ title }) => (
 );
 
 
+
 function ReportPage() {
+  const [isMobile, setIsMobile] = useState(window.innerWidth < 992);
+  
+    useEffect(() => {
+  
+      const handleResize = () => {
+        const mobile = window.innerWidth < 992;
+        setIsMobile(mobile);
+      };
+      window.addEventListener("resize", handleResize);
+      return () => window.removeEventListener("resize", handleResize);
+    }, []);
+  
+    useEffect(() => {
+      const mobile = window.innerWidth < 992;
+      setIsMobile(mobile);
+      //setIsOpen(!mobile);
+    }, []);
+  
     return (
-    <div className= {`${styles.outerMainDiv}`}>
-      <div
+    <div
+    //  className= {`${styles.outerMainDiv}`} 
       style={{
-        // marginTop:'120px',
-        marginLeft:'352px',
-        paddingTop:"120px",
-        minHeight: "100vh",
-        // width:"100%"
-      }}
+        marginLeft: isMobile ? "10px" : "100px",
+        // marginTop: "53px",
+        // overflowX: "hidden",
+        width: "calc(100%)",
+        backgroundColor: "#ffffff",
+        // minHeight: "100vh",
+      }}>
+      <div
+     
+      // style={{
+      //   // marginTop:'120px',
+      //   // marginLeft:'352px',
+      //   paddingTop:"120px",
+      //   minHeight: "100vh",
+      //   // width:"100%"
+      // }}
       className={`${styles.mainContainer}`}
     >
-      <div className="d-flex justify-content-between align-items-center mb-4">
+      <div className="d-flex justify-content-between align-items-center mb-4" >
         <h2 className={`${styles.headerOne}  fw-medium mb-2`} style={{ color: "#252525" }}>
           Reports & Scanning's
         </h2>
