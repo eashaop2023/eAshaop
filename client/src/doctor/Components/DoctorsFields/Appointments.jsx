@@ -167,6 +167,27 @@ const StyledTable = styled.table`
   }
 `;
 
+const StyledSelect = styled.select`
+  padding: 6px 10px;
+  border-radius: 6px;
+  border: 1.5px solid #ccc;
+  font-size: 0.9rem;
+  background-color: #fff;
+  cursor: pointer;
+  transition: border-color 0.2s ease;
+
+  &:hover {
+    border-color: #007bff;
+  }
+
+  &:disabled {
+    background-color: #f2f2f2;
+    color: #999;
+    cursor: not-allowed;
+  }
+`;
+
+
 const PaginationControls = styled.div`
   margin-top: 20px;
   display: flex;
@@ -253,6 +274,8 @@ const Appointments = () => {
       setCancellingIds((prev) => prev.filter((id) => id !== appointmentId));
     }
   };
+
+  
 
   const filterData = (appointments) =>
     appointments.filter((appointment) => {
