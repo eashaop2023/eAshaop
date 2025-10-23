@@ -323,10 +323,21 @@ exports.getDoctorAppointments = async (req, res) => {
       return user;
     });
 
+    const appointmentOngoing = await Appointment.find({
+      doctorId,
+      date: { $lte: now },
+      status: 'booked',
+    }).populate("userId", "full_name email phone_number");
+
     const upcoming = await Appointment.find({
       doctorId: doctorId, // make sure field matches schema
       date: { $gte: now }, // 'date' is the correct field
     }).populate("userId", "full_name email phone_number");
+    const ongoing = appointmentOngoing.filter(app => {
+      const startDate = app.date; // assuming app.date is a Date object
+      const endDate = new Date(startDate.getTime() + slotDuration * 60000);
+      return endDate >= now;
+    });
 
     const past = await Appointment.find({
       doctorId: doctorId,
@@ -336,6 +347,7 @@ exports.getDoctorAppointments = async (req, res) => {
     res.status(200).json({
       totalAppointments: past.length,
       upcoming,
+      ongoing,
       past,
       users
     });
