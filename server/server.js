@@ -69,51 +69,42 @@ cron.schedule("* * * * *", async () => {
     const now = new Date();
     const fiveMinsLater = new Date(now.getTime() + 5 * 60 * 1000);
 
+    // Find all video appointments without jitsiLink and booked
     const appointments = await Appointment.find({
       type: "video",
       jitsiLink: null,
       status: "booked",
-      date: {
-        $gte: new Date(
-          fiveMinsLater.getFullYear(),
-          fiveMinsLater.getMonth(),
-          fiveMinsLater.getDate()
-        ),
-        $lte: new Date(
-          fiveMinsLater.getFullYear(),
-          fiveMinsLater.getMonth(),
-          fiveMinsLater.getDate(),
-          23,
-          59,
-          59
-        ),
-      },
-      time: `${fiveMinsLater.getHours()}:${String(
-        fiveMinsLater.getMinutes()
-      ).padStart(2, "0")}`,
     });
 
     for (let appt of appointments) {
-      const jitsiLink = `https://meet.jit.si/EashaOP-${appt._id}-${Date.now()}`;
-      appt.jitsiLink = jitsiLink;
-      await appt.save();
+      // Combine date + time fields into a Date object for comparison
+      const [hourStr, minuteStr] = appt.time.split(":");
+      const apptDateTime = new Date(appt.date);
+      apptDateTime.setHours(parseInt(hourStr), parseInt(minuteStr), 0, 0);
 
-      await User.updateOne(
-        { _id: appt.userId },
-        { $set: { "appointments.$[elem].jitsiLink": jitsiLink } },
-        { arrayFilters: [{ "elem.appointmentId": appt._id }] }
-      );
+      // If the appointment starts within the next 5 minutes
+      if (apptDateTime - now <= 5 * 60 * 1000 && apptDateTime > now) {
+        const jitsiLink = `https://meet.jit.si/EashaOP-${appt._id}-${Date.now()}`;
+        appt.jitsiLink = jitsiLink;
+        await appt.save();
 
-      await Doctor.updateOne(
-        { _id: appt.doctorId },
-        { $set: { "appointments.$[elem].jitsiLink": jitsiLink } },
-        { arrayFilters: [{ "elem.appointmentId": appt._id }] }
-      );
+        await User.updateOne(
+          { _id: appt.userId },
+          { $set: { "appointments.$[elem].jitsiLink": jitsiLink } },
+          { arrayFilters: [{ "elem.appointmentId": appt._id }] }
+        );
 
-      console.log("Generated Jitsi link for appointment:", appt._id);
+        await Doctor.updateOne(
+          { _id: appt.doctorId },
+          { $set: { "appointments.$[elem].jitsiLink": jitsiLink } },
+          { arrayFilters: [{ "elem.appointmentId": appt._id }] }
+        );
+
+        console.log("✅ Generated Jitsi link for appointment:", appt._id);
+      }
     }
   } catch (err) {
-    console.error("Error generating Jitsi links:", err);
+    console.error("❌ Error generating Jitsi links:", err);
   }
 });
 
