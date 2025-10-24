@@ -255,71 +255,71 @@ exports.getAllAppointments = async (req, res) => {
 
 // GET /api/appointments/user/:userId
 
-exports.getUserAppointments = async (req, res) => {
-  try {
-    const { userId } = req.params;
-    const appointments = await Appointment.find({ userId })
-      .populate(
-        "doctorId",
-        "name education speciality hospitalName hospitalLocation consultationMode email mobile profileImage"
-      )
-      .lean();
+// exports.getUserAppointments = async (req, res) => {
+//   try {
+//     const { userId } = req.params;
+//     const appointments = await Appointment.find({ userId })
+//       .populate(
+//         "doctorId",
+//         "name education speciality hospitalName hospitalLocation consultationMode email mobile profileImage"
+//       )
+//       .lean();
 
-    const now = moment().tz("Asia/Kolkata"); // Current IST time
+//     const now = moment().tz("Asia/Kolkata"); // Current IST time
 
-    const formatAppointment = (appt) => ({
-      appointmentId: appt._id,
-      type: appt.type,
-      date: appt.date,
-      time: appt.time,
-      status: appt.status,
-      amount: appt.amount,
-      doctor: appt.doctorId
-        ? {
-          name: appt.doctorId.name,
-          speciality: appt.doctorId.speciality,
-          education: appt.doctorId.education,
-          consultationMode: appt.doctorId.consultationMode,
-          hospitalName: appt.doctorId.hospitalName,
-          hospitalLocation: appt.doctorId.hospitalLocation,
-          email: appt.doctorId.email,
-          mobile: appt.doctorId.mobile,
-          profileImage: appt.doctorId.profileImage,
-        }
-        : null,
-      dependent: appt.dependent || null,
-      jitsiLink: appt.jitsiLink || null,
-    });
+//     const formatAppointment = (appt) => ({
+//       appointmentId: appt._id,
+//       type: appt.type,
+//       date: appt.date,
+//       time: appt.time,
+//       status: appt.status,
+//       amount: appt.amount,
+//       doctor: appt.doctorId
+//         ? {
+//           name: appt.doctorId.name,
+//           speciality: appt.doctorId.speciality,
+//           education: appt.doctorId.education,
+//           consultationMode: appt.doctorId.consultationMode,
+//           hospitalName: appt.doctorId.hospitalName,
+//           hospitalLocation: appt.doctorId.hospitalLocation,
+//           email: appt.doctorId.email,
+//           mobile: appt.doctorId.mobile,
+//           profileImage: appt.doctorId.profileImage,
+//         }
+//         : null,
+//       dependent: appt.dependent || null,
+//       jitsiLink: appt.jitsiLink || null,
+//     });
 
-    const upcoming = [];
-    const past = [];
+//     const upcoming = [];
+//     const past = [];
 
-    appointments.forEach((appt) => {
-      // Combine date + time into full datetime
-      const apptDateTime = moment.tz(
-        `${moment(appt.date).format("YYYY-MM-DD")} ${appt.time}`,
-        "YYYY-MM-DD hh:mm A",
-        "Asia/Kolkata"
-      );
+//     appointments.forEach((appt) => {
+//       // Combine date + time into full datetime
+//       const apptDateTime = moment.tz(
+//         `${moment(appt.date).format("YYYY-MM-DD")} ${appt.time}`,
+//         "YYYY-MM-DD hh:mm A",
+//         "Asia/Kolkata"
+//       );
 
-      if (apptDateTime.isSameOrAfter(now)) {
-        upcoming.push(formatAppointment(appt));
-      } else {
-        past.push(formatAppointment(appt));
-      }
-    });
+//       if (apptDateTime.isSameOrAfter(now)) {
+//         upcoming.push(formatAppointment(appt));
+//       } else {
+//         past.push(formatAppointment(appt));
+//       }
+//     });
 
-    res.status(200).json({
-      totalUpcoming: upcoming.length,
-      totalPast: past.length,
-      upcoming,
-      past,
-    });
-  } catch (error) {
-    console.error("Get User Appointments Error:", error);
-    res.status(500).json({ message: error.message });
-  }
-};
+//     res.status(200).json({
+//       totalUpcoming: upcoming.length,
+//       totalPast: past.length,
+//       upcoming,
+//       past,
+//     });
+//   } catch (error) {
+//     console.error("Get User Appointments Error:", error);
+//     res.status(500).json({ message: error.message });
+//   }
+// };
 // GET /api/appointments/doctor/:doctorId
 exports.getDoctorAppointments = async (req, res) => {
   try {
