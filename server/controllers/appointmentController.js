@@ -117,25 +117,73 @@ exports.getUserAppointments = async (req, res) => {
     const { userId } = req.params;
 
     const appointments = await Appointment.find({ userId })
-      .populate({
-        path: "doctorId",
-        select: "name speciality email mobile",
-      })
-      .populate({
-        path: "userId",
-        select: "full_name email phone_number",
-      });
+      .populate(
+        "doctorId",
+        "name education speciality hospitalName hospitalLocation consultationMode email mobile profileImage"
+      )
+      .lean();
 
-    if (!appointments || appointments.length === 0) {
-      return res
-        .status(404)
-        .json({ message: "No appointments found for this user" });
-    }
+    const now = moment().tz("Asia/Kolkata");
 
-    res.status(200).json({ appointments });
+    const doctorIds = [...new Set(appointments.map(a => a.doctorId?._id))];
+    const doctorAvailability = await DoctorAvailability.find({
+      doctor: { $in: doctorIds }
+    }).lean();
+
+    const slotMap = {};
+    doctorAvailability.forEach(doc => {
+      slotMap[doc.doctor] = doc.slotDuration;
+    });
+
+    const onGoing = [];
+    const upcoming = [];
+    const past = [];
+
+    const formatAppointment = (appt, startTime, endTime) => ({
+      appointmentId: appt._id,
+      type: appt.type,
+      date: appt.date,
+      time: appt.time,
+      status: appt.status,
+      startTime,
+      endTime,
+      amount: appt.amount,
+      doctor: appt.doctorId || null,
+      dependent: appt.dependent || null,
+      jitsiLink: appt.jitsiLink || null,
+    });
+
+    appointments.forEach((appt) => {
+      const slotDuration = slotMap[appt.doctorId?._id] || 30;
+      const startMoment = moment.tz(
+        `${moment(appt.date).format("YYYY-MM-DD")} ${appt.time}`,
+        "YYYY-MM-DD hh:mm A",
+        "Asia/Kolkata"
+      );
+
+      const endMoment = moment(startMoment).add(slotDuration, "minutes");
+
+      if (now.isBetween(startMoment, endMoment)) {
+        onGoing.push(formatAppointment(appt, startMoment.format("hh:mm A"), endMoment.format("hh:mm A")));
+      } else if (startMoment.isAfter(now)) {
+        upcoming.push(formatAppointment(appt, startMoment.format("hh:mm A"), endMoment.format("hh:mm A")));
+      } else {
+        past.push(formatAppointment(appt, startMoment.format("hh:mm A"), endMoment.format("hh:mm A")));
+      }
+    });
+
+    res.status(200).json({
+      totalOngoing: onGoing.length,
+      totalUpcoming: upcoming.length,
+      totalPast: past.length,
+      onGoing,
+      upcoming,
+      past,
+    });
+
   } catch (error) {
     console.error("Get User Appointments Error:", error);
-    res.status(500).json({ message: "Server error", error: error.message });
+    res.status(500).json({ message: error.message });
   }
 };
 
