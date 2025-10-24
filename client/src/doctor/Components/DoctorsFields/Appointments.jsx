@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import axios from "axios";
 import { API_BASE_URL } from "../../../api-config";
 import styled, { css } from "styled-components"; // <-- Import
+import Select from "react-select";
 
 const PAGE_SIZE = 10;
 
@@ -167,14 +168,68 @@ const StyledTable = styled.table`
   }
 `;
 
+
+// const getStatusColor = (status) => {
+//   switch (status) {
+//     case "join":
+//       return "#0d6efd"; // Blue
+//     case "cancel":
+//     case "cancelled":
+//       return "#dc3545"; // Red
+//     case "completed":
+//       return "#28a745"; // Green
+//     default:
+//       return "#6c757d"; // Gray
+//   }
+// };
+
+const getStatusColor = (status) => {
+  switch (status?.toLowerCase()) {
+    case "join":
+    case "joined":
+      return "#4CAF50"; // green
+    case "cancel":
+    case "cancelled":
+      return "#F44336"; // red
+    case "completed":
+      return "#2196F3"; // blue
+    default:
+      return "#9E9E9E"; // gray
+  }
+};
+
+
+const StyledSelectWrapper = styled.div`
+  position: relative;
+  display: inline-block;
+  width: 120px;
+
+  &::after {
+    content: "▼";
+    position: absolute;
+    right: 10px;
+    top: 50%;
+    transform: translateY(-50%);
+    font-size: 0.7rem;
+    color: white;
+    pointer-events: none;
+  }
+`;
+
+
 const StyledSelect = styled.select`
+ width: 100%;
   padding: 6px 10px;
   border-radius: 6px;
   border: 1.5px solid #ccc;
   font-size: 0.9rem;
-  background-color: #fff;
+  background-color: ${({ status }) => getStatusColor(status)};
   cursor: pointer;
   transition: border-color 0.2s ease;
+  appearance: none;
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  color: white;
 
   &:hover {
     border-color: #007bff;
@@ -219,11 +274,19 @@ const PaginationControls = styled.div`
   }
 `;
 
+// For ongoing section only
+const OngoingTableWrapper = styled(TableWrapper)`
+  min-height: 250px !important; // adjust height as needed
+  overflow-y: auto;
+`;
+
+
 // ========================================================================
 //  YOUR REACT COMPONENT
 // ========================================================================
 
 const Appointments = () => {
+    const [ongoingAppointments, setOngoingAppointments] = useState([]);
   const [upcomingAppointments, setUpcomingAppointments] = useState([]);
   const [pastAppointments, setPastAppointments] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -241,6 +304,7 @@ const Appointments = () => {
         const response = await axios.get(
           `${API_BASE_URL}/api/appointments/doctor/${doctorId}`
         );
+       setOngoingAppointments(response.data.ongoing || []);
         setUpcomingAppointments(response.data.upcoming || []);
         setPastAppointments(response.data.past || []);
       } catch (error) {
@@ -255,23 +319,52 @@ const Appointments = () => {
     }
   }, [doctorId]);
 
-  const handleCancel = async (appointmentId) => {
-    try {
-      setCancellingIds((prev) => [...prev, appointmentId]);
-      await axios.patch(
-        `${API_BASE_URL}/api/appointments/${appointmentId}/cancel`
-      );
+  const handleAction = async (appointment, action) => {
+    const appointmentId = appointment._id;
 
-      setUpcomingAppointments((prev) =>
-        prev.map((appt) =>
-          appt._id === appointmentId ? { ...appt, status: "cancelled" } : appt
-        )
-      );
-    } catch (error) {
-      console.error("Error canceling appointment:", error);
-      alert("Failed to cancel appointment. Please try again.");
-    } finally {
-      setCancellingIds((prev) => prev.filter((id) => id !== appointmentId));
+    if (action === "cancel") {
+      try {
+        setCancellingIds((prev) => [...prev, appointmentId]);
+        await axios.patch(`${API_BASE_URL}/api/appointments/${appointmentId}/cancel`);
+        setOngoingAppointments((prev) =>
+          prev.map((appt) =>
+            appt._id === appointmentId ? { ...appt, status: "cancelled" } : appt
+          )
+        );
+        setUpcomingAppointments((prev) =>
+          prev.map((appt) =>
+            appt._id === appointmentId ? { ...appt, status: "cancelled" } : appt
+          )
+        );
+      } catch (error) {
+        console.error("Error cancelling appointment:", error);
+        alert("Failed to cancel appointment.");
+      } finally {
+        setCancellingIds((prev) => prev.filter((id) => id !== appointmentId));
+      }
+    } else if (action === "completed") {
+      try {
+        await axios.patch(`${API_BASE_URL}/api/appointments/${appointmentId}/complete`);
+        setOngoingAppointments((prev) =>
+          prev.map((appt) =>
+            appt._id === appointmentId ? { ...appt, status: "completed" } : appt
+          )
+        );
+        setUpcomingAppointments((prev) =>
+          prev.map((appt) =>
+            appt._id === appointmentId ? { ...appt, status: "completed" } : appt
+          )
+        );
+      } catch (error) {
+        console.error("Error completing appointment:", error);
+        alert("Failed to mark appointment as completed.");
+      }
+    } else if (action === "join") {
+      if (appointment.jitsiLink) {
+        window.open(appointment.jitsiLink, "_blank");
+      } else {
+        alert("Jitsi link not available.");
+      }
     }
   };
 
@@ -323,26 +416,67 @@ const Appointments = () => {
                 <td>{appt.time || "—"}</td>
                 <td className="capitalize">{appt.type || "—"}</td>
                 <td>₹{appt.amount || 0}</td>
-                {showCancel && (
-                  <td>
-                    <Button
-                      variant={
-                        appt.status === "cancelled" ? "secondary" : "danger"
-                      }
-                      disabled={isCancelling || appt.status === "cancelled"}
-                      onClick={() => handleCancel(appt._id)}
-                    >
-                      {appt.status === "cancelled"
-                        ? "Cancelled"
-                        : isCancelling
-                        ? "Cancelling..."
-                        : "Cancel"}
-                    </Button>
-                  </td>
-                )}
+                <td>
+<Select
+  options={[
+    { value: "join", label: "Join", color: "#4CAF50" },
+    { value: "cancel", label: "Cancel", color: "#F44336" },
+    { value: "completed", label: "Completed", color: "#2196F3" },
+  ]}
+  
+  defaultValue={{
+    value: appt.status,
+    label:
+      appt.status?.charAt(0).toUpperCase() +
+      appt.status?.slice(1).toLowerCase(),
+    color: getStatusColor(appt.status),
+  }}
+  onChange={(opt) => handleAction(appt, opt.value)}
+  isDisabled={
+    appt.status === "cancelled" ||
+    appt.status === "completed" ||
+    isCancelling
+  }
+  isSearchable={false}
+styles={{
+  control: (base, state) => ({
+    ...base,
+    backgroundColor: getStatusColor(state?.selectProps?.value?.value || appt.status),
+    color: "white",
+    borderRadius: 8,
+    border: "none",
+    boxShadow: "none",
+    minWidth: 130,
+    "&:hover": { cursor: "pointer" },
+  }),
+  singleValue: (base, state) => ({
+    ...base,
+    color: "white",
+    fontWeight: 500,
+  }),
+  menu: (base) => ({
+    ...base,
+    backgroundColor: "#fff",
+    borderRadius: 8,
+    overflow: "hidden",
+    zIndex: 5,
+  }),
+  option: (base, { data, isFocused }) => ({
+    ...base,
+    backgroundColor: isFocused ? data.color : "#fff",
+    color: isFocused ? "white" : data.color,
+    fontWeight: 500,
+    cursor: "pointer",
+  }),
+  dropdownIndicator: (base) => ({
+    ...base,
+    color: "white",
+  }),
+  indicatorSeparator: () => ({ display: "none" }),
+}}/>
+                </td>
               </tr>
-            );
-          })
+            );          })
         ) : (
           <tr>
             <td colSpan={showCancel ? 7 : 6} className="no-data">
@@ -419,9 +553,11 @@ const Appointments = () => {
 
         <AppointmentSection>
           <SectionTitle>Ongoing</SectionTitle>
-          <TableWrapper>
-            {loading ? <p>Loading...</p> : renderTable([])}
-          </TableWrapper>
+          <OngoingTableWrapper>
+          {/* <TableWrapper> */}
+            {loading ? <p>Loading...</p> : renderTable(ongoingAppointments, true)}
+          {/* </TableWrapper> */}
+          </OngoingTableWrapper>
         </AppointmentSection>
 
         <AppointmentSection>
