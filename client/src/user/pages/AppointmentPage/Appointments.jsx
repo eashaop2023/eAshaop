@@ -13,7 +13,7 @@ const Appointments = () => {
   const [activeTab, setActiveTab] = useState("virtual");
   const [showPopup, setShowPopup] = useState(false);
   // const [cancelTarget, setCancelTarget] = useState(null);
-  const [appointments, setAppointments] = useState({ upcoming: [], past: [] });
+  const [appointments, setAppointments] = useState({ ongoing:[], upcoming: [], past: [] });
   const [loading, setLoading] = useState(true);
   // const navigate = useNavigate();
 
@@ -45,6 +45,7 @@ const Appointments = () => {
           `${API_BASE_URL}/api/appointments/user/${userId}`
         );
         setAppointments({
+          ongoing:res.data.onGoing || [],
           upcoming: res.data.upcoming || [],
           past: res.data.past || [],
         });
@@ -310,9 +311,30 @@ const Appointments = () => {
               Clinic visit
             </button>
           </div>
+            
+           <h5 className={`${styles.headerOne} mb-3`} style={{ fontSize: "24px" }}>
+  Ongoing appointments
+</h5>
+
           <h5 className={`${styles.headerOne} mb-3`} style={{ fontSize: "24px" }}>
             Upcoming appointments
           </h5>
+
+          <div className={`${styles.rowContainer} row`}>
+  {appointments.ongoing.length > 0 ? (
+    appointments.ongoing
+      .filter(
+        (a) =>
+          a.status === "booked" &&
+          ((a.type === "video" && activeTab === "virtual") ||
+            (a.type === "clinic" && activeTab === "clinic"))
+      )
+      .map((appt) => renderCard(appt, false))
+  ) : (
+    <p>No ongoing appointments</p>
+  )}
+</div>
+
 
           {/* Upcoming Cards */}
           <div className={`${styles.rowContainer} row`}>
@@ -321,8 +343,8 @@ const Appointments = () => {
                 .filter(
                   (a) =>
                     a.status === "booked" &&
-                    (a.type === "video" && activeTab === "virtual") ||
-                    (a.type === "clinic" && activeTab === "clinic")
+                    ((a.type === "video" && activeTab === "virtual") ||
+                    (a.type === "clinic" && activeTab === "clinic"))
                 )
                 .map((appt) => renderCard(appt, false))
             ) : (
