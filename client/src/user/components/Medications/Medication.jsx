@@ -131,7 +131,7 @@ function Medication() {
         fontFamily: "Urbanist, sans-serif",
         // marginTop: "120px",
         paddingTop:"115px",
-        marginLeft: "335px",
+        // marginLeft: "335px",
         maxWidth: "1108px",
            marginLeft: isMobile ? "10px" : "100px",
       //   // marginTop: "53px",
