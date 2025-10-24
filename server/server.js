@@ -3,7 +3,8 @@ const dotenv = require("dotenv");
 const mongoose = require("mongoose");
 const bodyParser = require("body-parser");
 const cors = require("cors");
-const multer=require("multer")
+const multer=require("multer");
+const http = require("http");
 
 dotenv.config();
 console.log("Loaded CLOUD_NAME:", process.env.CLOUDINARY_CLOUD_NAME);
@@ -24,6 +25,10 @@ const Doctor = require("./models/doctorModel");
 const Appointment = require("./models/Appointment");
 
 const app = express();
+const server = http.createServer(app);
+const {initSocket}=require("./services/socketService");
+const io = initSocket(server);
+app.set("io", io);
 
 // -------------------- MIDDLEWARES --------------------
 // CORS: allow your frontend URL
@@ -100,17 +105,17 @@ cron.schedule("* * * * *", async () => {
           { arrayFilters: [{ "elem.appointmentId": appt._id }] }
         );
 
-        console.log("✅ Generated Jitsi link for appointment:", appt._id);
+        console.log("Generated Jitsi link for appointment:", appt._id);
       }
     }
   } catch (err) {
-    console.error("❌ Error generating Jitsi links:", err);
+    console.error("Error generating Jitsi links:", err);
   }
 });
 
 // -------------------- SERVER --------------------
 const PORT = process.env.PORT || 5000;
-app.listen(PORT, () => {
+server.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
   console.log(
     "Vonage API Key loaded:",

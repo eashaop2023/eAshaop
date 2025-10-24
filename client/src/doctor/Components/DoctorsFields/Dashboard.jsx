@@ -290,6 +290,7 @@ import {
   ResponsiveContainer,
 } from "recharts";
 import axios from "axios";
+import socket from "../../../common/socket";
 import { API_BASE_URL } from "../../../api-config";
 
 // --- Latest Bookings Component ---
@@ -382,6 +383,8 @@ const Dashboard = () => {
     const doctorId = localStorage.getItem("doctorId");
     if (!doctorId) return;
 
+    console.log("Dashboard mounted for doctorId:", doctorId);
+
     const fetchBookings = async () => {
       try {
         const res = await axios.get(`${API_BASE_URL}/api/appointments/doctor/${doctorId}`);
@@ -400,7 +403,34 @@ const Dashboard = () => {
       }
     };
 
+    // Initial fetch
     fetchBookings();
+
+    // Join the doctor room
+    socket.emit("joinDoctorRoom", doctorId, (ack) => {
+      console.log("Joined Doctor Room:", ack);
+    });
+
+    // Refetch bookings on updates
+    socket.on("appointmentUpdated", () => {
+      fetchBookings();
+    });
+
+    socket.on("appointmentDeleted", () => {
+      fetchBookings();
+    });
+
+    socket.on("appointmentInserted", () => {
+      fetchBookings();
+    });
+
+    // Cleanup on unmount
+    return () => {
+      socket.off("appointmentUpdated");
+      socket.off("appointmentDeleted");
+      socket.off("appointmentInserted");
+      socket.disconnect();
+    };
   }, []);
 
   return (

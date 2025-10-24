@@ -3,6 +3,7 @@ import axios from "axios";
 import { API_BASE_URL } from "../../../api-config";
 import styled, { css } from "styled-components"; // <-- Import
 import Select from "react-select";
+import socket from "../../../common/socket";
 
 const PAGE_SIZE = 10;
 
@@ -520,6 +521,117 @@ styles={{
 
   const filteredUpcoming = filterData(upcomingAppointments);
   const paginatedUpcoming = paginateData(filteredUpcoming, upcomingPage);
+
+  useEffect(() => {
+  if (!doctorId) {
+    console.log("🚫 No doctorId, skipping socket connection");
+    return;
+  }
+
+  console.log("🔌 Initializing socket connection for doctor id:", doctorId);
+
+  // Join doctor's personal room
+  console.log("➡️ Emitting joinDoctorRoom event");
+  socket.emit("joinDoctorRoom", doctorId, (ack) => {
+    console.log("✅ joinDoctorRoom ack:", ack);
+  });
+
+  // Listen for real-time updates
+  const onUpdated = (updatedAppointment) => {
+  console.log("📡 Received appointmentUpdated event:", updatedAppointment);
+
+  // Check if this appointment already exists in upcomingAppointments
+  setUpcomingAppointments((prev) => {
+    const exists = prev.some((appt) => appt._id === updatedAppointment._id);
+    if (exists) {
+      // Update existing appointment
+      return prev.map((appt) =>
+        appt._id === updatedAppointment._id ? updatedAppointment : appt
+      );
+    } else {
+      // Add new appointment (always upcoming)
+      return [updatedAppointment, ...prev];
+    }
+  });
+
+  // Also update ongoingAppointments if it exists there
+  setOngoingAppointments((prev) =>
+    prev.map((appt) =>
+      appt._id === updatedAppointment._id ? updatedAppointment : appt
+    )
+  );
+};
+
+
+  const onDeleted = (deletedId) => {
+    console.log("🗑 Received appointmentDeleted event for id:", deletedId);
+    setOngoingAppointments((prev) => prev.filter((appt) => appt._id !== deletedId));
+    setUpcomingAppointments((prev) => prev.filter((appt) => appt._id !== deletedId));
+  };
+
+  socket.on("appointmentUpdated", onUpdated);
+  socket.on("appointmentDeleted", onDeleted);
+
+  // Listen to connection/disconnection
+  socket.on("connect", () => {
+    console.log("✅ Socket connected with id:", socket.id);
+  });
+
+  socket.on("disconnect", (reason) => {
+    console.log("⚠️ Socket disconnected:", reason);
+  });
+
+  socket.on("connect_error", (err) => {
+    console.error("❌ Socket connection error:", err);
+  });
+
+  // Cleanup
+  return () => {
+    console.log("🧹 Cleaning up socket listeners");
+    socket.off("appointmentUpdated", onUpdated);
+    socket.off("appointmentDeleted", onDeleted);
+    socket.off("connect");
+    socket.off("disconnect");
+    socket.off("connect_error");
+  };
+}, [doctorId]);
+
+//   useEffect(() => {
+//   if (!doctorId) return;
+//   console.log("In socket connetion for doctor id",doctorId)
+
+//   // Join doctor's personal room
+//   socket.emit("joinDoctorRoom", doctorId);
+
+//   // Listen for real-time updates
+//   socket.on("appointmentUpdated", (updatedAppointment) => {
+//     setOngoingAppointments((prev) =>
+//       prev.map((appt) =>
+//         appt._id === updatedAppointment._id ? updatedAppointment : appt
+//       )
+//     );
+//     setUpcomingAppointments((prev) =>
+//       prev.map((appt) =>
+//         appt._id === updatedAppointment._id ? updatedAppointment : appt
+//       )
+//     );
+//   });
+
+//   socket.on("appointmentDeleted", (deletedId) => {
+//     setOngoingAppointments((prev) =>
+//       prev.filter((appt) => appt._id !== deletedId)
+//     );
+//     setUpcomingAppointments((prev) =>
+//       prev.filter((appt) => appt._id !== deletedId)
+//     );
+//   });
+
+//   // Cleanup
+//   return () => {
+//     socket.off("appointmentUpdated");
+//     socket.off("appointmentDeleted");
+//   };
+// }, [doctorId]);
 
   // --- Main component render (uses styled components) ---
   return (
