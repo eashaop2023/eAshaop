@@ -390,7 +390,7 @@ const Appointments = () => {
   };
 
   // --- renderTable function (uses StyledTable) ---
-  const renderTable = (appointments, showCancel = false) => (
+  const renderTable = (appointments, showCancel = false,section="upcoming") => (
     <StyledTable>
       <thead>
         <tr>
@@ -408,6 +408,19 @@ const Appointments = () => {
           appointments.map((appt) => {
             const user = appt.userId || {};
             const isCancelling = cancellingIds.includes(appt._id);
+const options =
+            section === "ongoing"
+              ? [
+                  { value: "join", label: "Join", color: "#4CAF50" },
+                  { value: "completed", label: "Completed", color: "#2196F3" },
+                ]
+              : [
+                  { value: "join", label: "Join", color: "#4CAF50" },
+                  { value: "cancel", label: "Cancel", color: "#F44336" },
+                  { value: "completed", label: "Completed", color: "#2196F3" },
+                ];
+
+
             return (
               <tr key={appt._id}>
                 <td>{user.full_name || "N/A"}</td>
@@ -418,11 +431,12 @@ const Appointments = () => {
                 <td>₹{appt.amount || 0}</td>
                 <td>
 <Select
-  options={[
-    { value: "join", label: "Join", color: "#4CAF50" },
-    { value: "cancel", label: "Cancel", color: "#F44336" },
-    { value: "completed", label: "Completed", color: "#2196F3" },
-  ]}
+  // options={[
+  //   { value: "join", label: "Join", color: "#4CAF50" },
+  //   { value: "cancel", label: "Cancel", color: "#F44336" },
+  //   { value: "completed", label: "Completed", color: "#2196F3" },
+  // ]}
+  options={options}
   
   defaultValue={{
     value: appt.status,
@@ -555,7 +569,7 @@ styles={{
           <SectionTitle>Ongoing</SectionTitle>
           <OngoingTableWrapper>
           {/* <TableWrapper> */}
-            {loading ? <p>Loading...</p> : renderTable(ongoingAppointments, true)}
+            {loading ? <p>Loading...</p> : renderTable(ongoingAppointments, true,"ongoing")}
           {/* </TableWrapper> */}
           </OngoingTableWrapper>
         </AppointmentSection>
