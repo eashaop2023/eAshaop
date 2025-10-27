@@ -7,6 +7,7 @@ const bcrypt = require("bcrypt");
 const User = require("../models/user.js");
 // const { generateOTP, sendOTP } = require("../utils/otpHelperUser.js"); 
 const { generateOTP, sendOTP } = require("../utils/otpHelper");
+const userDependent = require("../models/userDependent.js");
 
 exports.registerUserApp = async (req, res) => {
   try {
@@ -88,11 +89,13 @@ exports.registerUser = async (req, res) => {
 
     // ⿢ Normalize phone and email
     let normalizedPhone = phone_number.replace(/\D/g, "").trim();
-    if (normalizedPhone.length === 10) normalizedPhone = `+91${normalizedPhone}`;
-    else if (normalizedPhone.length === 12 && normalizedPhone.startsWith("91"))
+    if (normalizedPhone.length === 10) {
+      normalizedPhone = `+91${normalizedPhone}`;
+    } else if (normalizedPhone.length === 12 && normalizedPhone.startsWith("91")) {
       normalizedPhone = `+${normalizedPhone}`;
-    else
+    } else {
       return res.status(400).json({ message: "Invalid phone number format" });
+    }
 
     const normalizedEmail = email?.trim().toLowerCase();
 
@@ -101,61 +104,93 @@ exports.registerUser = async (req, res) => {
     if (normalizedEmail) query.push({ email: normalizedEmail });
     if (normalizedPhone) query.push({ phone_number: normalizedPhone });
 
-    let existingUser = null;
+    let existingVerifiedUser = null;
+    let existingUnverifiedUser = null;
+
     if (query.length > 0) {
-      existingUser = await User.findOne({ $or: query });
-    }
+      existingVerifiedUser = await User.findOne({
+        $and: [
+          { $or: query },
+          { otp_verified: true }
+        ]
+      });
 
-    if (existingUser) {
-      return res.status(400).json({ message: "User already exists with this email or phone" });
-    }
-
-    // ⿤ Hash password
-    const hashedPassword = await bcrypt.hash(password.trim(), 10);
-
-    // ⿥ Generate 4-digit OTP (Always 4 digits)
-    const otp = String(Math.floor(1000 + Math.random() * 9000)).padStart(4, "0");
-    const expires = new Date(Date.now() + 10 * 60 * 1000); // 10 minutes expiry
-
-    // ⿦ Create user
-    const user = new User({
-      full_name,
-      phone_number: normalizedPhone,
-      dob,
-      gender,
-      password: hashedPassword,
-      email: normalizedEmail,
-      registration_otp: { code: otp, expires },
-    });
-
-    await user.save();
-
-    // ⿧ Send OTP (Email or SMS)
-    try {
-      if (method === "email") {
-        await sendOTP({ verifyBy: "email", email: normalizedEmail, otp });
-      } else {
-        await sendOTP({ verifyBy: "phone", mobile: normalizedPhone, otp });
+      if (!existingVerifiedUser) {
+        existingUnverifiedUser = await User.findOne({
+          $and: [
+            { $or: query },
+            { otp_verified: false }
+          ]
+        });
       }
-    } catch (err) {
-      console.error("OTP sending error:", err.message);
-      // Continue even if OTP fails
     }
 
-    // ⿨ Success Response
-    res.status(201).json({
-      message: `OTP sent successfully to your ${method}`,
-      user: {
-        id: user._id,
-        full_name: user.full_name,
-        phone_number: user.phone_number,
-        email: user.email,
-      },
-    });
+    if (existingVerifiedUser) {
+      return res.status(400).json({ message: "User already exists with this email or phone" });
+    } else if (existingUnverifiedUser) {
+      const hashedPassword = await bcrypt.hash(password.trim(), 10);
+      const otp = String(Math.floor(1000 + Math.random() * 9000)).padStart(4, "0");
+      const expires = new Date(Date.now() + 10 * 60 * 1000); // 10 minutes expiry
+
+      existingUnverifiedUser.full_name = full_name;
+      existingUnverifiedUser.phone_number = normalizedPhone;
+      existingUnverifiedUser.dob = dob;
+      existingUnverifiedUser.gender = gender;
+      existingUnverifiedUser.password = hashedPassword;
+      existingUnverifiedUser.email = normalizedEmail;
+      existingUnverifiedUser.registration_otp = { code: otp, expires };
+
+      await existingUnverifiedUser.save();
+      
+      try {
+        if (method === "email") {
+          await sendOTP({ verifyBy: "email", email: normalizedEmail, otp });
+        } else {
+          await sendOTP({ verifyBy: "phone", mobile: normalizedPhone, otp });
+        }
+      } catch (err) {
+        console.error("OTP sending error:", err.message);
+      }
+
+      return res.status(200).json({
+        message: `OTP resent successfully to your ${method}`,
+      });
+
+    } else {
+      const hashedPassword = await bcrypt.hash(password.trim(), 10);
+      const otp = String(Math.floor(1000 + Math.random() * 9000)).padStart(4, "0");
+      const expires = new Date(Date.now() + 10 * 60 * 1000); // 10 minutes expiry
+
+      const newUser = new User({
+        full_name,
+        phone_number: normalizedPhone,
+        dob,
+        gender,
+        password: hashedPassword,
+        email: normalizedEmail,
+        registration_otp: { code: otp, expires },
+      });
+      await newUser.save();
+
+      try {
+        if (method === "email") {
+          await sendOTP({ verifyBy: "email", email: normalizedEmail, otp });
+        } else {
+          await sendOTP({ verifyBy: "phone", mobile: normalizedPhone, otp });
+        }
+      } catch (err) {
+        console.error("OTP sending error:", err.message);
+      }
+
+      return res.status(201).json({
+        message: `OTP sent successfully to your ${method}`,
+      });
+    }
+
   } catch (err) {
     console.error("Registration Error:", err);
     res.status(500).json({ message: "Registration failed", error: err.message });
-  }
+  }
 };
 
 //  Verify OTP & Save User
@@ -445,6 +480,8 @@ exports.login = async (req, res) => {
         full_name: user.full_name,
         phone_number: user.phone_number,
         email: user.email,
+        dob: user.dob,
+        gender: user.gender,
       },
     });
   } catch (err) {
@@ -605,8 +642,6 @@ exports.forgotPasswordSendOTP = async (req, res) => {
   }
 };
 
-
-
 exports.resendForgotOTP = async (req, res) => {
   try {
     const { verifyBy, value } = req.body;
@@ -732,6 +767,36 @@ exports.resetPassword = async (req, res) => {
   }
 };
 
+exports.changePassword = async (req, res) => {
+  try {
+    const userId = req.params.id;
+    const { oldPassword, newPassword } = req.body;
+
+    if (!oldPassword || !newPassword) {
+      return res.status(400).json({ message: "Old and new passwords are required" });
+    }
+
+    // Fetch user
+    const user = await User.findById(userId);
+    if (!user) return res.status(404).json({ message: "User not found" });
+
+    // Check old password
+    const isMatch = await bcrypt.compare(oldPassword, user.password);
+    if (!isMatch) return res.status(401).json({ message: "Old password is incorrect" });
+
+    // Hash new password
+    const hashedPassword = await bcrypt.hash(newPassword, 10);
+    user.password = hashedPassword;
+
+    await user.save();
+
+    res.status(200).json({ message: "Password changed successfully" });
+  } catch (error) {
+    console.error("Change Password Error:", error);
+    res.status(500).json({ message: "Server error" });
+  }
+};
+
 // === User Logout ===
 exports.user_logout = async (req, res) => {
   const response = await userServices.user_logout(req.body);
@@ -808,9 +873,13 @@ exports.getUserById = async (req, res) => {
   try {
     const userId = req.params.id;
     const user = await userServices.getUserById(userId);
+    const userDependent = await userServices.getDependentUserId(userId);
     if (!user) return res.status(404).json({ message: "User not found" });
 
-    res.status(200).json({ user });
+    const userObj = user.toObject();
+    delete userObj.appointments;
+
+    res.status(200).json({ userDependent, user:userObj });
   } catch (error) {
     res.status(500).json({ message: "Server error", error: error.message });
   }
@@ -829,16 +898,31 @@ exports.updateUserProfile = async (req, res) => {
       userId,
       updateData
     );
+
+    if (req.query.application_android == "true" && updateData.profileImage) {
+      const updateProfileImage = await userServices.updateProfileImage(
+      userId,
+      updateData.profileImage
+      )
+    }
+
     if (!updatedUser)
       return res.status(404).json({ message: "User not found" });
 
-    res.status(200).json({
-      message: "User profile updated successfully",
-      user: updatedUser,
-    });
+    if (req.query.application_android == "true") {
+      res.status(200).json({
+        message: "User profile updated successfully",
+      });
+    } else {
+      res.status(200).json({
+        message: "User profile updated successfully",
+        user: updatedUser,
+      });
+    }
+
   } catch (error) {
-    res.status(500).json({ message: "Server error", error: error.message });
-  }
+    res.status(500).json({ message: "Server error", error: error.message });
+  }
 };
 
 // Upload multiple documents
@@ -918,3 +1002,69 @@ exports.updateDocument = async (req, res) => {
   }
 }; */
 
+
+exports.userDependent = async (req, res) => {
+  try {
+    const { userId, full_name, phone_number, gender, email, dob, relation, address, pincode, _id } = req.body;
+
+    if (req.query.removeDependent == "true") {
+      if (!_id) return res.status(400).json({ message: "Dependent _id is required for removal" });
+
+      let dependent = await userDependent.findById(_id);
+      if (!dependent) return res.status(404).json({ message: "Dependent not found" });
+
+      dependent.isDeleted = true;
+      await dependent.save();
+
+      return res.status(200).json({ message: "Dependent deleted successfully" });
+    }
+
+    if (!userId || !full_name || !phone_number || !gender || !relation || !email || !dob || !address || !pincode) {
+      return res.status(400).json({ message: "All fields are required" });
+    }
+
+    const normalizedPhone = phone_number.replace(/\D/g, "");
+    const formattedPhone = normalizedPhone.length === 10 ? `+91${normalizedPhone}` : +`${normalizedPhone}`;
+    const normalizedEmail = email.trim().toLowerCase();
+
+    let existingDependent = await userDependent.findOne({
+      $or: [{ phone_number: formattedPhone }, { email: normalizedEmail }],
+    });
+
+    if (existingDependent) {
+      existingDependent.userId = userId;
+      existingDependent.full_name = full_name;
+      existingDependent.phone_number = formattedPhone;
+      existingDependent.gender = gender.toLowerCase();
+      existingDependent.email = normalizedEmail;
+      existingDependent.dob = dob;
+      existingDependent.relation = relation;
+      existingDependent.address = address;
+      existingDependent.pincode = pincode;
+      existingDependent.isDeleted = false;
+
+      await existingDependent.save();
+
+      return res.status(200).json({ message: "Existing dependent updated successfully" });
+    }
+
+    const newDependent = new userDependent({
+      userId,
+      full_name,
+      phone_number: formattedPhone,
+      gender: gender.toLowerCase(),
+      email: normalizedEmail,
+      dob,
+      relation,
+      address,
+      pincode,
+      isDeleted: false,
+    });
+
+    await newDependent.save();
+
+    res.status(201).json({ message: "New dependent registered successfully" });
+  } catch (err) {
+    res.status(500).json({ message: "Server error", err });
+  }
+};

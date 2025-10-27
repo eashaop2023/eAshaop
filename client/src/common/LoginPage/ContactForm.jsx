@@ -4,6 +4,7 @@ import logo from "../.././assets/eAshalogo.png";
 import { toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import { API_BASE_URL } from "../../api-config";
+import LoaderOverlay from "../../commonComponents/FadeLoader";
 
 
 const ContactForm = () => {
@@ -14,6 +15,7 @@ const ContactForm = () => {
     message: "",
     notRobot: false,
   });
+  const [loading, setLoading] = useState(false);
 
   const handleChange = (e) => {
     const { name, value, type, checked } = e.target;
@@ -41,6 +43,7 @@ const ContactForm = () => {
     toast.error("Mobile number must be exactly 10 digits");
     return;
   }
+    setLoading(true);
 
     try{
       const res=await fetch(`${API_BASE_URL}/api/contact`, {
@@ -60,11 +63,13 @@ const ContactForm = () => {
        });
     } catch(err){
       toast.error(err.message);
-    }
-  };
+} finally {
+      setLoading(false); // ✅ stop loader
+    }  };
 
   return (
     <>
+    <LoaderOverlay loading={loading} />
       <style>{`
         .custom-checkbox {
           width: 16px;

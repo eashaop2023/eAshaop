@@ -33,12 +33,15 @@ const createCategory = async (req, res) => {
 // @route   GET /api/categories
 const getAllCategories = async (req, res) => {
   try {
-    const categories = await Category.find();
+    const categories = await Category.find().populate({
+      path: "doctors",
+      match: { isActive: true, isApproved: true } // match active & approved
+    });
 
     const results = categories.map(cat => ({
       uuid: cat.uuid,
       name: cat.name,
-      doctorCount: cat.doctors.length, 
+      doctorCount: cat.doctors.length, // now only active & approved
       message: cat.doctors.length > 0 ? null : "Currently no doctors available"
     }));
 
@@ -56,8 +59,10 @@ const getDoctorsByCategoryByUUID = async (req, res) => {
     const { uuid } = req.params;
 
     // Find category by UUID
-    const category = await Category.findOne({ uuid }).populate("doctors");
-
+const category = await Category.findOne({ uuid }).populate({
+      path: "doctors",
+      match: { isActive: true, isApproved: true } // ✅ filter same as getAllCategories
+    });
     if (!category) {
       return res.status(404).json({ message: "Category not found" });
     }

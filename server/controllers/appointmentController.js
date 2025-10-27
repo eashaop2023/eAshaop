@@ -228,16 +228,16 @@ exports.getUserAppointments = async (req, res) => {
       amount: appt.amount,
       doctor: appt.doctorId
         ? {
-            name: appt.doctorId.name,
-            speciality: appt.doctorId.speciality,
-            education: appt.doctorId.education,
-            consultationMode: appt.doctorId.consultationMode,
-            hospitalName: appt.doctorId.hospitalName,
-            hospitalLocation: appt.doctorId.hospitalLocation,
-            email: appt.doctorId.email,
-            mobile: appt.doctorId.mobile,
-            profileImage: appt.doctorId.profileImage,
-          }
+          name: appt.doctorId.name,
+          speciality: appt.doctorId.speciality,
+          education: appt.doctorId.education,
+          consultationMode: appt.doctorId.consultationMode,
+          hospitalName: appt.doctorId.hospitalName,
+          hospitalLocation: appt.doctorId.hospitalLocation,
+          email: appt.doctorId.email,
+          mobile: appt.doctorId.mobile,
+          profileImage: appt.doctorId.profileImage,
+        }
         : null,
       dependent: appt.dependent || null,
       jitsiLink: appt.jitsiLink || null,
@@ -278,20 +278,78 @@ exports.getDoctorAppointments = async (req, res) => {
     const { doctorId } = req.params;
     const now = new Date();
 
+    const userIds = await Appointment.distinct('userId', { doctorId, status: 'booked' });
+
+
+    let users = await User.find({ _id: { $in: userIds } }).select('-appointments');
+
+
+
+    const userAppointments = await Appointment.find({ doctorId, userId: { $in: userIds }, status: 'booked' });
+
+    const doctorAvailability = await DoctorAvailability.findOne({ doctor: doctorId });
+
+    if (!doctorAvailability) {
+      return res.status(404).json({ message: "Doctor availability not found" });
+    }
+
+    const slotDuration = doctorAvailability.slotDuration;
+
+    users = users.map(user => {
+      const appointment = userAppointments.find(app => app.userId.toString() === user._id.toString());
+      if (appointment) {
+        const start = appointment.time; // assuming time is in "HH:mm" format
+        const [hours, minutes] = start.split(":").map(Number);
+        const startDate = new Date();
+        startDate.setHours(hours, minutes, 0, 0);
+
+        const endDate = new Date(startDate.getTime() + slotDuration * 60000); // add slot duration
+
+        // Format back to "HH:mm"
+        const formatTime = date => date.toTimeString().slice(0, 5);
+
+        return {
+          _id: user._id,
+          profileImage: user.profileImage,
+          startTime: formatTime(startDate),
+          endTime: formatTime(endDate),
+        };
+        // return {
+        //   ...user.toObject(),
+        //   startTime: formatTime(startDate),
+        //   endTime: formatTime(endDate),
+        // };
+      }
+      return user;
+    });
+
+    const appointmentOngoing = await Appointment.find({
+      doctorId,
+      date: { $lte: now },
+      status: 'booked',
+    }).populate("userId", "full_name email phone_number");
+
     const upcoming = await Appointment.find({
       doctorId: doctorId, // make sure field matches schema
       date: { $gte: now }, // 'date' is the correct field
     }).populate("userId", "full_name email phone_number");
+    const ongoing = appointmentOngoing.filter(app => {
+      const startDate = app.date; // assuming app.date is a Date object
+      const endDate = new Date(startDate.getTime() + slotDuration * 60000);
+      return endDate >= now;
+    });
 
     const past = await Appointment.find({
       doctorId: doctorId,
       date: { $lt: now },
     }).populate("userId", "full_name email phone_number");
-
+    const profileImage = await User.findById
     res.status(200).json({
       totalAppointments: past.length,
-
+      upcoming,
+      ongoing,
       past,
+      users
     });
   } catch (error) {
     console.error("Get Doctor Appointments Error:", error);
@@ -479,91 +537,88 @@ const razorpay = new Razorpay({
 });
 
 // ------------------------ Book Appointment ------------------------
-exports.bookAppointment = async (req, res) => {
-  try {
-    const { userId, doctorId, date, time, type, dependent, amount } = req.body;
+// exports.bookAppointment = async (req, res) => {
+//   try {
+//     const { userId, doctorId, date, time, type, dependent, amount } = req.body;
 
-    const requestedDateIST1 = moment.utc(date).tz("Asia/Kolkata");
-    console.log("Appointment saved with date:", requestedDateIST1);
+//     if (!userId || !doctorId || !date || !time || !type || !amount)
+//       return res.status(400).json({ message: "All fields are required" });
 
-    if (!userId || !doctorId || !date || !time || !type || !amount)
-      return res.status(400).json({ message: "All fields are required" });
+//     if (typeof amount !== "number" || amount <= 0)
+//       return res.status(400).json({ message: "Amount must be a positive number" });
 
-    if (typeof amount !== "number" || amount <= 0)
-      return res
-        .status(400)
-        .json({ message: "Amount must be a positive number" });
+//     const appointmentDate = moment.tz(date, "Asia/Kolkata"); // moment object for date
+//     const appointmentDateStr = appointmentDate.format("YYYY-MM-DD"); // "2025-10-09"
 
-    const user = await User.findById(userId);
-    if (!user) return res.status(404).json({ message: "User not found" });
+//     const appointmentDateTime = moment.tz(`${appointmentDateStr} ${time}`, "YYYY-MM-DD HH:mm", "Asia/Kolkata");
 
-    const doctor = await Doctor.findById(doctorId);
-    if (!doctor) return res.status(404).json({ message: "Doctor not found" });
+//     // Logging (optional)
+//     console.log("Appointment date in IST:", appointmentDateStr);
+//     console.log("Appointment time in IST:", appointmentDateTime.format());
 
-    // ✅ Convert date & time to IST
-    const requestedDateIST = moment.tz(requestedDateIST1, "YYYY-MM-DD", "Asia/Kolkata");
-    const requestedTimeIST = moment.tz(`${requestedDateIST1} ${time}`, "YYYY-MM-DD HH:mm", "Asia/Kolkata");
+//     const user = await User.findById(userId);
+//     if (!user) return res.status(404).json({ message: "User not found" });
 
-    // Start and end of requested date in IST
-    const requestedDateStart = requestedDateIST.startOf("day").toDate();
-    const requestedDateEnd = requestedDateIST.endOf("day").toDate();
+//     const doctor = await Doctor.findById(doctorId);
+//     if (!doctor) return res.status(404).json({ message: "Doctor not found" });
 
-    // Check doctor availability
-    const availability = await DoctorAvailability.findOne({
-      doctor: doctorId,
-      date: { $gte: requestedDateStart, $lte: requestedDateEnd },
-    });
+//     const dayStart = appointmentDate.clone().startOf("day").toDate(); // 00:00 IST as UTC Date
+//     const dayEnd = appointmentDate.clone().endOf("day").toDate();     // 23:59:59 IST as UTC Date
 
-    if (!availability)
-      return res
-        .status(400)
-        .json({ message: "Doctor is not available on this date" });
+//     const availability = await DoctorAvailability.findOne({
+//       doctor: doctorId,
+//       date: { $gte: dayStart, $lte: dayEnd },
+//     });
 
-    // Check time within doctor's slot
-    const [startHour, startMinute] = availability.startTime.split(":").map(Number);
-    const [endHour, endMinute] = availability.endTime.split(":").map(Number);
+//     if (!availability)
+//       return res.status(400).json({ message: "Doctor is not available on this date" });
 
-    const startTime = moment(requestedDateIST).hour(startHour).minute(startMinute).toDate();
-    const endTime = moment(requestedDateIST).hour(endHour).minute(endMinute).toDate();
+//      const availableStart = moment.tz(`${appointmentDateStr} ${availability.startTime}`, "YYYY-MM-DD HH:mm", "Asia/Kolkata").toDate();
+//     const availableEnd = moment.tz(`${appointmentDateStr} ${availability.endTime}`, "YYYY-MM-DD HH:mm", "Asia/Kolkata").toDate();
 
-    const now = moment().tz("Asia/Kolkata").toDate();
+//     const now = moment().tz("Asia/Kolkata").toDate();
 
-    if (requestedTimeIST.toDate() < now)
-      return res.status(400).json({ message: "Cannot book an appointment in the past" });
+//     if (appointmentDateTime.toDate() < now) {
+//       return res.status(400).json({ message: "Cannot book an appointment in the past" });
+//     }
 
-    if (requestedTimeIST.toDate() < startTime || requestedTimeIST.toDate() > endTime)
-      return res.status(400).json({ message: "Doctor is not available for this slot" });
+//     if (
+//       appointmentDateTime.toDate() < availableStart ||
+//       appointmentDateTime.toDate() > availableEnd
+//     ) {
+//       return res.status(400).json({ message: "Doctor is not available for this time slot" });
+//     }
 
-    // Create Razorpay order
-    const order = await razorpay.orders.create({
-      amount: amount * 100, // INR to paise
-      currency: "INR",
-      receipt: `receipt_${Date.now()}`,
-    });
+//     // Create Razorpay order
+//     const order = await razorpay.orders.create({
+//       amount: amount * 100, // INR to paise
+//       currency: "INR",
+//       receipt: `receipt_${Date.now()}`,
+//     });
 
-    // Save appointment
-    const appointment = await Appointment.create({
-      userId,
-      doctorId,
-      type,
-      date: requestedDateIST.format("YYYY-MM-DD"), // store date string
-      time, // store time as string (24-hour)
-      dependent: dependent || null,
-      status: "pending",
-      amount,
-      razorpayOrderId: order.id,
-    });
+//     // Save appointment
+//     const appointment = await Appointment.create({
+//       userId,
+//       doctorId,
+//       type,
+//       date: appointmentDateStr,
+//       time,
+//       dependent: dependent || null,
+//       status: "pending",
+//       amount,
+//       razorpayOrderId: order.id,
+//     });
 
-    res.status(201).json({
-      message: "Razorpay order created. Complete payment to confirm appointment",
-      order,
-      appointmentId: appointment._id,
-    });
-  } catch (error) {
-    console.error("Book Appointment Error:", error);
-    res.status(500).json({ message: "Server Error", error: error.message });
-  }
-};
+//     return res.status(201).json({
+//       message: "Razorpay order created. Complete payment to confirm appointment",
+//       order,
+//       appointmentId: appointment._id,
+//     });
+//   } catch (error) {
+//     console.error("Book Appointment Error:", error);
+//     return res.status(500).json({ message: "Server Error", error: error.message });
+//   }
+// };
 
 // ------------------------ Confirm Payment (manual) ------------------------
 exports.confirmPayment = async (req, res) => {
@@ -714,5 +769,215 @@ exports.razorpayWebhook = async (req, res) => {
   } catch (err) {
     console.error("Webhook Error:", err);
     res.status(500).json({ message: "Server error", error: err.message });
+  }
+};
+
+exports.bookAppointment = async (req, res) => {
+  try {
+    const { userId, doctorId, date, time, type, dependent, amount } = req.body;
+
+    if (!userId || !doctorId || !date || !time || !type || !amount)
+      return res.status(400).json({ message: "All fields are required" });
+
+    if (typeof amount !== "number" || amount <= 0)
+      return res.status(400).json({ message: "Amount must be a positive number" });
+
+    const user = await User.findById(userId);
+    if (!user) return res.status(404).json({ message: "User not found" });
+
+    const doctor = await Doctor.findById(doctorId);
+    if (!doctor) return res.status(404).json({ message: "Doctor not found" });
+
+    const requestedDateIST = moment.utc(date).tz("Asia/Kolkata");
+    const startOfDay = moment(requestedDateIST).startOf("day").toDate();
+    const endOfDay = moment(requestedDateIST).endOf("day").toDate();
+    const requestedTimeIST = moment.tz(`${requestedDateIST.format("YYYY-MM-DD")} ${time}`, "YYYY-MM-DD HH:mm", "Asia/Kolkata");
+    const now = moment().tz("Asia/Kolkata");
+
+    if (requestedTimeIST.isBefore(now))
+      return res.status(400).json({ message: "Cannot book an appointment in the past" });
+
+    const availabilities = await DoctorAvailability.find({
+      doctor: doctorId,
+      date: { $gte: requestedTimeIST}
+    });
+
+    if (!availabilities.length)
+      return res.status(400).json({ message: "Doctor is not available on this date" });
+
+    const matchingSlot = availabilities.find((availability) => {
+      const [startHour, startMinute] = availability.startTime.split(":");
+      const [endHour, endMinute] = availability.endTime.split(":");
+      const slotStart = moment(requestedDateIST).hour(startHour).minute(startMinute);
+      const slotEnd = moment(requestedDateIST).hour(endHour).minute(endMinute);
+      if (slotEnd.isBefore(slotStart)) slotEnd.add(1, "day");
+      return requestedTimeIST.isBetween(slotStart, slotEnd, null, "[)");
+    });
+
+    if (!matchingSlot)
+      return res.status(400).json({ message: "Doctor is not available for this slot" });
+
+    const order = await razorpay.orders.create({
+      amount: amount * 100,
+      currency: "INR",
+      receipt: `receipt_${Date.now()}`
+    });
+
+    const appointment = await Appointment.create({
+      userId,
+      doctorId,
+      type,
+      date: requestedDateIST.toDate(),
+      time,
+      dependent: dependent || null,
+      status: "pending",
+      amount,
+      razorpayOrderId: order.id
+    });
+
+    res.status(201).json({
+      message: "Razorpay order created. Complete payment to confirm appointment",
+      order,
+      appointmentId: appointment._id
+    });
+  } catch (error) {
+    console.error("Book Appointment Error:", error);
+    res.status(500).json({ message: "Server Error", error: error.message });
+  }
+};
+
+
+
+exports.getDoctorAppointmentsForApp = async (req, res) => {
+  try {
+    const { doctorId } = req.params;
+    const now = new Date();
+
+    const userIds = await Appointment.distinct('userId', { doctorId, status: 'booked' });
+
+    let users = await User.find({ _id: { $in: userIds } }).select('-appointments');
+    let totalAmount = 0;
+
+    const userAppointments = await Appointment.find({
+      doctorId,
+      // userId: { $in: userIds },
+      status: 'booked'
+    });
+    for (let i = 0; i < userAppointments.length; i++) {
+      totalAmount += Number(userAppointments[i].amount)
+    }
+
+
+    const doctorAvailability = await DoctorAvailability.findOne({ doctor: doctorId });
+    if (!doctorAvailability) {
+      return res.status(404).json({ message: "Doctor availability not found" });
+    }
+
+    const slotDuration = doctorAvailability.slotDuration;
+    const formatTime = date => date.toTimeString().slice(0, 5);
+
+    users = users.map(user => {
+      const appointment = userAppointments.find(app => app.userId.toString() === user._id.toString());
+      if (appointment) {
+        const start = appointment.time;
+        const [hours, minutes] = start.split(":").map(Number);
+        const startDate = new Date();
+        startDate.setHours(hours, minutes, 0, 0);
+        const endDate = new Date(startDate.getTime() + slotDuration * 60000);
+        return {
+          _id: user._id,
+          profileImage: user.profileImage,
+          startTime: formatTime(startDate),
+          endTime: formatTime(endDate),
+          status: user.status,
+          jitsiLink: user.jitsiLink,
+          type: user.type,
+          gender: user.gender || null,
+          lastVisit: formatTime(startDate) || null,
+          age: user.dob || null
+
+        };
+      }
+      return {
+        _id: user._id,
+        profileImage: user.profileImage,
+        startTime: null,
+        endTime: null,
+        status: user.status,
+        jitsiLink: user.jitsiLink,
+        type: User.type,
+        gender: user.age,
+        lastVisit: user.lastVisit,
+        age: user.age || null
+      };
+    });
+
+    let upcoming = await Appointment.find({
+      doctorId,
+      date: { $gte: now },
+    }).populate("userId", "full_name email phone_number");
+
+    let past = await Appointment.find({
+      doctorId,
+      date: { $lt: now },
+    }).populate("userId", "full_name email phone_number");
+
+    let total = await Appointment.find({
+      doctorId
+    }).populate("userId", "full_name email phone_number");
+
+    const attachUserDetails = (appointments) => {
+      return appointments.map(appointment => {
+        const obj = appointment.toObject();
+        const userId = obj.userId?._id?.toString() || obj.userId?.toString();
+        const userMatch = users.find(u => u._id.toString() === userId);
+
+        if (userMatch && typeof obj.userId === 'object') {
+          obj.userId.profileImage = userMatch.profileImage || {};
+          obj.userId.startTime = userMatch.startTime || null;
+          obj.userId.endTime = userMatch.endTime || null;
+          obj.userId.status = userMatch.status || null;
+          obj.userId.jitsiLink = userMatch.jitsiLink || null;
+          obj.userId.type = userMatch.type || null;
+          obj.userId.gender = userMatch.gender || null,
+            obj.userId.lastVisit = userMatch.startDate || null,
+            obj.userId.age = userMatch.age || null
+
+        }
+        return obj;
+      });
+    };
+
+    past = attachUserDetails(past);
+    upcoming = attachUserDetails(upcoming);
+    total = attachUserDetails(total);
+
+
+    function isToday(dateString) {
+      const date = new Date(dateString);
+      const today = new Date();
+      return (
+        date.getFullYear() === today.getFullYear() &&
+        date.getMonth() === today.getMonth() &&
+        date.getDate() === today.getDate()
+      );
+    }
+
+    const todayPatient = upcoming.filter(item => isToday(item.date));
+
+    res.status(200).json({
+      totalAmount: totalAmount,
+      totalUpcoming: upcoming.length,
+      totalAppointments: total.length,
+      todayPatient : todayPatient.length,
+      rating : "3.5",
+      upcoming,
+      past,
+      total
+    });
+
+  } catch (error) {
+    console.error("Get Doctor Appointments Error:", error);
+    res.status(500).json({ message: error.message });
   }
 };

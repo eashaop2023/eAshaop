@@ -5,6 +5,7 @@ import { useNavigate, useLocation } from "react-router-dom";
 import { toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import { API_BASE_URL } from "../../api-config";
+import LoaderOverlay from "../../commonComponents/FadeLoader";
 
 // const API_BASE_URL = "${API_BASE_URL}"; // adjust if needed
 
@@ -12,6 +13,12 @@ const OTPVerification = () => {
   const [otp, setOtp] = useState(["", "", "", ""]);
   const [error, setError] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [resendCount, setResendCount] = useState(0);
+  const [resendDisabled, setResendDisabled] = useState(false);
+const [timer, setTimer] = useState(0);
+  const maxResends = 3;
+
+
 
   const navigate = useNavigate();
   const location = useLocation();
@@ -74,6 +81,8 @@ const identifier = location.state?.verifyByValue || "";
     } catch (err) {
       console.error(err);
       setError(true);
+      toast.error(err.message || "Invalid OTP", { position: "top-center" });
+
     } finally {
       setLoading(false);
     }
@@ -81,6 +90,11 @@ const identifier = location.state?.verifyByValue || "";
 
   // ✅ Resend OTP with backend
   const handleResendOtp = async () => {
+     if (resendCount >= maxResends) {
+    toast.error("You have reached the maximum resend limit.", { position: "top-center" });
+    return;
+  }
+  setLoading(true);
     try {
       const res = await fetch(`${API_BASE_URL}/api/user/registration/resend-otp`, {
         method: "POST",
@@ -95,13 +109,31 @@ body: JSON.stringify({
       if (!res.ok) throw new Error(data.message || "Failed to resend OTP");
 
       toast.success("OTP resent successfully!", { position: "top-center" });
-    } catch (err) {
-      toast.error(err.message, { position: "top-center" });
-    }
-  };
+      setResendCount(resendCount + 1);
+    // Start 30-second cooldown
+    setResendDisabled(true);
+    setTimer(30);
+    const interval = setInterval(() => {
+      setTimer(prev => {
+        if (prev <= 1) {
+          clearInterval(interval);
+          setResendDisabled(false);
+          return 0;
+        }
+        return prev - 1;
+      });
+    }, 1000);
+
+  } catch (err) {
+    toast.error(err.message, { position: "top-center" });
+} finally {
+      setLoading(false);
+    }};
 
   return (
     <>
+          <LoaderOverlay loading={loading} />
+
             <style>{`
         .logo-wrapper {
           position: absolute;
@@ -248,18 +280,30 @@ body: JSON.stringify({
           className="text-center mt-3"
           style={{ fontWeight: 400, fontSize: "1.125rem", color: "#494949" }}
         >
-          <p>Didn't receive the code?</p>
+          <p className="mb-4">Didn't receive the code?</p>
           <button
             onClick={handleResendOtp}
-            className="btn btn-link p-0"
+            className="btn "
             style={{
               fontWeight: 400,
               fontSize: "1.125rem",
-              color: "#00A99D",
+               color: "#fff",
+    backgroundColor: "#00A99D",
+    border: "none",
+    borderRadius: "28px",
+    padding: "10px 20px",
+
             }}
+              disabled={resendCount >= maxResends}
+
           >
-            Resend Code
-          </button>
+{resendCount >= maxResends
+    ? "Resend limit reached"
+    : resendDisabled
+      ? `Resend in ${timer}s`
+      : "Resend Code"
+  }     
+        </button>
         </div>
       </div>
     </>

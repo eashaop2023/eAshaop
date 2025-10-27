@@ -4,17 +4,25 @@ import CardiologistMainContent from "./cardiologist/MainContent";
 import NeurologistMainContent from "./Neurologist/MainContent";
 import OrthopedicMainContent from "./Orthopedic/MainContent";
 import ENTMainContent from "./ENT/MainContent";
+import OphthalmologyContent from "./Ophthalmology/MainContent"; // ✔ correct spelling
+import DentalMainContent from "./Dental/MainContent"
+import MentalMainContent from "./MentalHealth/MainContent";
+import WomenMainContent from "./WomenHealth/MainContent";
+import SkinBeautyMainContent from "./SkinBeauty/MainContent";
 // import other categories
 
 const uuidToCategoryMap = {
   "bD1KuA_6pr": "Cardiologist",
   "UqkGTNQTOD": "General Healthcare",
-  "nf4sb5TRxi": "Neurologist",
+  "r1ArfRKaU_": "Neurologist",
   "oybWOH7Ok8": "Orthopedic",
-  "hX1KuA_6pr": "Ophthalmology",
+  "whHEP4Ba-m": "Ophthalmology",
   "4A31RiqS_M": "ENT",
-  "mZ4sb5TRxi": "Dental",
-  
+  "u3bp-C0G4f": "Dentist",
+  "QWonnSUTJw": "Mental Health",
+  "EGGSWzg5RE":"Women Health",
+  "_jCoVKpbHK":"Skin & Beauty",
+
   // add all UUIDs for your categories here
 };
 
@@ -25,18 +33,20 @@ const DynamicDoctorCategory = (props) => {
     "General Healthcare": GeneralHealthcareMainContent,
     "Cardiologist": CardiologistMainContent,
     // "childhealth": ChildHealth,
-    // "dental": Dental,
+    "Dentist":DentalMainContent ,
      "ENT": ENTMainContent,
-    // "mentalhealth": MentalHealth,
+     "Mental Health": MentalMainContent,
     "Neurologist": NeurologistMainContent,
-    // "ophthalmology": Ophthalmology,
+"Ophthalmology": OphthalmologyContent,
      "Orthopedic": OrthopedicMainContent,
-    // "womenhealth": WomenHealth,
+    "Women Health": WomenMainContent,
+    "Skin & Beauty":SkinBeautyMainContent
     // "skinbeauty": SkinBeauty,
   };
 
-  const CategoryComponent = categoryComponents[categorySlug];
-  return <CategoryComponent {...props} categorySlug={categorySlug} />;
+const CategoryComponent = categoryComponents[categorySlug];
+if (!CategoryComponent) return <p>Category component not found.</p>;
+return <CategoryComponent {...props} categorySlug={categorySlug} uuid={uuid} />;
 };
 
 

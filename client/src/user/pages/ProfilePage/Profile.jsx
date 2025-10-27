@@ -4,6 +4,9 @@ import { Container, Row, Col, Form, Button, Badge } from "react-bootstrap";
 import Boy from "../../assets/user.png";
 import styles from "../../pages/ProfilePage/Profile.module.css";
 import { API_BASE_URL } from "../../../api-config";
+import { toast } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
+import LoaderOverlay from "../../../commonComponents/FadeLoader";
 
 function useIsMobileOrTablet() {
   const [isMobileOrTablet, setIsMobileOrTablet] = useState(window.innerWidth < 1024);
@@ -90,6 +93,35 @@ export default function UserDetailsPanel() {
   };
 
 const handleSave = async () => {
+
+    // ✅ Frontend validations
+  if (formData.address.trim().length < 3) {
+    toast.error("Address must be at least 3 characters.");
+    return;
+  }
+  if (!formData.gender) {
+    toast.error("Please select a gender.");
+    return;
+  }
+  if (formData.height && (formData.height < 20 || formData.height > 400)) {
+    toast.error("Height must be between 20 and 400 cm.");
+    return;
+  }
+  if (formData.weight && (formData.weight < 1 || formData.weight > 500)) {
+    toast.error("Weight must be between 1 and 500 kg.");
+    return;
+  }
+  if (formData.aadhaar_number && !/^\d{12}$/.test(formData.aadhaar_number)) {
+    toast.error("Aadhaar number must be 12 digits.");
+    return;
+  }
+  if (!formData.language_preferred) {
+    toast.error("Please select a preferred language.");
+    return;
+  }
+
+   setLoading(true);
+
   try {
     const storedUser = JSON.parse(localStorage.getItem("user"));
     const payload = {
@@ -110,15 +142,17 @@ const handleSave = async () => {
 
     const result = await response.json();
     if (response.ok) {
-      alert("Profile updated successfully!");
+      toast.success("Profile updated successfully!");
     } else {
-      alert(result.message || "Update failed");
+      toast.error(result.message || "Update failed");
     }
   } catch (error) {
     console.error("Update error:", error);
+    toast.error("Something went wrong while updating profile.");
+  } finally {
+    setLoading(false); // 👈 Hide loader
   }
 };
-
   const handleImageChange = async (e) => {
     const file = e.target.files[0];
     if (!file) return;
@@ -128,6 +162,7 @@ const handleSave = async () => {
     formDataObj.append("profileImage", file);
 
     try {
+      setLoading(true);
     const res = await fetch(
       `${API_BASE_URL}/api/user/update-profile-image/${storedUser.id}`, // ✅ PUT route
       {
@@ -138,9 +173,16 @@ const handleSave = async () => {
     if (!res.ok) throw new Error("Failed to upload image");
     const data = await res.json();
     setProfileImage(data.imageUrl); // ✅ update state
+
+        const updatedUser = { ...storedUser, profileImage: { cloudinaryUrl: data.imageUrl } };
+    localStorage.setItem("user", JSON.stringify(updatedUser));
+        toast.success("Profile image updated successfully!"); // ✅ better UX
+
   } catch (err) {
-    console.error(err);
-    alert("Image upload failed");
+    console.error("Image upload error:", err);
+    toast.error("Image upload failed!");
+  } finally {
+    setLoading(false); // 👈 hide loader
   }
 };
 
@@ -159,10 +201,11 @@ const handleSave = async () => {
 
 
 
-  if (loading) return <p>Loading profile...</p>;
+if (loading) return <LoaderOverlay loading={true} />;
   return (
-    
-    
+      <>
+         <LoaderOverlay loading={loading} />
+
     <Container
       fluid
       className="px-3 px-md-5"
@@ -179,7 +222,7 @@ const handleSave = async () => {
           {isMobileOrTablet && (
             <div
               className="d-flex justify-content-end align-items-end mb-1 px-2"
-              style={{ marginTop: "-50px",paddingLeft:"0px" }}
+              style={{ marginTop: "-20px",paddingLeft:"0px" }}
             >
               <div
                 className="rounded-circle border d-flex align-items-center justify-content-center"
@@ -324,12 +367,14 @@ const handleSave = async () => {
                           variant="light"
                           // onClick={() => setGender(g)}
                             onClick={() => handleChange("gender", g)}
+style={{
+  backgroundColor:
+    formData.gender.toLowerCase() === g.toLowerCase() ? "#00A99D" : "white",
+  color: formData.gender.toLowerCase() === g.toLowerCase() ? "white" : "#252525",
 
-                          style={{
-                            // backgroundColor: gender === g ? "#00A99D" : "white",
-                            // color: gender === g ? "white" : "#252525",
-                             backgroundColor: formData.gender === g.toLowerCase() ? "#00A99D" : "white",
-                             color: formData.gender === g.toLowerCase() ? "white" : "#252525",
+
+                            //  backgroundColor: formData.gender === g.toLowerCase() ? "#00A99D" : "white",
+                            //  color: formData.gender === g.toLowerCase() ? "white" : "#252525",
                             border: "none",
                             flex: 1,
                             fontWeight: "500",
@@ -413,6 +458,7 @@ const handleSave = async () => {
                   style={{ height: "48px" }}
                   ref={refs[6]}
                   onKeyDown={(e) => handleEnterKey(e, 6)}
+                  placeholder="in cms"
                 />
               </Col>
               <Col xs={6} md={4} className="mb-3">
@@ -424,6 +470,7 @@ const handleSave = async () => {
                   style={{ height: "48px" }}
                   ref={refs[7]}
                   onKeyDown={(e) => handleEnterKey(e, 7)}
+                  placeholder="in kgs"
                 />
               </Col>
             </Row>
@@ -452,7 +499,13 @@ const handleSave = async () => {
                       backgroundColor: "#F0F0F0",
                     }}
                   >
-                    {tag} <span style={{ cursor: "pointer", marginLeft: 8 }}>✕</span>
+{tag}{" "}
+<span
+  style={{ cursor: "pointer", marginLeft: 8 }}
+  onClick={() => handleRemoveHealthTag(index)}
+>
+  ✕
+</span>
                   </Badge>
                 ))}
               </div>
@@ -480,5 +533,6 @@ const handleSave = async () => {
         </Col>
       </Row>
     </Container>
+    </>
   );
 }

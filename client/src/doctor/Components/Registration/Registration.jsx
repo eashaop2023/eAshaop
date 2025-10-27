@@ -1,11 +1,20 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
+
 import { API_BASE_URL } from "../../../api-config";
+import { categories } from "./RegisterCategories";
+import { toast } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
+import LoaderOverlay from "../../../commonComponents/FadeLoader";
 
 const PersonalDetailsForm = () => {
   const navigate = useNavigate();
   const [activeStep, setActiveStep] = useState(1);
   const [showPopup, setShowPopup] = useState(false);
+   const [isSubmitting, setIsSubmitting] = useState(false);
+    const [loading, setLoading] = useState(false); 
+  const [cooldown, setCooldown] = useState(0);
+
 
   const availableLanguages = ["English", "Hindi", "Telugu", "Tamil", "Kannada"];
 
@@ -19,6 +28,7 @@ const PersonalDetailsForm = () => {
     experience: "",
     expertise: "",
     speciality: "",
+    categoryUuid: "", // ✅ Add this line
     consultationFee: "",
     gender: "",
     consultantMode: "",
@@ -29,6 +39,9 @@ const PersonalDetailsForm = () => {
     photo: null,
     photoPreview: null,
   });
+
+
+  
 
   const [files, setFiles] = useState({
     license: null,
@@ -50,31 +63,35 @@ const PersonalDetailsForm = () => {
     }
   };
 
-  const validateStep1 = () => {
-    for (let key in formData) {
-      if (
-        key !== "photo" &&
-        key !== "photoPreview" &&
-        key !== "language" &&
-        !formData[key]
-      ) {
-        if (Array.isArray(formData[key]) && formData[key].length > 0) continue;
-        setError("Please fill all required fields before continuing.");
-        return false;
-      }
-    }
-    setError("");
-    return true;
-  };
+  // Improved Step 1 validation
+const validateStep1 = () => {
+  if (!formData.firstName) return toast.error("Please enter First Name") || false;
+  if (!formData.age) return toast.error("Please enter Age") || false;
+  if (!formData.hospitalAddress) return toast.error("Please enter Hospital/Clinic Address") || false;
+  if (!formData.hospitalName) return toast.error("Please enter Hospital/Clinic Name") || false;
+  if (!formData.qualification) return toast.error("Please enter Qualification") || false;
+  if (!formData.university) return toast.error("Please enter University") || false;
+  if (!formData.experience) return toast.error("Please enter Years of Experience") || false;
+  if (!formData.expertise) return toast.error("Please enter Areas of Expertise") || false;
+  if (!formData.speciality) return toast.error("Please select Speciality") || false;
+  if (!formData.gender) return toast.error("Please select Gender") || false;
+  if (!formData.consultantMode) return toast.error("Please select Consultant Mode") || false;
+  if (!formData.phone) return toast.error("Please enter Phone Number") || false;
+  if (!formData.email) return toast.error("Please enter Email") || false;
+  if (!formData.language.length) return toast.error("Please select at least one Language") || false;
+  if (!formData.description) return toast.error("Please enter Description") || false;
+
+  return true;
+};
+
 
   const validateStep2 = () => {
     for (let key in files) {
       if (!files[key]) {
-        setError("Please upload all required documents.");
+        toast.error("Please upload all required documents.");
         return false;
       }
     }
-    setError("");
     return true;
   };
 
@@ -82,7 +99,26 @@ const PersonalDetailsForm = () => {
   e.preventDefault();
   if (!validateStep2()) return;
 
+  if (cooldown > 0) {
+      toast.warning(`Please wait ${cooldown}s before resubmitting.`);
+      return;
+    }
+
+setLoading(true);    
+
   try {
+   // --- Step 1: Check if doctor already exists ---
+    const checkRes = await fetch(
+      `${API_BASE_URL}/api/doctors/check?email=${formData.email}&phone=${formData.phone}`
+    );
+    const checkData = await checkRes.json();
+
+    if (checkData.exists) {
+      toast.error("Doctor with this email or phone is already registered.");
+setLoading(false);      return;
+    }
+
+
     const formDataToSend = new FormData();
     formDataToSend.append("name", formData.firstName);
     formDataToSend.append("age", formData.age);
@@ -93,6 +129,7 @@ const PersonalDetailsForm = () => {
     formDataToSend.append("experience", formData.experience);
     formDataToSend.append("areaOfInterest", formData.expertise);
     formDataToSend.append("speciality", formData.speciality);
+formDataToSend.append("categoryUuid", formData.categoryUuid);
     formDataToSend.append("consultationFee", formData.consultationFee);
     formDataToSend.append("gender", formData.gender);
     formDataToSend.append("consultationMode", formData.consultantMode);
@@ -119,17 +156,27 @@ const PersonalDetailsForm = () => {
 
     if (!res.ok) throw new Error(data.message || "Failed to register doctor");
 
-    alert("Registered successfully! OTP has been sent to your email/phone.");
+    toast.success("Registered successfully! OTP has been sent to your email/phone.");
   navigate("/otp-register", { state: {
         doctorId: data.doctor._id,   // <-- Doctor's _id from backend
         identifier: data.doctor.email, // <-- Email from backend
         from: "signup",
       }, });
-  } catch (error) {
-    alert(error.message);
-  }
-};
-  const handleOkClick = () => {
+} catch (error) {
+      toast.error(error.message);
+    } finally {
+      setLoading(false);
+
+      // ✅ Start cooldown timer (e.g., 10 seconds)
+      let time = 60;
+      setCooldown(time);
+      const timer = setInterval(() => {
+        time--;
+        setCooldown(time);
+        if (time <= 0) clearInterval(timer);
+      }, 1000);
+    }
+  };  const handleOkClick = () => {
     setShowPopup(false);
     navigate("/login");
   };
@@ -175,6 +222,7 @@ const PersonalDetailsForm = () => {
 
   return (
     <div className="container my-5">
+      <LoaderOverlay loading={loading} />
       {/* Steps on Top */}
       <div className="d-flex justify-content-center mb-5">
         {[1, 2].map((step) => (
@@ -254,7 +302,7 @@ const PersonalDetailsForm = () => {
               { name: "university", label: "University" },
               { name: "experience", label: "Years of Experience", type: "number" },
               { name: "expertise", label: "Areas of Expertise" },
-              { name: "speciality", label: "Speciality" },
+              // { name: "speciality", label: "Speciality" },
               { name: "consultationFee", label: "Consultation Fee", type: "number" },
             ].map(({ name, label, type, lettersOnly }) => (
               <div key={name} className="col-12 col-md-4">
@@ -268,11 +316,41 @@ const PersonalDetailsForm = () => {
                   onChange={(e) => {
                     let val = e.target.value;
                     if (lettersOnly) val = val.replace(/[^a-zA-Z\s]/g, "");
+                            if (type === "number" && val !== "" && parseInt(val) < 0) val = "0"; // ✅ prevent negative
+
                     handleChange(name, val);
                   }}
                 />
               </div>
             ))}
+
+
+            {/* Speciality Dropdown */}
+<div className="col-12 col-md-4">
+  <label className="form-label">
+    Speciality <span className="text-danger">*</span>
+  </label>
+  <select
+    className="form-select rounded-pill"
+    value={formData.speciality}
+    onChange={(e) => {
+      const selected = categories.find((cat) => cat.name === e.target.value);
+      setFormData((prev) => ({
+        ...prev,
+        speciality: selected?.name || "",
+        categoryUuid: selected?.uuid || "",
+      }));
+    }}
+  >
+    <option value="">Select Speciality</option>
+    {categories.map((cat,index) => (
+  <option key={cat.uuid ?? index} value={cat.name}>
+        {cat.name}
+      </option>
+    ))}
+  </select>
+</div>
+
 
             {/* Gender */}
             <div className="col-12 col-md-6">
@@ -309,20 +387,28 @@ const PersonalDetailsForm = () => {
             </div>
 
             {/* Phone */}
-            <div className="col-12 col-md-6">
-              <label className="form-label">
-                Phone Number <span className="text-danger">*</span>
-              </label>
-              <input
-                type="tel"
-                className="form-control rounded-pill"
-                placeholder="+91"
-                value={formData.phone}
-                onChange={(e) =>
-                  handleChange("phone", e.target.value.replace(/[^0-9]/g, ""))
-                }
-              />
-            </div>
+<div className="col-12 col-md-6">
+  <label className="form-label">
+    Phone Number <span className="text-danger">*</span>
+  </label>
+<div
+    className="input-group rounded-pill"
+    style={{ border: "1px solid #ced4da", overflow: "hidden" }}
+  >    <span className="input-group-text bg-light border-0">+91</span>
+    <input
+      type="tel"
+      className="form-control border-0"
+      placeholder="Enter 10-digit number"
+      value={formData.phone}
+      maxLength={10}
+      onChange={(e) => {
+        let val = e.target.value.replace(/[^0-9]/g, "");
+        if (val.length > 10) val = val.slice(0, 10);
+        handleChange("phone", val);
+      }}
+    />
+  </div>
+</div>
 
             {/* Email */}
             <div className="col-12 col-md-6">
@@ -437,16 +523,20 @@ const PersonalDetailsForm = () => {
             </button>
             <button
               className={`btn rounded-pill text-white ${
-                isStep2Complete ? "" : "disabled"
+                isSubmitting || cooldown > 0 ? "disabled" : ""
               }`}
               style={{
                 backgroundColor: isStep2Complete ? "#00BFA6" : "gray",
                 borderColor: "#00A99D",
               }}
               onClick={handleSubmit}
-              disabled={!isStep2Complete}
+              disabled={!isStep2Complete || isSubmitting || cooldown > 0}
             >
-              Submit
+              {isSubmitting
+                ? "Submitting..."
+                : cooldown > 0
+                ? `Wait ${cooldown}s`
+                : "Submit"}
             </button>
           </div>
         </div>

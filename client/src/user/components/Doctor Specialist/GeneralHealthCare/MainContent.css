@@ -163,8 +163,18 @@
 
 }
 
-@media (min-width : 425px) {
-  
+@media screen and (max-width : 403px) {
+  .toggle-buttons-container button{
+    font-size: 10px !important;
+    padding: 6px 10px !important;
+  }
+  .toggle-buttons-container{
+    height: 50px !important;
+  }
+  .clinic-visit{
+    text-align: center !important;
+    padding-left: 0px !important;
+  }
 }
 
 @media (min-width:768px) and (max-width:777px){
@@ -190,6 +200,20 @@
   .btn1 {
         width: 55% !important;
   }
+}
+
+
+@media screen and (max-width:1024px){
+  .clinic-visit{
+    text-align: center !important;
+    padding-left: 0px !important;
+  }
+
+  .toggle-buttons-container{
+    height: 60px !important;
+  }
+
+
 }
 
 

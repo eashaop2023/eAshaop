@@ -790,6 +790,11 @@ const updateDoctorProfile = async (req, res) => {
 
     // Fields allowed to update
     const editableFields = [
+      "profileImage",
+      "medicalCertificates",
+      "Govt ID",
+      "Medical License",
+      "Education Certificate",
       "age",
       "email",
       "mobile",
@@ -842,8 +847,8 @@ const updateDoctorProfile = async (req, res) => {
         doctor.hospitalName = req.body.hospitalName;
         doctor.hospitalLocation = req.body.hospitalLocation;
       } else {
-        doctor.hospitalName = undefined;
-        doctor.hospitalLocation = undefined;
+        doctor.hospitalName = req.body.hospitalName;
+        doctor.hospitalLocation = req.body.hospitalLocation;
       }
     }
 

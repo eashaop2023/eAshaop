@@ -46,11 +46,18 @@ const uploadeProfileImage = async (userId, imageUrl) => {
 
 const updateProfileImage = async (userId, imageUrl) => {
   const trimmedUserId = userId.trim();
+
+  // Call repository to update the DB
   const updatedUser = await userRepository.uploadeProfileImage(
     trimmedUserId,
     imageUrl
   );
-  return updatedUser;
+
+  // Return consistent key for frontend
+  return {
+    ...updatedUser,
+    profileImage: { cloudinaryUrl: imageUrl },
+  };
 };
 
 const getAllUsers = async () => {
@@ -141,6 +148,10 @@ const getDocuments = async (userId) => {
   }
 }; */
 
+const getDependentUserId = async (userId) => {
+  return await userRepository.getDependentUserId(userId);
+};
+
 module.exports = {
 //  registration_sendOtp,
 //  registration_verifyOtp,
@@ -160,4 +171,5 @@ module.exports = {
 
   getDocuments,
   // updateDocument,
+  getDependentUserId
 };

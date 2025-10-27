@@ -10,6 +10,7 @@ import {
   FaBars,
   FaTimes,
 } from "react-icons/fa";
+import { GoFile } from "react-icons/go";
 import { API_BASE_URL } from "../../../api-config";
 
 const Sidebar = () => {
@@ -26,6 +27,11 @@ const Sidebar = () => {
       name: "Prescription",
       icon: <FaPrescriptionBottleAlt />,
       path: "/doctor/prescriptions",
+    },
+    {
+    name: "Appointments",
+    icon: <GoFile />, // You can change this to another icon if preferred
+    path: "/doctor/appointments",
     },
     { name: "Reviews and Ratings", icon: <FaStar />, path: "/doctor/reviews" },
   ];

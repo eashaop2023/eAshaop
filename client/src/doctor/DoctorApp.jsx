@@ -13,6 +13,7 @@ import BookingHistory from "./Components/DoctorsFields/History";
 import Prescription from "./Components/DoctorsFields/Prescription";
 import Ratings from "./Components/DoctorsFields/Ratings";
 import DoctorProfilePage from "./Components/DoctorsFields/DoctorProfile";
+import Appointments from "./Components/DoctorsFields/Appointments";
 
 const ProtectedRoute = ({ children }) => {
   const token = localStorage.getItem("authToken");
@@ -44,13 +45,14 @@ const DoctorApp = () => {
           <Route path="prescriptions" element={<Prescription />} />
           <Route path="reviews" element={<Ratings />} />
           <Route path="doctorprofile" element={<DoctorProfilePage />} />
+          <Route path="appointments" element={<Appointments />} />
         </Route>
 
         {/* Fallback */}
         <Route path="*" element={<Navigate to="dashboard" replace />} />
       </Routes>
 
-      <ToastContainer position="top-center" autoClose={2000} />
+      {/* <ToastContainer position="top-center" autoClose={2000} /> */}
     </>
   );
 };

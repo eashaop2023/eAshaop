@@ -32,7 +32,7 @@
 
 .sb-container.open {
   /* mobile/tablet open width */
-  width: 260px;
+  width: 280px;
   padding: 25px;
   transform: translateX(0);
 }
@@ -124,3 +124,9 @@
     top: 75px !important;
   }
 }
+
+/* @media screen and (max-width:424px){
+  .sb-container{
+    margin-top: 500px !important;
+  }
+} */
