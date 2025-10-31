@@ -21,15 +21,15 @@ const Sidebar = () => {
   const isLabCards = location.pathname === "/lab";
 
   // --- Menu items
-const menuItems = [
-  { icon: dashboard, label: "Dashboard", path: "/user/dashboard" },
-  { icon: doctor, label: "Doctors", path: "/user/category" },
-  { icon: appointments, label: "Appointments", path: "/user/appointment" },
-  { icon: medications, label: "Medications", path: "/user/medication" },
-  { icon: lab, label: "Lab", path: "/user/lab" },
-  { icon: reports, label: "Reports & Scanning's", path: "/user/reportone" },
-  { icon: pharmacy, label: "Pharmacy", path: "/user/pharmacy" },
-];
+  const menuItems = [
+    { icon: dashboard, label: "Dashboard", path: "/user/dashboard" },
+    { icon: doctor, label: "Doctors", path: "/user/category" },
+    { icon: appointments, label: "Appointments", path: "/user/appointment" },
+    { icon: medications, label: "Medications", path: "/user/medication" },
+    { icon: lab, label: "Lab", path: "/user/lab" },
+    { icon: reports, label: "Reports & Scanning's", path: "/user/reportone" },
+    { icon: pharmacy, label: "Pharmacy", path: "/user/pharmacy" },
+  ];
 
   // --- Sync selected item with current route
   useEffect(() => {
@@ -52,7 +52,11 @@ const menuItems = [
   useEffect(() => {
     const mobile = window.innerWidth < 992;
     setIsMobile(mobile);
-    setIsOpen(!mobile);
+    // setIsOpen(!mobile);
+    setTimeout(() => {
+      setIsOpen(false);
+    }, 3000);
+    console.log('open');
   }, []);
 
   // --- Track viewport width
@@ -85,8 +89,8 @@ const menuItems = [
   const activeLineLeft = isMobile
     ? "222px"
     : isOpen
-    ? `${Math.max(41, sidebarWidthNum - 30)}px`
-    : "41px";
+      ? `${Math.max(41, sidebarWidthNum - 30)}px`
+      : "41px";
 
   const toggleSidebar = () => {
     setIsOpen((prev) => !prev);
