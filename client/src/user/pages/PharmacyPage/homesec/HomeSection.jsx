@@ -578,6 +578,7 @@ export default function HomeSection() {
                     }}
                     type="button"
                     data-bs-toggle="dropdown"
+                    disabled
                   >
                     {/* {selectedLocation.split(",")[0]},
                     <span style={{ color: "#00A99D" }}>

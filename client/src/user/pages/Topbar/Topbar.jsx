@@ -17,6 +17,8 @@ import reports from "../../assets/icons/reports.svg";
 import pharmacy from "../../assets/icons/pharmacy.svg";
 import close from "../../assets/icons/close.svg";
 import open from "../../assets/icons/open.svg";
+import { ImCross } from "react-icons/im";
+
 
 const Topbar = ({ toggleSidebar: propToggleSidebar, isMobile: propIsMobile } = {}) => {
   const [calculatedIsMobile, setCalculatedIsMobile] = useState(window.innerWidth < 992);
@@ -169,57 +171,134 @@ const Topbar = ({ toggleSidebar: propToggleSidebar, isMobile: propIsMobile } = {
       >
         {isMobile && (
           <>
-            <FiMenu
-              size={24}
-              style={{ cursor: "pointer", marginRight: '15px' }}
-              // onClick={toggleSidebar}
-              onClick={() => setToggleState(!toggleState)}
-              title="Menu"
-            />
-           {/* Mobile Sidebar Overlay */}
-{isMobile && toggleState && (
-  <div
-    style={{
-      position: "fixed",
-      top: "76px",
-      left: "0",
-      width: "100%",
-      height: "100vh",
-      backgroundColor: "#fff",
-      zIndex: 999,
-      padding: "25px 20px",
-      overflowY: "auto",
-    }}
-  >
-    <ol className="list-unstyled">
-      {menuItems.map((item, index) => (
-        <li
-          key={index}
-          onClick={() => {
-            navigate(item.path);
-            setToggleState(false); // auto-close after navigation
-          }}
-          style={{
-            display: "flex",
-            alignItems: "center",
-            padding: "12px 0",
-            borderBottom: "1px solid #eee",
-            cursor: "pointer",
-            fontSize: "16px",
-            color: "#333",
-          }}
-        >
-          <img
-            src={item.icon}
-            alt={item.label}
-            style={{ width: "24px", height: "24px", marginRight: "12px" }}
-          />
-          <span>{item.label}</span>
-        </li>
-      ))}
-    </ol>
-  </div>
-)}
+            {isMobile && (
+              <>
+                {!toggleState ? (
+                  <FiMenu
+                    size={24}
+                    style={{ cursor: "pointer", marginRight: "15px" }}
+                    onClick={() => setToggleState(true)}
+                    title="Menu"
+                  />
+                ) : (
+                  <ImCross
+                    size={18}
+                    onClick={() => setToggleState(false)}
+                    style={{ cursor: "pointer", marginRight: "18px" }}
+                  />
+                )}
+                {isMobile && toggleState && (
+                  <>
+                    <div
+                      onClick={() => setToggleState(false)}
+                      style={{
+                        position: "fixed",
+                        top: "76px",
+                        left: "0",
+                        width: "100%",
+                        height: "100vh",
+                        backgroundColor: "rgba(0, 0, 0, 0.3)",
+                        zIndex: 998,
+                      }}
+                    ></div>
+                    <div
+                      style={{
+                        position: "fixed",
+                        top: "76px",
+                        left: "0",
+                        width: "70%",
+                        height: "100vh",
+                        backgroundColor: "#fff",
+                        zIndex: 999,
+                        padding: "25px 20px",
+                        overflowY: "auto",
+                        boxShadow: "2px 0 8px rgba(0,0,0,0.1)",
+                      }}
+                      onClick={(e) => e.stopPropagation()}
+                    >
+                      <ol className="list-unstyled">
+                        {menuItems.map((item, index) => (
+                          <li
+                            key={index}
+                            onClick={() => {
+                              navigate(item.path);
+                              setToggleState(false);
+                            }}
+                            style={{
+                              display: "flex",
+                              alignItems: "center",
+                              padding: "12px 0",
+                              cursor: "pointer",
+                              fontSize: "16px",
+                              color: "#333",
+                              backgroundColor:
+                                location.pathname === item.path ? "#f1f1f1" : "transparent",
+                              borderRadius: "13px"
+                            }}
+                          >
+                            <img
+                              src={item.icon}
+                              alt={item.label}
+                              style={{
+                                width: "24px",
+                                height: "24px",
+                                marginRight: "12px",
+                                marginLeft: "12px"
+                              }}
+                            />
+                            <span>{item.label}</span>
+                          </li>
+                        ))}
+                      </ol>
+                    </div>
+                  </>
+                )}
+              </>
+            )}
+
+            {/* {isMobile && toggleState && (
+              <div
+                style={{
+                  position: "fixed",
+                  top: "76px",
+                  left: "0",
+                  width: "70%",
+                  height: "100vh",
+                  backgroundColor: "#fff",
+                  zIndex: 999,
+                  padding: "25px 20px",
+                  overflowY: "auto",
+                }}
+              >
+                <ol className="list-unstyled">
+                  {menuItems.map((item, index) => (
+                    <li
+                      key={index}
+                      onClick={() => {
+                        navigate(item.path);
+                        setToggleState(false); // auto-close after navigation
+                      }}
+                      style={{
+                        display: "flex",
+                        alignItems: "center",
+                        padding: "12px 0",
+                        // borderBottom: "1px solid #eee",
+                        cursor: "pointer",
+                        fontSize: "16px",
+                        color: "#333",
+                      }}
+                    >
+                      <img
+                        src={item.icon}
+                        alt={item.label}
+                        style={{ width: "24px", height: "24px", marginRight: "12px" }}
+                      />
+                      <span>{item.label}</span>
+                    </li>
+                  ))}
+                </ol>
+              </div>
+            )} */}
 
           </>
 
