@@ -18,7 +18,11 @@ import pharmacy from "../../assets/icons/pharmacy.svg";
 import close from "../../assets/icons/close.svg";
 import open from "../../assets/icons/open.svg";
 import { ImCross } from "react-icons/im";
-
+import User from "../../assets/icons/profile.png";
+import Security from "../../assets/icons/pharmacy.svg";
+import Legal from "../../assets/icons/home-hashtag.png";
+import Payment from "../../assets/icons/Money Bag.png";
+import Family from "../../assets/icons/people.png";
 
 const Topbar = ({ toggleSidebar: propToggleSidebar, isMobile: propIsMobile } = {}) => {
   const [calculatedIsMobile, setCalculatedIsMobile] = useState(window.innerWidth < 992);
@@ -31,13 +35,25 @@ const Topbar = ({ toggleSidebar: propToggleSidebar, isMobile: propIsMobile } = {
 
   // const toggleSidebar = propToggleSidebar;
   // const isMobile = propIsMobile !== undefined ? propIsMobile : calculatedIsMobile;
-  const [profileImage, setProfileImage] = useState(dp);
+  const [profileImage, setProfileImage] = useState();
 
   useEffect(() => {
     const storedUser = JSON.parse(localStorage.getItem("user"));
-    if (storedUser?.profileImage?.cloudinaryUrl) {
-      setProfileImage(storedUser.profileImage.cloudinaryUrl);
-    }
+    console.log(storedUser);
+    fetch(`${API_BASE_URL}/api/user/${storedUser.id}`)
+      .then((res) => res.json()) // parse JSON
+      .then((data) => {
+        console.log("Fetched user from API:", data?.user?.profileImage?.cloudinaryUrl);
+        if (data?.user?.profileImage?.cloudinaryUrl) {
+          setProfileImage(data?.user?.profileImage?.cloudinaryUrl);
+        }
+        // backend should return { user: {...} } or just {...}
+        // setUser(data.user || data || storedUser);
+      })
+      .catch((err) => {
+        console.error("Error fetching user:", err);
+      })
+
   }, []);
 
   const [toggleState, setToggleState] = useState(false);
@@ -60,7 +76,6 @@ const Topbar = ({ toggleSidebar: propToggleSidebar, isMobile: propIsMobile } = {
       });
 
       const data = await response.json();
-
       if (response.ok) {
         // ✅ Clear tokens or localStorage if you store them there
         localStorage.removeItem("token");
@@ -156,7 +171,27 @@ const Topbar = ({ toggleSidebar: propToggleSidebar, isMobile: propIsMobile } = {
   const toggleSidebar = () => {
     setIsOpen((prev) => !prev);
   };
-
+  const validPaths = [
+    "/user/profile",
+    "/user/profile/security-and-login",
+    "/user/profile/payment-and-billing",
+    "/user/profile/legal",
+  ];
+  const [random, setRandom] = useState(false);
+  useEffect(() => {
+    console.log(validPaths.includes(location?.pathname));
+    if (validPaths.includes(location?.pathname)) {
+      setRandom(true);
+    }
+  }, []);
+  const sidebarOptions = [
+    { label: "Dashboard", icon: dashboard, path: "/user/dashboard" },
+    { label: "User details", icon: User, path: "/user/profile" },
+    { label: "Security and Login", icon: Security, path: "/user/profile/security-and-login" },
+    { label: "Payment and Billing", icon: Payment, path: "/user/profile/payment-and-billing" },
+    // { label: "Family Members", icon: Family, path: "/user/profile/family-members" },
+    { label: "Legal", icon: Legal, path: "/user/profile/legal" },
+  ];
   return (
     <div
       className={` ${styles.topBarContainer}  w-100 d-flex justify-content-between align-items-center px-3 px-lg-4 py-2 border-bottom bg-white`}
@@ -173,89 +208,158 @@ const Topbar = ({ toggleSidebar: propToggleSidebar, isMobile: propIsMobile } = {
           <>
             {isMobile && (
               <>
-                {!toggleState ? (
-                  <FiMenu
-                    size={24}
-                    style={{ cursor: "pointer", marginRight: "15px" }}
-                    onClick={() => setToggleState(true)}
-                    title="Menu"
-                  />
-                ) : (
-                  <ImCross
-                    size={18}
-                    onClick={() => setToggleState(false)}
-                    style={{ cursor: "pointer", marginRight: "18px" }}
-                  />
-                )}
-                {isMobile && toggleState && (
-                  <>
-                    <div
-                      onClick={() => setToggleState(false)}
-                      style={{
-                        position: "fixed",
-                        top: "76px",
-                        left: "0",
-                        width: "100%",
-                        height: "100vh",
-                        backgroundColor: "rgba(0, 0, 0, 0.3)",
-                        zIndex: 998,
-                      }}
-                    ></div>
-                    <div
-                      style={{
-                        position: "fixed",
-                        top: "76px",
-                        left: "0",
-                        width: "70%",
-                        height: "100vh",
-                        backgroundColor: "#fff",
-                        zIndex: 999,
-                        padding: "25px 20px",
-                        overflowY: "auto",
-                        boxShadow: "2px 0 8px rgba(0,0,0,0.1)",
-                      }}
-                      onClick={(e) => e.stopPropagation()}
-                    >
-                      <ol className="list-unstyled">
-                        {menuItems.map((item, index) => (
-                          <li
-                            key={index}
-                            onClick={() => {
-                              navigate(item.path);
-                              setToggleState(false);
-                            }}
-                            style={{
-                              display: "flex",
-                              alignItems: "center",
-                              padding: "12px 0",
-                              cursor: "pointer",
-                              fontSize: "16px",
-                              color: "#333",
-                              backgroundColor:
-                                location.pathname === item.path ? "#f1f1f1" : "transparent",
-                              borderRadius: "13px"
-                            }}
-                          >
-                            <img
-                              src={item.icon}
-                              alt={item.label}
-                              style={{
-                                width: "24px",
-                                height: "24px",
-                                marginRight: "12px",
-                                marginLeft: "12px"
-                              }}
-                            />
-                            <span>{item.label}</span>
-                          </li>
-                        ))}
-                      </ol>
-                    </div>
+                {
+                  !random && <>
+                    {!toggleState ? (
+                      <FiMenu
+                        size={24}
+                        style={{ cursor: "pointer", marginRight: "15px" }}
+                        onClick={() => setToggleState(true)}
+                        title="Menu"
+                      />
+                    ) : (
+                      <ImCross
+                        size={18}
+                        onClick={() => setToggleState(false)}
+                        style={{ cursor: "pointer", marginRight: "18px" }}
+                      />
+                    )}
+                    {isMobile && toggleState && (
+                      <>
+                        <div
+                          onClick={() => setToggleState(false)}
+                          style={{
+                            position: "fixed",
+                            top: "76px",
+                            left: "0",
+                            width: "100%",
+                            height: "100vh",
+                            backgroundColor: "rgba(0, 0, 0, 0.3)",
+                            zIndex: 998,
+                          }}
+                        ></div>
+                        <div
+                          style={{
+                            position: "fixed",
+                            top: "76px",
+                            left: "0",
+                            width: "70%",
+                            height: "100vh",
+                            backgroundColor: "#fff",
+                            zIndex: 999,
+                            padding: "25px 20px",
+                            overflowY: "auto",
+                            boxShadow: "2px 0 8px rgba(0,0,0,0.1)",
+                          }}
+                          onClick={(e) => e.stopPropagation()}
+                        >
+                          <ol className="list-unstyled">
+                            {menuItems.map((item, index) => (
+                              <li
+                                key={index}
+                                onClick={() => {
+                                  navigate(item.path);
+                                  setToggleState(false);
+                                }}
+                                style={{
+                                  display: "flex",
+                                  alignItems: "center",
+                                  padding: "12px 0",
+                                  cursor: "pointer",
+                                  fontSize: "16px",
+                                  color: "#333",
+                                  backgroundColor:
+                                    location.pathname === item.path ? "#f1f1f1" : "transparent",
+                                  borderRadius: "13px"
+                                }}
+                              >
+                                <img
+                                  src={item.icon}
+                                  alt={item.label}
+                                  style={{
+                                    width: "24px",
+                                    height: "24px",
+                                    marginRight: "12px",
+                                    marginLeft: "12px"
+                                  }}
+                                />
+                                <span>{item.label}</span>
+                              </li>
+                            ))}
+                          </ol>
+                        </div>
+                      </>
+                    )}
                   </>
-                )}
+                }
               </>
             )}
-
+            {/* {
+              location?.pathname == "/user/profile" || "/user/profile/security-and-login" || "/user/profile/payment-and-billing" || "/user/profile/payment-and-billing" || "/user/profile/legal" && <>
+                <div
+                  onClick={() => setToggleState(false)}
+                  style={{
+                    position: "fixed",
+                    top: "76px",
+                    left: "0",
+                    width: "100%",
+                    height: "100vh",
+                    backgroundColor: "rgba(0, 0, 0, 0.3)",
+                    zIndex: 998,
+                  }}
+                ></div>
+                <div
+                  style={{
+                    position: "fixed",
+                    top: "76px",
+                    left: "0",
+                    width: "70%",
+                    height: "100vh",
+                    backgroundColor: "#fff",
+                    zIndex: 999,
+                    padding: "25px 20px",
+                    overflowY: "auto",
+                    boxShadow: "2px 0 8px rgba(0,0,0,0.1)",
+                  }}
+                  onClick={(e) => e.stopPropagation()}
+                >
+                  <ol className="list-unstyled">
+                    {sidebarOptions.map((item, index) => (
+                      <li
+                        key={index}
+                        onClick={() => {
+                          navigate(item.path);
+                          setToggleState(false);
+                        }}
+                        style={{
+                          display: "flex",
+                          alignItems: "center",
+                          padding: "12px 0",
+                          cursor: "pointer",
+                          fontSize: "16px",
+                          color: "#333",
+                          backgroundColor:
+                            location.pathname === item.path ? "#f1f1f1" : "transparent",
+                          borderRadius: "13px"
+                        }}
+                      >
+                        <img
+                          src={item.icon}
+                          alt={item.label}
+                          style={{
+                            width: "24px",
+                            height: "24px",
+                            marginRight: "12px",
+                            marginLeft: "12px"
+                          }}
+                        />
+                        <span>{item.label}</span>
+                      </li>
+                    ))}
+                  </ol>
+                </div>
+              </>
+            } */}
             {/* {isMobile && toggleState && (
               <div
                 style={{
@@ -310,9 +414,10 @@ const Topbar = ({ toggleSidebar: propToggleSidebar, isMobile: propIsMobile } = {
           style={{
             width: '72px',
             height: '60px',
-            marginRight: '40px',
+            marginRight: "40px",
+            marginLeft: random ? "40px" : ""
           }}
-          onClick={() => { navigate('/') }}
+          onClick={() => { navigate("/user/dashboard") }}
         />
       </div>
 
@@ -333,13 +438,11 @@ const Topbar = ({ toggleSidebar: propToggleSidebar, isMobile: propIsMobile } = {
 
         <img
           src={profileImage}
-          alt="User"
+          alt="User1"
           className="rounded-circle hover:cursor-pointer"
           style={{ width: '48px', height: '48px', objectFit: 'cover' }}
           onClick={handleClick}
         />
-
-
       </div>
     </div>
   );
