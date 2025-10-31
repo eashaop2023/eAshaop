@@ -123,6 +123,9 @@ server.listen(PORT, () => {
   );
 });
 
+
+const swaggerDocs = require("./config/swagger");
+swaggerDocs(app);
 // -------------------- ERROR HANDLER --------------------
 app.use((err, req, res, next) => {
   if (err instanceof multer.MulterError) {

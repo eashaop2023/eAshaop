@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import axios from "axios";
 import { API_BASE_URL } from "../../../api-config";
+import socket from "../../../common/socket";
 
 const PAGE_SIZE = 10;
 
@@ -47,6 +48,37 @@ const BookingHistory = () => {
     };
 
     fetchAppointments();
+
+     // Listen to connection/disconnection
+      socket.on("connect", () => {
+        console.log("✅ Socket connected with id:", socket.id);
+      });
+    
+      socket.on("disconnect", (reason) => {
+        console.log("⚠️ Socket disconnected:", reason);
+      });
+    
+      socket.on("connect_error", (err) => {
+        console.error("❌ Socket connection error:", err);
+      });
+
+        // socket.emit("joinDoctorRoom", doctorId, (ack) => {
+        //   console.log("✅ joinDoctorRoom ack:", ack);
+        // });
+
+    socket.emit("joinDoctorRoom",doctorId)
+    socket.on("appointmentUpdated",fetchAppointments);
+    socket.on("appointmentDeleted",fetchAppointments);
+
+    return () => {
+        console.log("🧹 Cleaning up socket listeners");
+        socket.off("appointmentUpdated", onUpdated);
+        socket.off("appointmentDeleted", onDeleted);
+        socket.off("connect");
+        socket.off("disconnect");
+        socket.off("connect_error");
+      };
+
   }, [doctorId]);
 
   // Filter past appointments based on search, status, and date filters

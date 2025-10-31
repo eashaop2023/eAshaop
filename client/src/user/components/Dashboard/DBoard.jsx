@@ -426,7 +426,7 @@ const [isMobile, setIsMobile] = useState(window.innerWidth < 992);
 
           
 
-          {/* <div className="mt-6">
+          <div className="mt-6">
   <h2 className="text-[24px] text-[#252525] font-semibold mb-3">
      Doctor Suggestion
   </h2>
@@ -453,7 +453,7 @@ const [isMobile, setIsMobile] = useState(window.innerWidth < 992);
       </div>
     ))}
   </Slider>
-</div> */}
+</div>
 
 
           <div>
