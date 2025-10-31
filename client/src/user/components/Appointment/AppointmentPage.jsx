@@ -35,10 +35,10 @@ export default function AppointmentPage() {
   const location = useLocation();
   const { doctorId, consultationType } = location.state || {};
 
-  console.log(availableSlots);
+  console.log( doctorId, consultationType);
   // Fetch doctor
   useEffect(() => {
-    setDoctor(location.state);
+    setDoctor(location.state?.details);
     // if (!doctorId) return;
     const fetchDoctor = async () => {
       try {
@@ -57,9 +57,9 @@ export default function AppointmentPage() {
   const fetchSlots = async () => {
     try {
       const dateStr = startDate.toLocaleDateString("en-CA");
-      console.log(location?.state?.id,dateStr)
+      console.log(location?.state?.details?.id,dateStr)
       const res = await axios.get(
-        `${API_BASE_URL}/api/doctors/${location?.state?.id}/availability/${dateStr}`
+        `${API_BASE_URL}/api/doctors/${location?.state?.details?.id}/availability/${dateStr}`
       );      
       let slots = res.data.slots || [];
       const today = new Date();
@@ -292,11 +292,11 @@ export default function AppointmentPage() {
               </div>
             </div>
 
-            <div className="d-flex w-100 justify-content-between mb-3">
+            {/* <div className="d-flex w-100 justify-content-between mb-3">
               <Button variant="outline" className="w-100 fw-normal text-[18px] call-btn" style={{ backgroundColor: "#EDFFFE", color: "#00A99D", borderRadius: "28px", height: "72px", width: "272px", display: "flex", alignItems: "center", justifyContent: "center", gap: "10px" }}>
                 <img src={Call} alt="call" className="h-8 w-8 text-[18px]" /> <span className="fw-normal text-[20px]">Call</span>
               </Button>
-            </div>
+            </div> */}
 
             <div className="heading w-100">
               <h6 className="fw-bold" style={{ fontSize: "18px" }}>About</h6>
