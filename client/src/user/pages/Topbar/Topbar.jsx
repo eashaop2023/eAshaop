@@ -23,6 +23,8 @@ import Security from "../../assets/icons/pharmacy.svg";
 import Legal from "../../assets/icons/home-hashtag.png";
 import Payment from "../../assets/icons/Money Bag.png";
 import Family from "../../assets/icons/people.png";
+import socket from "../../../common/socket"
+
 
 const Topbar = ({ toggleSidebar: propToggleSidebar, isMobile: propIsMobile } = {}) => {
   const [calculatedIsMobile, setCalculatedIsMobile] = useState(window.innerWidth < 992);
@@ -53,6 +55,35 @@ const Topbar = ({ toggleSidebar: propToggleSidebar, isMobile: propIsMobile } = {
       .catch((err) => {
         console.error("Error fetching user:", err);
       })
+
+      // 3️⃣ Join the user's personal room
+      socket.emit("joinUserRoom", storedUser.id);
+      console.log(`🧩 Joined user room: ${storedUser.id}`);
+      socket.on("UserprofileImageUpdated", (data) => {
+      console.log("🔁 Received profile image update:", data);
+
+      if (data.userId === storedUser.id) {
+        const newImage = data.profileImage.cloudinaryUrl || data.profileImage;
+
+        setProfileImage(newImage);
+
+        // Update localStorage too
+        const updatedUser = {
+          ...storedUser,
+          profileImage: { cloudinaryUrl: newImage },
+        };
+        localStorage.setItem("user", JSON.stringify(updatedUser));
+
+        console.log("✅ Updated profile image in UI + localStorage");
+      }
+    });
+
+    // 5️⃣ Cleanup on unmount
+    return () => {
+      socket.off("UserprofileImageUpdated");
+      socket.disconnect();
+      console.log("🧹 Socket disconnected from Topbar");
+    };
 
   }, []);
 
@@ -90,9 +121,6 @@ const Topbar = ({ toggleSidebar: propToggleSidebar, isMobile: propIsMobile } = {
       console.error("Error logging out:", error);
     }
   };
-  console.log(toggleState);
-
-
   const [isOpen, setIsOpen] = useState(window.innerWidth >= 992);
   const [isMobile, setIsMobile] = useState(window.innerWidth < 992);
   const [selected, setSelected] = useState(null);
