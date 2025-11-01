@@ -3,6 +3,8 @@ const { Server } = require("socket.io");
 const Appointment = require("../models/Appointment");
 const Category=require("../models/categoryModel")
 const Doctor=require("../models/doctorModel")
+const User = require("../models/user"); 
+const { default: mongoose } = require("mongoose");
 
 let io;
 
@@ -33,7 +35,17 @@ function initSocket(server) {
       console.log(`User joined category room: ${categoryUUID}`);
     });
 
+     socket.on("joinUserRoom", (userId) => {
+      socket.join(userId);
+      console.log(`👤 User ${userId} joined their personal room`);
+    });
 
+    
+    socket.on("joinDoctorProfileRoom", (doctorId) => {
+      socket.join(doctorId);
+      console.log(`Doctor ${doctorId} joined room`);
+    });
+    
     socket.on("disconnect", () => {
       console.log("Socket disconnected:", socket.id);
     });
@@ -42,6 +54,8 @@ function initSocket(server) {
   setupAppointmentChangeStream();
   // setupDoctorChangeStream();
   setupCategoryChangeStream(); 
+  setupUserChangeStream(); 
+  setupDoctorChangeStream();
   return io;
 }
 
@@ -94,13 +108,13 @@ function setupCategoryChangeStream() {
   const mongoose = require("mongoose");
 
   mongoose.connection.once("open", () => {
-    console.log("✅ MongoDB connected — setting up category change stream");
+   // console.log("MongoDB connected — setting up category change stream");
 
     // Watch the Category collection
     const changeStream = Doctor.watch([], { fullDocument: "updateLookup" });
 
     changeStream.on("change", async (change) => {
-      console.log("📢 Category change detected:", change.operationType);
+     // console.log(" Category change detected:", change.operationType);
 
       if (["insert", "update", "replace", "delete"].includes(change.operationType)) {
         // You can include more info if needed
@@ -109,15 +123,85 @@ function setupCategoryChangeStream() {
           time: new Date(),
         });
 
-        console.log("🔁 Emitted 'categoryDoctorsUpdated' event to all clients");
+       // console.log(" Emitted 'categoryDoctorsUpdated' event to all clients");
       }
     });
 
     changeStream.on("error", (err) => {
-      console.error("❌ Error in Category Change Stream:", err);
+      console.error(" Error in Category Change Stream:", err);
     });
   });
 }
+
+
+function setupUserChangeStream() {
+  const mongoose = require("mongoose");
+
+  mongoose.connection.once("open", () => {
+    console.log(" MongoDB connected — setting up user change stream");
+
+    const changeStream = User.watch([], { fullDocument: "updateLookup" });
+
+    changeStream.on("change", async (change) => {
+      console.log(" User change detected:", change.operationType);
+
+      if (change.operationType === "update" || change.operationType === "replace") {
+        const updatedUser = change.fullDocument;
+
+        // Only emit if profile image changed
+        if (change.updateDescription?.updatedFields?.profileImage) {
+          console.log(" Profile image updated for user:", updatedUser._id);
+
+          io.to(updatedUser._id.toString()).emit("UserprofileImageUpdated", {
+            userId: updatedUser._id,
+            profileImage: updatedUser.profileImage,
+          });
+
+          console.log(" Emitted 'UserprofileImageUpdated' event to user room");
+        }
+      }
+    });
+
+    changeStream.on("error", (err) => {
+      console.error("Error in User Change Stream:", err);
+    });
+  });
+}
+
+function setupDoctorChangeStream() {
+  const mongoose = require("mongoose");
+
+  mongoose.connection.once("open", () => {
+    console.log(" MongoDB connected — setting up user change stream");
+
+    const changeStream = Doctor.watch([], { fullDocument: "updateLookup" });
+
+    changeStream.on("change", async (change) => {
+      console.log(" Doctor change detected:", change.operationType);
+
+      if (change.operationType === "update" || change.operationType === "replace") {
+        const updatedDoctor = change.fullDocument;
+
+        // Only emit if profile image changed
+        if (change.updateDescription?.updatedFields?.profileImage) {
+          console.log(" Profile image updated for user:", updatedDoctor._id);
+
+          io.to(updatedDoctor._id.toString()).emit("DoctorprofileImageUpdated", {
+            DoctorId: updatedDoctor._id,
+            profileImage: updatedDoctor.profileImage,
+          });
+         
+          console.log(" Emitted 'DoctorprofileImageUpdated' event to doctor room");
+        }
+      }
+    });
+
+    changeStream.on("error", (err) => {
+      console.error("Error in User Change Stream:", err);
+    });
+  });
+}
+
 
 
 module.exports = { initSocket };
