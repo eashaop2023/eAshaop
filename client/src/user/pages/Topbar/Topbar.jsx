@@ -41,48 +41,40 @@ const Topbar = ({ toggleSidebar: propToggleSidebar, isMobile: propIsMobile } = {
 
   useEffect(() => {
     const storedUser = JSON.parse(localStorage.getItem("user"));
-    console.log(storedUser);
     fetch(`${API_BASE_URL}/api/user/${storedUser.id}`)
       .then((res) => res.json()) // parse JSON
       .then((data) => {
-        console.log("Fetched user from API:", data?.user?.profileImage?.cloudinaryUrl);
         if (data?.user?.profileImage?.cloudinaryUrl) {
           setProfileImage(data?.user?.profileImage?.cloudinaryUrl);
         }
-        // backend should return { user: {...} } or just {...}
-        // setUser(data.user || data || storedUser);
       })
       .catch((err) => {
         console.error("Error fetching user:", err);
       })
 
-      // 3️⃣ Join the user's personal room
+     
       socket.emit("joinUserRoom", storedUser.id);
-      console.log(`🧩 Joined user room: ${storedUser.id}`);
+      
       socket.on("UserprofileImageUpdated", (data) => {
-      console.log("🔁 Received profile image update:", data);
+     
 
       if (data.userId === storedUser.id) {
         const newImage = data.profileImage.cloudinaryUrl || data.profileImage;
 
         setProfileImage(newImage);
 
-        // Update localStorage too
+       
         const updatedUser = {
           ...storedUser,
           profileImage: { cloudinaryUrl: newImage },
         };
         localStorage.setItem("user", JSON.stringify(updatedUser));
-
-        console.log("✅ Updated profile image in UI + localStorage");
       }
     });
 
-    // 5️⃣ Cleanup on unmount
+   
     return () => {
       socket.off("UserprofileImageUpdated");
-      socket.disconnect();
-      console.log("🧹 Socket disconnected from Topbar");
     };
 
   }, []);
@@ -97,10 +89,10 @@ const Topbar = ({ toggleSidebar: propToggleSidebar, isMobile: propIsMobile } = {
 
   const handleLogout = async () => {
     try {
-      // ✅ Call backend logout API
+      
       const response = await fetch(`${API_BASE_URL}/api/user/logout`, {
         method: "POST",
-        credentials: "include", // if using cookies for session
+        credentials: "include", 
         headers: {
           "Content-Type": "application/json",
         },
@@ -108,11 +100,8 @@ const Topbar = ({ toggleSidebar: propToggleSidebar, isMobile: propIsMobile } = {
 
       const data = await response.json();
       if (response.ok) {
-        // ✅ Clear tokens or localStorage if you store them there
         localStorage.removeItem("token");
         localStorage.removeItem("user");
-
-        // Redirect to login
         navigate("/login");
       } else {
         console.error("Logout failed:", data.message);
@@ -207,7 +196,6 @@ const Topbar = ({ toggleSidebar: propToggleSidebar, isMobile: propIsMobile } = {
   ];
   const [random, setRandom] = useState(false);
   useEffect(() => {
-    console.log(validPaths.includes(location?.pathname));
     if (validPaths.includes(location?.pathname)) {
       setRandom(true);
     }

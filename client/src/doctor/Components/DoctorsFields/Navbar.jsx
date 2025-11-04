@@ -14,71 +14,67 @@ const Navbar = () => {
   const handleUserClick = () => {
   navigate("/doctor/doctorprofile"); 
 };
-
-useEffect(() => {
-  const doctorId = localStorage.getItem("doctorId"); // make sure this is correct
-  if (!doctorId) return;
-
-  async function fetchDoctorProfile() {
-    try {
-      const token = localStorage.getItem("authToken");
-      if (!token) return;
-
-      const res = await axios.get(`${API_BASE_URL}/api/doctors/profile`, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
-
-      const profile = res.data.profileImage;
-      setProfileImage(profile);
-      //console.log("Doctor profile fetched:", profile);
-    } catch (err) {
-      console.error("Error fetching doctor profile:", err);
+  // ✅ Step 1: Load doctorId first
+  useEffect(() => {
+    const storedId = localStorage.getItem("doctorId");
+    if (storedId) {
+      setDoctorId(storedId);
     }
-  }
+  }, []);
 
-  fetchDoctorProfile();
+  // ✅ Step 2: Fetch profile & join socket only when doctorId is available
+  useEffect(() => {
+    if (!doctorId) return;
 
-  // ✅ Join doctor's personal room
-  socket.emit("joinDoctorProfileRoom", doctorId);
-  //console.log(`Joined Doctor profile room: ${doctorId}`);
+    async function fetchDoctorProfile() {
+      try {
+        const token = localStorage.getItem("authToken");
+        if (!token) return;
 
-  // ✅ Handle profile image updates
-  const handleProfileUpdate = (data) => {
-   // console.log("Received profile image update:", data);
+        const res = await axios.get(`${API_BASE_URL}/api/doctors/profile`, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
 
-    if (data.DoctorId === doctorId) {
-      const newImage = data.profileImage.cloudinaryUrl || data.profileImage;
-      setProfileImage(newImage);
-     // console.log("✅ Updated profile image in UI");
+        setProfileImage(res.data.profileImage);
+      } catch (err) {
+        console.error("Error fetching doctor profile:", err);
+      }
     }
-  };
 
-  socket.on("DoctorprofileImageUpdated", handleProfileUpdate);
+    fetchDoctorProfile();
 
-  // Cleanup listener only, don't disconnect the socket
-  return () => {
-    socket.off("DoctorprofileImageUpdated", handleProfileUpdate);
-    //console.log("✅ Removed Doctor profile listener");
-  };
-}, []);
+    // ✅ Join doctor socket room
+    socket.emit("joinDoctorProfileRoom", doctorId);
 
+    // ✅ Listen for profile updates
+    const handleProfileUpdate = (data) => {
+      if (data.DoctorId === doctorId) {
+        const newImage = data.profileImage.cloudinaryUrl || data.profileImage;
+        setProfileImage(newImage);
+      }
+    };
+
+    socket.on("DoctorprofileImageUpdated", handleProfileUpdate);
+
+    return () => {
+      socket.off("DoctorprofileImageUpdated", handleProfileUpdate);
+    };
+  }, [doctorId]); // 👈 Runs whenever doctorId is set
 // useEffect(() => {
+//   const doctorId = localStorage.getItem("doctorId"); // make sure this is correct
+//   if (!doctorId) return;
+
 //   async function fetchDoctorProfile() {
 //     try {
 //       const token = localStorage.getItem("authToken");
-//       if (!token) {
-//         // console.warn("⚠️ No auth token found");
-//         return;
-//       }
+//       if (!token) return;
 
 //       const res = await axios.get(`${API_BASE_URL}/api/doctors/profile`, {
 //         headers: { Authorization: `Bearer ${token}` },
 //       });
-//       setProfileImage(res.data.profileImage)
-//       console.log("✅ Doctor profile:", res.data);
-//       // setDoctorId(res.data.)
 
-//       // setDoctor(res.data.doctor); // example
+//       const profile = res.data.profileImage;
+//       setProfileImage(profile);
 //     } catch (err) {
 //       console.error("Error fetching doctor profile:", err);
 //     }
@@ -86,37 +82,29 @@ useEffect(() => {
 
 //   fetchDoctorProfile();
 
-//    //  Join the user's personal room
-//       socket.emit("joinDoctorProfileRoom",doctorId);
-//       console.log(`Joined Doctor profile room: ${doctorId}`);
-//       socket.on("DoctorprofileImageUpdated", (data) => {
-//       console.log("Received profile image update:", data);
+//   // ✅ Join doctor's personal room
+//   socket.emit("joinDoctorProfileRoom", doctorId);
+//   //console.log(`Joined Doctor profile room: ${doctorId}`);
 
-//       if (data.DoctorId === storedUser.id) {
-//         const newImage = data.profileImage.cloudinaryUrl || data.profileImage;
+ 
+//   const handleProfileUpdate = (data) => {
+   
 
-//         setProfileImage(newImage);
+//     if (data.DoctorId === doctorId) {
+//       const newImage = data.profileImage.cloudinaryUrl || data.profileImage;
+//       setProfileImage(newImage);
+//      // console.log("✅ Updated profile image in UI");
+//     }
+//   };
 
-//         // Update localStorage too
-//         // const updatedUser = {
-//         //   ...storedUser,
-//         //   profileImage: { cloudinaryUrl: newImage },
-//         // };
-//         // localStorage.setItem("user", JSON.stringify(updatedUser));
+//   socket.on("DoctorprofileImageUpdated", handleProfileUpdate);
 
-//         console.log("✅ Updated profile image in UI + localStorage");
-//       }
-//     });
+//   // Cleanup listener only, don't disconnect the socket
+//   return () => {
+//     socket.off("DoctorprofileImageUpdated", handleProfileUpdate);
 
-//     // 5️⃣ Cleanup on unmount
-//     return () => {
-//       socket.off("profileImageUpdated");
-//       socket.disconnect();
-//       console.log("Socket disconnected from Topbar");
-//     };
+//   };
 // }, []);
-
-
 
   return (
     <div className="fixed top-0 left-0 w-full h-16 flex items-center justify-between px-6 border-b border-[#F7F7F7] shadow-sm bg-white z-50">
