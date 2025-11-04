@@ -214,6 +214,7 @@ export default function UserDetailsPanel() {
           fontFamily: "Urbanist, sans-serif",
           paddingRight: "0px",
           // marginTop: "20px",
+          marginBottom:"30px"
         }}
       >
         <Row className={`${styles.rowContainer}`}>
@@ -401,7 +402,7 @@ export default function UserDetailsPanel() {
                 {/* Desktop profile image - hide on mobile/tablet */}
 
 
-                <div className="ms-md-4 w-100 mt-3 mt-md-0">
+                <div className="ms-md-4 w-96 mt-3 mt-md-0">
                   <Row>
                     <Col xs={8} md={4} className="mb-3">
                       <Form.Label className="mb-1">Full Name</Form.Label>
@@ -608,7 +609,7 @@ export default function UserDetailsPanel() {
                       backgroundColor: "#00A99D",
                       border: "none",
                       height: "58px",
-                      width: "347px",
+                      width: "307px",
                     }}
                     onClick={handleSave}
                   >

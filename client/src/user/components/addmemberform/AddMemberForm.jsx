@@ -158,7 +158,8 @@ const AddMemberForm = ({ onClose,onAdd }) => {
     <div className={`${styles.mainContainer} d-flex justify-content-center  `}
      style={{
       overflowY:'auto',
-      marginTop:'60px'
+      marginTop:'60px',
+      paddingBottom:"50px"
       
      }}
     >

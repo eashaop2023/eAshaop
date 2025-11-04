@@ -90,7 +90,6 @@ const Topbar = ({ toggleSidebar: propToggleSidebar, isMobile: propIsMobile } = {
       console.error("Error logging out:", error);
     }
   };
-  console.log(toggleState);
 
 
   const [isOpen, setIsOpen] = useState(window.innerWidth >= 992);

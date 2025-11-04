@@ -14,6 +14,8 @@ import Arrowleft from "../../assets/confirmappointmenticons/arrow-left.svg";
 import AddMemberForm from "../addmemberform/AddMemberForm";
 import { toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
+import Radio from '@mui/material/Radio';
+
 
 export default function AppointmentPage() {
   const [startDate, setStartDate] = useState(() => {
@@ -35,7 +37,7 @@ export default function AppointmentPage() {
   const location = useLocation();
   const { doctorId, consultationType } = location.state || {};
 
-  console.log( doctorId, consultationType);
+  console.log(doctorId, consultationType);
   // Fetch doctor
   useEffect(() => {
     setDoctor(location.state?.details);
@@ -57,10 +59,10 @@ export default function AppointmentPage() {
   const fetchSlots = async () => {
     try {
       const dateStr = startDate.toLocaleDateString("en-CA");
-      console.log(location?.state?.details?.id,dateStr)
+      console.log(location?.state?.details?.id, dateStr)
       const res = await axios.get(
         `${API_BASE_URL}/api/doctors/${location?.state?.details?.id}/availability/${dateStr}`
-      );      
+      );
       let slots = res.data.slots || [];
       const today = new Date();
       today.setHours(0, 0, 0, 0);
@@ -91,7 +93,7 @@ export default function AppointmentPage() {
     const fetchSlots = async () => {
       try {
         const dateStr = startDate.toLocaleDateString("en-CA");
-        console.log(doctorId,dateStr)
+        console.log(doctorId, dateStr)
         const res = await axios.get(
           `${API_BASE_URL}/api/doctors/${doctorId}/availability/${dateStr}`
         );
@@ -161,6 +163,8 @@ export default function AppointmentPage() {
   }, []);
 
   // Add member
+  const storedUser = JSON.parse(localStorage.getItem("user") || "{}");
+  const userId = storedUser._id || storedUser.id;
   const handleAddMember = async (memberData) => {
     try {
 
@@ -254,7 +258,7 @@ export default function AppointmentPage() {
     if (datePickerRef.current) datePickerRef.current.setOpen(true);
   };
 
-  const weekDays = Array.from({ length: 7 }).map((_, i) => {
+  const weekDays = Array.from({ length: 6 }).map((_, i) => {
     const d = new Date();
     d.setHours(0, 0, 0, 0);
     d.setDate(d.getDate() + i);
@@ -268,6 +272,415 @@ export default function AppointmentPage() {
   const selectedMember = members[selectedMemberIndex];
 
 
+
+  return (
+    <div
+      style={{
+        fontFamily: "Urbanist, sans-serif",
+        boxSizing: "border-box",
+        overflowX: "hidden",
+        width: "100%",
+        maxWidth: "100%",
+        padding: "1rem",
+        display: "grid",
+        gridTemplateColumns: "1fr",
+        gap: "24px",
+        height: "100vh"
+      }}
+    >
+      <style>
+        {`
+            @media (min-width: 992px) {
+              div[data-layout="doctorGrid"] {
+                display: grid !important;
+                grid-template-columns: 1fr 1fr !important;
+                align-items: flex-start !important;
+              }
+            }
+
+            @media (max-width: 991px) {
+              div[data-layout="doctorGrid"] > div:last-child {
+                margin-top: 20px !important;
+              }
+            }
+          `}
+      </style>
+
+
+
+      <div data-layout="doctorGrid" style={{ display: "grid", gridTemplateColumns: "1fr", gap: "24px" }}>
+        <div
+          style={{
+            display: "flex",
+            flexDirection: "column",
+            gap: "24px",
+            marginTop: "80px",
+            marginLeft: "20px",
+            boxSizing: "border-box",
+          }}
+        >
+          <button
+            onClick={() => navigate(-1)}
+            style={{
+              display: "flex",
+              alignItems: "center",
+              textDecoration: "none",
+              background: "none",
+              border: "none",
+              color: "#00A99D",
+              fontWeight: 500,
+              fontSize: "18px",
+              cursor: "pointer",
+            }}
+          >
+            <img
+              src={Arrowleft}
+              alt="Back"
+              style={{ width: "24px", height: "24px", marginRight: "8px" }}
+            />
+            Doctors
+          </button>
+
+          <div style={{ textAlign: "center", position: "relative", marginBottom: "50px" }}>
+            <img
+              src={doctor?.backgroundImage || "https://img.freepik.com/free-vector/hospital-healthcare-service-sale-banner_23-2150394136.jpg"}
+              alt="Banner"
+              style={{
+                width: "100%",
+                height: "150px",
+                objectFit: "cover",
+                borderRadius: "10px",
+                boxSizing: "border-box",
+              }}
+            />
+            <img
+              src={doctor?.profileImage || Profile}
+              alt={doctor?.name}
+              style={{
+                height: "120px",
+                width: "120px",
+                borderRadius: "50%",
+                objectFit: "cover",
+                border: "3px solid white",
+                boxShadow: "0 4px 10px rgba(0,0,0,0.3)",
+                position: "absolute",
+                bottom: "-60px",
+                left: "50%",
+                transform: "translateX(-50%)",
+              }}
+            />
+          </div>
+
+          <div>
+            <h5 style={{ fontWeight: "700", fontSize: "22px", marginBottom: "5px" }}>
+              {doctor?.name}{" "}
+              <small style={{ fontWeight: 500, fontSize: "18px" }}>{doctor?.education}</small>
+            </h5>
+            <p style={{ color: "#6c757d", fontWeight: 500, fontSize: "18px", margin: 0 }}>
+              ♡ {doctor?.speciality}
+            </p>
+            <div style={{ display: "flex", alignItems: "center", color: "#6c757d", fontSize: "18px" }}>
+              <span style={{ color: "#FDCB02", marginRight: "4px" }}>★</span>
+              {doctor?.averageRating} / 5
+            </div>
+          </div>
+
+          <div>
+            <h6 style={{ fontWeight: "700", fontSize: "18px" }}>About</h6>
+            <p style={{ color: "#6c757d", fontSize: "17px" }}>{doctor?.about}</p>
+
+            <h6 style={{ fontWeight: "700", fontSize: "18px" }}>Languages</h6>
+            <p style={{ color: "#6c757d", fontSize: "17px" }}>
+              {doctor?.languages?.join(", ")}
+            </p>
+
+            <h6 style={{ fontWeight: "700", fontSize: "18px" }}>Areas of Expertise</h6>
+            <div style={{ display: "flex", flexWrap: "wrap", gap: "10px" }}>
+              {doctor?.areaOfInterest?.split(",").map((item) => (
+                <span
+                  key={item}
+                  style={{
+                    background: "#f8f9fa",
+                    color: "#000",
+                    borderRadius: "20px",
+                    padding: "8px 15px",
+                    fontSize: "14px",
+                  }}
+                >
+                  {item}
+                </span>
+              ))}
+            </div>
+          </div>
+
+          <div>
+            <h6 style={{ fontWeight: "700", fontSize: "18px" }}>Education & Training</h6>
+            <p style={{ color: "#6c757d", fontSize: "17px", marginBottom: "5px" }}>
+              Degree: {doctor?.education} from {doctor?.university}
+            </p>
+            <p style={{ color: "#6c757d", fontSize: "17px" }}>
+              Works at: {doctor?.hospitalName}
+            </p>
+            {/* <ReviewForm rating={doctor?.averageRating} doctorId={doctorId} userId={userId} />
+            <CommentSection /> */}
+          </div>
+        </div>
+
+        <div
+          style={{
+            display: "flex",
+            flexDirection: "column",
+            justifyContent: "flex-start",
+            alignItems: "center",
+            boxSizing: "border-box",
+            overflowX: "hidden",
+            // marginTop: window.innerWidth > 992 ? "5px" : "100px",
+            padding: "0.5rem",
+            paddingBottom: "4rem",
+            marginTop: "80px"
+
+          }}
+        >
+          <div style={{ width: "100%", maxWidth: "600px", boxSizing: "border-box" }}>
+            <h5 style={{ fontWeight: 500, marginBottom: "1rem" }}>Book Appointment</h5>
+
+            <div>
+              {members.map((member, idx) => (
+                <div
+                  key={idx}
+                  style={{
+                    display: "flex",
+                    justifyContent: "space-between",
+                    alignItems: "center",
+                    padding: "10px 15px",
+                    border: "1px solid #dee2e6",
+                    borderRadius: "50px",
+                    marginBottom: "10px",
+                  }}
+                >
+                  <div>
+                    <div style={{ fontWeight: 500 }}>{member.name}</div>
+                    <div style={{ color: "#6c757d", fontSize: "14px" }}>
+                      Age - {member.age} | Sex - {member.sex}
+                    </div>
+                  </div>
+                  <Radio
+                    checked={selectedMemberIndex === idx}
+                    onChange={() => setSelectedMemberIndex(idx)}
+                    sx={{
+                      color: 'rgb(0, 169, 157)',
+                      '&.Mui-checked': {
+                        color: 'rgb(0, 169, 157)',
+                      },
+                      width: 16,
+                      height: 16,
+                      padding: 0,
+                      cursor: 'pointer',
+                    }}
+                  />
+
+                </div>
+              ))}
+            </div>
+            <a
+              href="#"
+              onClick={(e) => {
+                e.preventDefault();
+                setShowAddMember(true);
+              }}
+              style={{
+                color: "#00A99D",
+                fontSize: "0.9rem",
+                textDecoration: "none",
+                display: "inline-block",
+                marginBottom: "1rem",
+              }}
+            >
+              + Add dependent
+            </a>
+            <div
+              style={{
+                display: 'flex',
+                flexDirection: 'column',
+                alignItems: 'center',
+                gap: '16px',
+                marginBottom: '16px',
+                flexWrap: 'wrap',
+              }}
+            >
+              <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', color: '#252525' }}>
+                <img
+                  src={Calender}
+                  alt="calendar"
+                  style={{ width: 32, height: 32, cursor: 'pointer' }}
+                  onClick={handleCalendarClick}
+                />
+                <div style={{ fontSize: '14px', fontWeight: 500 }}>
+                  {startDate.toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' })}
+                </div>
+                <DatePicker
+                  ref={datePickerRef}
+                  selected={startDate}
+                  onChange={handleDateChange}
+                  minDate={new Date()}
+                  popperPlacement="top-start"
+                  showPopperArrow={false}
+                  popperClassName="custom-datepicker-popper"
+                  calendarClassName="calendar-wrapper"
+                  customInput={<div style={{ display: 'none' }} />}
+                />
+              </div>
+
+              <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', justifyContent: 'center' }}>
+                {weekDays.map((day, i) => {
+                  const isSelected = day.toDateString() === startDate.toDateString();
+                  return (
+                    <div
+                      key={i}
+                      style={{
+                        width: 45,
+                        textAlign: 'center',
+                        backgroundColor: isSelected ? '#00A99D' : 'transparent',
+                        color: isSelected ? '#fff' : '#000',
+                        padding: '6px 5px',
+                        borderRadius: '6px',
+                        cursor: 'pointer',
+                      }}
+                      onClick={() => handleDateChange(day)}
+                    >
+                      <div>{["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"][day.getDay()]}</div>
+                      <div>{day.getDate()}</div>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+
+            <div style={{ display: "flex", flexWrap: "wrap", gap: "10px", marginBottom: "15px" }}>
+              {availableSlots.length > 0 ? (
+                availableSlots.map((slot) => (
+                  <div
+                    key={slot.start}
+                    onClick={() => setSelectedSlot(slot.start)}
+                    style={{
+                      padding: "6px 15px",
+                      borderRadius: "20px",
+                      backgroundColor: selectedSlot === slot.start ? "#00A99D" : "#F0F0F0",
+                      color: selectedSlot === slot.start ? "#fff" : "#000",
+                      cursor: "pointer",
+                    }}
+                  >
+                    {slot.start} - {slot.end}
+                  </div>
+                ))
+              ) : (
+                <p style={{ color: "#6c757d" }}>No slots available for this date.</p>
+              )}
+            </div>
+
+            <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+              <div
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "space-between",
+                  border: "1px solid #00A99D",
+                  color: "#00A99D",
+                  borderRadius: "50px",
+                  padding: "8px 15px",
+                  width: "100%",
+                }}
+              >
+                <span>{startDate.toLocaleDateString("en-GB")}</span>
+                <span>{selectedSlot || "Select slot"}</span>
+              </div>
+
+              <button
+                onClick={() => {
+                  try {
+                    if (!selectedMember) return toast.error("Please select a patient.");
+                    if (!selectedSlot) return toast.error("Please select a time slot.");
+
+                    const appointmentDateTime = new Date(startDate);
+                    const [hours, minutes] = selectedSlot.split(":").map(Number);
+                    appointmentDateTime.setHours(hours, minutes, 0, 0);
+
+                    const appointmentData = {
+                      member: selectedMember,
+                      slot: selectedSlot,
+                      date: appointmentDateTime.toISOString(),
+                      doctor,
+                      amount: doctor?.consultationFee,
+                      consultationType,
+                    };
+
+                    localStorage.setItem("appointmentData", JSON.stringify(appointmentData));
+
+                    toast.success(`Selected slot at ${selectedSlot} Redirecting...`, {
+                      autoClose: 1000,
+                      position: "top-center",
+                    });
+
+                    setTimeout(
+                      () => navigate("/user/category/confirmappointment", { state: appointmentData }),
+                      1000
+                    );
+
+                    setAvailableSlots((prev) => prev.filter((s) => s.start !== selectedSlot));
+                    setSelectedSlot(null);
+                  } catch (err) {
+                    console.error("Slot check error:", err);
+                    toast.error("Failed to process appointment. Please try again.");
+                  }
+                }}
+                style={{
+                  backgroundColor: "#00A99D",
+                  color: "white",
+                  border: "none",
+                  borderRadius: "50px",
+                  padding: "8px 16px",
+                  cursor: "pointer",
+                  flexShrink: 0,
+                }}
+              >
+                Book Slot
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {showAddMember && (
+        <>
+          <div
+            style={{
+              position: "fixed",
+              top: 0,
+              left: 0,
+              width: "100%",
+              height: "100vh",
+              backgroundColor: "rgba(0,0,0,0.5)",
+              zIndex: 1000,
+            }}
+          />
+          <div
+            style={{
+              position: "fixed",
+              top: "50px",
+              left: 0,
+              width: "100%",
+              height: "100vh",
+              zIndex: 1001,
+              overflowY: "auto",
+            }}
+          >
+            <AddMemberForm onClose={() => setShowAddMember(false)} onAdd={handleAddMember} />
+          </div>
+        </>
+      )}
+    </div>
+  );
+
   return (
     <Container fluid className="p-4 doctor-details-container main-container" style={{ fontFamily: "Urbanist, sans-serif" }}>
       <Row className="doctor-info">
@@ -280,8 +693,41 @@ export default function AppointmentPage() {
             </button>
 
             <div className="doctor-img-data w-100">
-              <div className="d-flex justify-content-center w-100 mb-3">
-                <img src={doctor?.profileImage || Profile} alt={doctor?.name} className="rounded-circle appointment-image" style={{ height: '120px', width: '120px', objectFit: 'cover' }} />
+              <div
+                className="d-flex justify-content-center w-100 mb-5 position-relative"
+                style={{
+                  // border: "1px solid black",
+                  height: "150px",
+                  overflow: "visible",
+                }}
+              >
+                <img
+                  src="https://tse4.mm.bing.net/th/id/OIP.FbPafxK8AlAX53Pbit6KsAHaEK?rs=1&pid=ImgDetMain&o=7&rm=3"
+                  alt="Banner"
+                  style={{ width: "100%", height: "100%", objectFit: "cover", borderRadius: "50px" }}
+                />
+
+                <div
+                  style={{
+                    position: "absolute",
+                    bottom: "-60px",
+                    left: "50%",
+                    transform: "translateX(-50%)",
+                  }}
+                >
+                  <img
+                    src={doctor?.profileImage || Profile}
+                    alt={doctor?.name}
+                    className="rounded-circle"
+                    style={{
+                      height: "120px",
+                      width: "120px",
+                      objectFit: "cover",
+                      border: "3px solid white",
+                      boxShadow: "0 4px 10px rgba(0,0,0,0.3)",
+                    }}
+                  />
+                </div>
               </div>
               <div className="doctor-data d-flex flex-column gap-2">
                 <h5 className="mt-3 mb-0 fw-bold text-[22px]">{doctor?.name} <small className="fw-medium text-[18px]">{doctor?.education}</small></h5>

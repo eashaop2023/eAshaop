@@ -20,22 +20,22 @@ const Appointments = () => {
   const userId = localStorage.getItem("userId");
 
   const [isMobile, setIsMobile] = useState(window.innerWidth < 992);
-    
-      useEffect(() => {
-    
-        const handleResize = () => {
-          const mobile = window.innerWidth < 992;
-          setIsMobile(mobile);
-        };
-        window.addEventListener("resize", handleResize);
-        return () => window.removeEventListener("resize", handleResize);
-      }, []);
-    
-      useEffect(() => {
-        const mobile = window.innerWidth < 992;
-        setIsMobile(mobile);
-        //setIsOpen(!mobile);
-      }, []);
+
+  useEffect(() => {
+
+    const handleResize = () => {
+      const mobile = window.innerWidth < 992;
+      setIsMobile(mobile);
+    };
+    window.addEventListener("resize", handleResize);
+    return () => window.removeEventListener("resize", handleResize);
+  }, []);
+
+  useEffect(() => {
+    const mobile = window.innerWidth < 992;
+    setIsMobile(mobile);
+    //setIsOpen(!mobile);
+  }, []);
 
   // ✅ Fetch appointments
   useEffect(() => {
@@ -83,9 +83,9 @@ const Appointments = () => {
   // };
 
   const renderCard = (appointment, isPast = false) => {
-      console.log("Doctor data:", appointment.doctor);
+    console.log("Doctor data:", appointment.doctor);
 
-    const { appointmentId, doctor, date, time, status, type,jitsiLink=null } = appointment;
+    const { appointmentId, doctor, date, time, status, type, jitsiLink = null } = appointment;
     const isCancelled = status === "cancelled";
     const isJoined = status === "booked";
     const isVideo = type === "video";
@@ -93,10 +93,10 @@ const Appointments = () => {
     const canJoin = isVideo && isJoined && !!jitsiLink;
 
     const handleJoinClick = () => {
-    if (jitsiLink) {
-      window.open(jitsiLink, "_blank"); // Open Jitsi link in new tab
-    }
-  };
+      if (jitsiLink) {
+        window.open(jitsiLink, "_blank"); // Open Jitsi link in new tab
+      }
+    };
 
     return (
       <div className="col-md-4 mb-3 mt-3" key={appointmentId}>
@@ -158,32 +158,32 @@ const Appointments = () => {
 
 
             {/* Hospital Info (clinic visits only) */}
-{type === "clinic" && (doctor?.hospitalName || doctor?.hospitalLocation) && (
-  <div
-    className="d-flex flex-column mb-2"
-    style={{ fontSize: "0.85rem", color: "#666" }}
-  >
-    {doctor?.hospitalName ? (
-      <span className="mb-1">
-        <strong>Hospital Name:</strong> {doctor.hospitalName}
-      </span>
-    ) : (
-      <span className="mb-1">
-        <strong>Hospital Name:</strong> Not available
-      </span>
-    )}
+            {type === "clinic" && (doctor?.hospitalName || doctor?.hospitalLocation) && (
+              <div
+                className="d-flex flex-column mb-2"
+                style={{ fontSize: "0.85rem", color: "#666" }}
+              >
+                {doctor?.hospitalName ? (
+                  <span className="mb-1">
+                    <strong>Hospital Name:</strong> {doctor.hospitalName}
+                  </span>
+                ) : (
+                  <span className="mb-1">
+                    <strong>Hospital Name:</strong> Not available
+                  </span>
+                )}
 
-    {doctor?.hospitalLocation ? (
-      <span className="mb-0" style={{ lineHeight: "1.5" }}>
-        <strong>Location:</strong> {doctor.hospitalLocation}
-      </span>
-    ) : (
-      <span className="mb-0" style={{ lineHeight: "1.5" }}>
-        <strong>Location:</strong> Not available
-      </span>
-    )}
-  </div>
-)}
+                {doctor?.hospitalLocation ? (
+                  <span className="mb-0" style={{ lineHeight: "1.5" }}>
+                    <strong>Location:</strong> {doctor.hospitalLocation}
+                  </span>
+                ) : (
+                  <span className="mb-0" style={{ lineHeight: "1.5" }}>
+                    <strong>Location:</strong> Not available
+                  </span>
+                )}
+              </div>
+            )}
 
             {/* Date & Time */}
             <div
@@ -241,10 +241,10 @@ const Appointments = () => {
                     borderRadius: "28px",
                     padding: "6px 16px",
                   }}
-                disabled={!canJoin}
-                onClick={handleJoinClick}
+                  disabled={!canJoin}
+                  onClick={handleJoinClick}
                 >
-{canJoin ? "Join" : "Waiting for link..."}                </button>
+                  {canJoin ? "Join" : "Waiting for link..."}                </button>
               )}
             </div>
           )}
@@ -255,18 +255,17 @@ const Appointments = () => {
 
   if (loading) return <p className="text-center mt-5">Loading appointments...</p>;
 
-  
+
 
   return (
     <>
-      <div   style={{
+      <div style={{
         fontFamily: "Urbanist, sans-serif",
         // marginTop: "120px",
-        paddingTop:"115px",
+        paddingTop: "115px",
         // marginLeft: "335px",
-        maxWidth: "1108px",
-           marginLeft: isMobile ? "10px" : "100px",
-      
+        // maxWidth: "1108px",
+        marginLeft: isMobile ? "10px" : "110px",
       }}>
         <div className="flex-grow-1 px-3">
           {/* <h5 className={`${styles.headerOne} mb-3`} style={{ fontSize: "24px" }}>
@@ -283,9 +282,8 @@ const Appointments = () => {
             }}
           >
             <button
-              className={`btn d-flex align-items-center rounded-pill px-3 py-2 ${
-                activeTab === "virtual" ? "text-white" : "text-dark"
-              }`}
+              className={`btn d-flex align-items-center rounded-pill px-3 py-2 ${activeTab === "virtual" ? "text-white" : "text-dark"
+                }`}
               style={{
                 backgroundColor: activeTab === "virtual" ? "#00a9a4" : "#fff",
                 border: "none",
@@ -297,9 +295,8 @@ const Appointments = () => {
             </button>
 
             <button
-              className={`btn d-flex align-items-center rounded-pill px-3 py-2 ${
-                activeTab === "clinic" ? "text-white" : "text-dark"
-              }`}
+              className={`btn d-flex align-items-center rounded-pill px-3 py-2 ${activeTab === "clinic" ? "text-white" : "text-dark"
+                }`}
               style={{
                 backgroundColor: activeTab === "clinic" ? "#00a9a4" : "#fff",
                 border: "none",
@@ -336,14 +333,14 @@ const Appointments = () => {
           </h5>
           <div className="row">
             {appointments.past.length > 0 ? (
-appointments.past
-  .filter(
-    (a) =>
-       a.status==="booked"&&
-      (a.type === "video" && activeTab === "virtual") ||
-      (a.type === "clinic" && activeTab === "clinic")
-  )
-  .map((appt) => renderCard(appt, true))
+              appointments.past
+                .filter(
+                  (a) =>
+                    a.status === "booked" &&
+                    (a.type === "video" && activeTab === "virtual") ||
+                    (a.type === "clinic" && activeTab === "clinic")
+                )
+                .map((appt) => renderCard(appt, true))
             ) : (
               <p>No past appointments</p>
             )}
@@ -398,7 +395,7 @@ appointments.past
               <button
                 className="btn btn-danger"
                 style={{ borderRadius: "28px" }}
-                // onClick={confirmCancel}
+              // onClick={confirmCancel}
               >
                 Yes, cancel appointment
               </button>

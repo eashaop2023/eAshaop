@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { createContext, useState } from "react";
 import ScrollToTop from "./components/commonComponent/ScrollToTop";
 import { Routes, Route } from "react-router-dom";
 import './UserApp.css';
@@ -95,8 +95,10 @@ function UserApp() {
     general: [],
   });
 
+
   return (
     <>
+
       <ScrollToTop />
       <Routes>
         {/* ---------- Default Layout ---------- */}
@@ -125,7 +127,7 @@ function UserApp() {
 
         {/* ---------- Lab Routes ---------- */}
         <Route path="lab/*" element={<LabSectionLayout />}>
-          <Route index element={<LabCardsComponent />} /> 
+          <Route index element={<LabCardsComponent />} />
           <Route path="panel" element={<FullPanel />} />
         </Route>
 
@@ -155,8 +157,8 @@ function UserApp() {
                 />
               }
             />
-            </Route>
-            {/* <Route
+          </Route>
+          {/* <Route
               path=":uuid"
               element={
                 <CardiologistMainContent
@@ -289,7 +291,7 @@ function UserApp() {
         pauseOnHover
         theme="colored" // "light", "dark", "colored"
       /> */}
-  
+
     </>
   );
 }

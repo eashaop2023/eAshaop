@@ -6,34 +6,50 @@ import DoctorApp from "./doctor/DoctorApp";
 import LoginFlow from "./common/LoginPage/LoginFlow";
 import { ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
+import { createContext, useEffect, useState } from "react";
+
+
+
+export const MyContext = createContext("");
 
 
 function App() {
+  const [showNotification, setShowNotification] = useState(false);
+  
+  useEffect(() => {
+    console.log("FR",showNotification);
+    const timer = setTimeout(() => setShowNotification(true), 300);
+    return () => { clearTimeout(timer); setShowNotification(false) };
+  }, []);
+
   return (
-    <Router>
-      <ToastContainer
-        position="top-center"
-        autoClose={3000}
-        hideProgressBar={false}
-        newestOnTop={true}
-        closeOnClick
-        pauseOnHover
-        draggable
-      />
-      <Routes>
-        {/* Common Login Page */}
-        <Route path="/*" element={<LoginFlow />} />
+    <MyContext.Provider value={{ showNotification, setShowNotification }}>
+      <Router>
+        <ToastContainer
+          position="top-center"
+          autoClose={3000}
+          hideProgressBar={false}
+          newestOnTop={true}
+          closeOnClick
+          pauseOnHover
+          draggable
+        />
+        <Routes>
+          {/* Common Login Page */}
+          <Route path="/*" element={<LoginFlow />} />
 
-        <Route path="/login" element={<LoginFlow />} />
-        {/* <Route path="/forgot-password" element={<Forgotpassword />} /> */}
+          <Route path="/login" element={<LoginFlow />} />
+          {/* <Route path="/forgot-password" element={<Forgotpassword />} /> */}
 
-        {/* User routes (handled inside UserApp.jsx) */}
-        <Route path="/user/*" element={<UserApp />} />
+          {/* User routes (handled inside UserApp.jsx) */}
+          <Route path="/user/*" element={<UserApp />} />
 
-        {/* Doctor routes (handled inside DoctorApp.jsx) */}
-        <Route path="/doctor/*" element={<DoctorApp />} />
-      </Routes>
-    </Router>
+          {/* Doctor routes (handled inside DoctorApp.jsx) */}
+          <Route path="/doctor/*" element={<DoctorApp />} />
+        </Routes>
+      </Router>
+    </MyContext.Provider>
+
   );
 }
 
