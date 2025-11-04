@@ -790,6 +790,7 @@ const updateDoctorProfile = async (req, res) => {
 
     // Fields allowed to update
     const editableFields = [
+      "backgroundImage",
       "profileImage",
       "medicalCertificates",
       "Govt ID",
@@ -899,6 +900,11 @@ const updateDoctorProfile = async (req, res) => {
       files.profileImage && files.profileImage.length > 0
         ? uploadToCloudinary(files.profileImage[0].buffer, "doctors/profileImages").then(
             (url) => (doctor.profileImage = url)
+          )
+        : null,
+         files.backgroundImage && files.backgroundImage.length > 0
+        ? uploadToCloudinary(files.backgroundImage[0].buffer, "doctors/backgroundImages").then(
+            (url) => (doctor.backgroundImage = url)
           )
         : null,
     ]);

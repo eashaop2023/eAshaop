@@ -21,7 +21,8 @@ function initSocket(server) {
       methods: ["GET", "POST","PUT","DELETE", "OPTIONS","PATCH"],
     },
   });
-
+  const activeUserStreams = {};
+  const activeDoctorStreams = {};
   io.on("connection", (socket) => {
     console.log("Socket connected:", socket.id);
 
@@ -44,6 +45,9 @@ function initSocket(server) {
     socket.on("joinDoctorProfileRoom", (doctorId) => {
       socket.join(doctorId);
       console.log(`Doctor ${doctorId} joined room`);
+      if (!activeDoctorStreams[doctorId]) {
+      activeDoctorStreams[doctorId] = setupDoctorChangeStream(doctorId);
+    }
     });
     
     socket.on("disconnect", () => {
@@ -55,7 +59,8 @@ function initSocket(server) {
   // setupDoctorChangeStream();
   setupCategoryChangeStream(); 
   setupUserChangeStream(); 
-  setupDoctorChangeStream();
+ // setupDoctorChangeStream();
+ 
   return io;
 }
 
@@ -168,39 +173,88 @@ function setupUserChangeStream() {
   });
 }
 
-function setupDoctorChangeStream() {
+function setupDoctorChangeStream(doctorId) {
   const mongoose = require("mongoose");
+  const objectId = new mongoose.Types.ObjectId(doctorId);
 
-  mongoose.connection.once("open", () => {
-    console.log(" MongoDB connected — setting up user change stream");
+  console.log(`Setting up doctor-specific change stream for ID: ${doctorId}`);
 
-    const changeStream = Doctor.watch([], { fullDocument: "updateLookup" });
+  const pipeline = [
+    {
+      $match: {
+        "documentKey._id": objectId,
+        operationType: { $in: ["update", "replace"] },
+      },
+    },
+  ];
 
-    changeStream.on("change", async (change) => {
-      console.log(" Doctor change detected:", change.operationType);
+  const changeStream = Doctor.watch(pipeline, { fullDocument: "updateLookup" });
 
-      if (change.operationType === "update" || change.operationType === "replace") {
-        const updatedDoctor = change.fullDocument;
+  changeStream.on("change", (change) => {
+    const updatedDoctor = change.fullDocument;
+    const updatedFields = change.updateDescription?.updatedFields || {};
 
-        // Only emit if profile image changed
-        if (change.updateDescription?.updatedFields?.profileImage) {
-          console.log(" Profile image updated for user:", updatedDoctor._id);
+    if (updatedFields.profileImage) {
+      console.log(`🩺 Profile image updated for Doctor ${doctorId}`);
 
-          io.to(updatedDoctor._id.toString()).emit("DoctorprofileImageUpdated", {
-            DoctorId: updatedDoctor._id,
-            profileImage: updatedDoctor.profileImage,
-          });
-         
-          console.log(" Emitted 'DoctorprofileImageUpdated' event to doctor room");
-        }
-      }
-    });
-
-    changeStream.on("error", (err) => {
-      console.error("Error in User Change Stream:", err);
-    });
+      io.to(doctorId.toString()).emit("DoctorprofileImageUpdated", {
+        DoctorId: doctorId,
+        profileImage: updatedDoctor.profileImage,
+      });
+    }
   });
+
+  changeStream.on("error", (err) => {
+    console.error("Error in Doctor Change Stream:", err);
+  });
+
+  return changeStream;
 }
+
+// function setupDoctorChangeStream() {
+//   const mongoose = require("mongoose");
+
+//   mongoose.connection.once("open", () => {
+//     console.log(" MongoDB connected — setting up user change stream");
+
+//      const pipeline = [
+//       {
+//         $match: {
+//           "documentKey._id": objectId, // only this doctor's document
+//           operationType: { $in: ["update", "replace"] },
+//         },
+//       },
+//     ];
+
+//     const changeStream = Doctor.watch(pipeline, { fullDocument: "updateLookup" });
+
+//     // const changeStream = Doctor.watch([], { fullDocument: "updateLookup" });
+
+//     changeStream.on("change", async (change) => {
+//       console.log(" Doctor change detected:", change.operationType);
+
+//       if (change.operationType === "update" || change.operationType === "replace") {
+//         const updatedDoctor = change.fullDocument;
+
+//         // Only emit if profile image changed
+//         if (change.updateDescription?.updatedFields?.profileImage) {
+//           console.log(" Profile image updated for user:", updatedDoctor._id);
+
+//           io.to(updatedDoctor._id.toString()).emit("DoctorprofileImageUpdated", {
+//             DoctorId: updatedDoctor._id,
+//             profileImage: updatedDoctor.profileImage,
+//           });
+         
+//           console.log(" Emitted 'DoctorprofileImageUpdated' event to doctor room");
+//         }
+//       }
+//     });
+
+//     changeStream.on("error", (err) => {
+//       console.error("Error in User Change Stream:", err);
+//     });
+//   });
+// }
 
 
 

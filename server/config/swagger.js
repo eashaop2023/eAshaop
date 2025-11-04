@@ -11,10 +11,10 @@ const options = {
     },
     servers: [
       {
-        url: "http://localhost:5000", // change to your production URL later
+        url: "http://localhost:5000", 
       },
     ],
-    components: {          // <-- Move components here inside definition
+    components: {         
       securitySchemes: {
         bearerAuth: {
           type: "http",
@@ -35,7 +35,7 @@ const swaggerSpec = swaggerJsdoc(options);
 
 function swaggerDocs(app) {
   app.use("/api-docs", swaggerUi.serve, swaggerUi.setup(swaggerSpec));
-  console.log(`📘 Swagger Docs available at: http://localhost:5000/api-docs`);
+  console.log(`Swagger Docs available at: http://localhost:5000/api-docs`);
 }
 
 module.exports = swaggerDocs;

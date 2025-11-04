@@ -2075,6 +2075,7 @@ router.put(
   "/profile",
   protect,
   upload.fields([
+    { name: "backgroundImage", maxCount: 1 },
     { name: "profileImage", maxCount: 1 },
     { name: "govtId", maxCount: 1 },
     { name: "medicalLicense", maxCount: 1 },
