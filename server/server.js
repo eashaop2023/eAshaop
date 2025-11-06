@@ -19,6 +19,7 @@ const patientRoutes = require("./routes/patientRoutes");
 const contactRoutes = require("./routes/contactRoutes");
 const apiRoutes = require("./routes/api/index");
 const appointmentRoutes = require("./routes/appointmentRoutes");
+const reviewRoutes = require("./routes/reviewAndRatingRoutes/reviewRoutes");
 
 const User = require("./models/user");
 const Doctor = require("./models/doctorModel");
@@ -65,6 +66,7 @@ app.use("/api/patients", patientRoutes);
 app.use("/api/contact", contactRoutes);
 app.use("/api", apiRoutes);
 app.use("/api/appointments", appointmentRoutes);
+app.use('/api', reviewRoutes)
 
 // -------------------- CRON JOB --------------------
 const cron = require("node-cron");
