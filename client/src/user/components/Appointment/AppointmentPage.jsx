@@ -15,6 +15,8 @@ import AddMemberForm from "../addmemberform/AddMemberForm";
 import { toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import Radio from '@mui/material/Radio';
+import ReviewForm from "./ReviewForm";
+import CommentSection from "./CommentSection";
 
 
 export default function AppointmentPage() {
@@ -315,7 +317,7 @@ export default function AppointmentPage() {
             flexDirection: "column",
             gap: "24px",
             marginTop: "80px",
-            marginLeft: "20px",
+            marginLeft: "10px",
             boxSizing: "border-box",
           }}
         >
@@ -421,8 +423,49 @@ export default function AppointmentPage() {
             <p style={{ color: "#6c757d", fontSize: "17px" }}>
               Works at: {doctor?.hospitalName}
             </p>
-            {/* <ReviewForm rating={doctor?.averageRating} doctorId={doctorId} userId={userId} />
-            <CommentSection /> */}
+            <div
+              style={{
+                backgroundColor: "#f9fafc",
+                borderRadius: "12px",
+                boxShadow: "0 2px 8px rgba(0,0,0,0.08)",
+                // padding: "20px",
+                marginTop: "30px",
+                overflowY: "auto",
+                height: "400px", 
+                fontFamily: "Urbanist, sans-serif",
+                position: "relative",
+              }}
+            >
+              <h3
+                style={{
+                  position: "sticky",
+                  top: "0",
+                  backgroundColor: "#f9fafc", 
+                  textAlign: "center",
+                  fontSize: "22px",
+                  fontWeight: "700",
+                  color: "#2c3e50",
+                  margin: "0 0 16px 0",
+                  letterSpacing: "0.5px",
+                  borderBottom: "2px solid #e0e0e0",
+                  padding: "10px 0 8px 0",
+                  zIndex: 10, 
+                }}
+              >
+                Overall Reviews & Comments
+              </h3>
+
+              <div style={{ marginBottom: "20px" }}>
+                <ReviewForm rating={doctor?.averageRating} doctorId={doctorId} userId={userId} />
+              </div>
+
+              <div style={{ borderTop: "1px solid #ddd", paddingTop: "10px" }}>
+                <CommentSection />
+              </div>
+            </div>
+
+
+
           </div>
         </div>
 

@@ -146,7 +146,7 @@ const Sidebar = () => {
                     setTimeout(() => {
                       setIsOpen(false)
                     }, 5000);
-                    if (isMobile) setIsOpen(false); // ✅ Auto-close on mobile
+                    if (isMobile) setIsOpen(false); 
                   }}
                   className={`d-flex align-items-center mb-4 sidebar-item ${isSelected ? "sidebar-active" : ""
                     }`}
@@ -170,9 +170,7 @@ const Sidebar = () => {
                       }}
                     />
                   )}
-
                   <img src={item.icon} alt={item.label} className="sidebar-icon" />
-
                   <span
                     className="sidebar-label"
                     style={{
