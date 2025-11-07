@@ -359,7 +359,7 @@ exports.verifyLoginOTP = async (req, res) => {
     user.login_otp.code = null; // optional: clear OTP after verification
     await user.save();
 
-    const token = generateToken(user._id);
+    const token = generateToken(user._id,"user");
 
     res.json({
       message: "Login successful",
@@ -467,10 +467,14 @@ exports.login = async (req, res) => {
     if (!isValid)
       return res.status(401).json({ message: "Invalid login credentials" });
 
-    const token = generateToken({
-      id: user._id,
-      phone_number: user.phone_number,
-    });
+    // const token = generateToken({
+    //   id: user._id,
+    //   phone_number: user.phone_number,
+    //   role:"user",
+    // });
+         // ✅ Correct token generation
+    const token = generateToken(user._id, "user");
+
 
     res.status(200).json({
       message: "Login successful",

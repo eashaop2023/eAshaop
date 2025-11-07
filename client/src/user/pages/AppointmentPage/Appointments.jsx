@@ -13,7 +13,7 @@ const Appointments = () => {
   const [activeTab, setActiveTab] = useState("virtual");
   const [showPopup, setShowPopup] = useState(false);
   // const [cancelTarget, setCancelTarget] = useState(null);
-  const [appointments, setAppointments] = useState({ upcoming: [], past: [] });
+  const [appointments, setAppointments] = useState({ upcoming: [],onGoing:[], past: [] });
   const [loading, setLoading] = useState(true);
   // const navigate = useNavigate();
 
@@ -45,6 +45,7 @@ const Appointments = () => {
           `${API_BASE_URL}/api/appointments/user/${userId}`
         );
         setAppointments({
+          onGoing: res.data.onGoing || [],
           upcoming: res.data.upcoming || [],
           past: res.data.past || [],
         });
@@ -255,6 +256,8 @@ const Appointments = () => {
 
   if (loading) return <p className="text-center mt-5">Loading appointments...</p>;
 
+
+
   
 
   return (
@@ -310,13 +313,54 @@ const Appointments = () => {
               Clinic visit
             </button>
           </div>
-          <h5 className={`${styles.headerOne} mb-3`} style={{ fontSize: "24px" }}>
+
+          <h5 className={`mt-3 mb-3`} style={{ fontSize: "24px" }}>
+            Ongoing  appointments
+          </h5>
+
+          {/* <div className={`${styles.rowContainer} row`}>
+            {appointments.onGoing.length > 0 ? (
+              appointments.onGoing
+                .filter(
+                  (a) =>
+                    a.status === "booked" &&
+                    (a.type === "video" && activeTab === "virtual") ||
+                    (a.type === "clinic" && activeTab === "clinic")
+                )
+                .map((appt) => renderCard(appt, false,true))
+            ) : (
+              <p>No ongoing appointments</p>
+            )}
+          </div> */}
+          {(() => {
+  const filteredOngoing = (appointments.onGoing || []).filter(
+    (a) =>
+      a.status === "booked" &&
+      ((a.type === "video" && activeTab === "virtual") ||
+        (a.type === "clinic" && activeTab === "clinic"))
+  );
+
+  return (
+    <div className={`${styles.rowContainer} row`}>
+      {filteredOngoing.length > 0 ? (
+        filteredOngoing.map((appt) => renderCard(appt, false, true))
+      ) : (
+        <p>No ongoing appointments</p>
+      )}
+    </div>
+  );
+})()}
+
+
+
+
+          <h5 className={`mt-3 mb-3`} style={{ fontSize: "24px" }}>
             Upcoming appointments
           </h5>
 
           {/* Upcoming Cards */}
           <div className={`${styles.rowContainer} row`}>
-            {appointments.upcoming.length > 0 ? (
+            {/* {appointments.upcoming.length > 0 ? (
               appointments.upcoming
                 .filter(
                   (a) =>
@@ -327,14 +371,32 @@ const Appointments = () => {
                 .map((appt) => renderCard(appt, false))
             ) : (
               <p>No upcoming appointments</p>
-            )}
+            )} */}
+
+            {(() => {
+    const filteredUpcoming = (appointments.upcoming || []).filter(
+      (a) =>
+        a.status === "booked" &&
+        (
+          (a.type === "video" && activeTab === "virtual") ||
+          (a.type === "clinic" && activeTab === "clinic")
+        )
+    );
+
+    return filteredUpcoming.length > 0 ? (
+      filteredUpcoming.map((appt) => renderCard(appt, false))
+    ) : (
+      <p>No upcoming appointments</p>
+    );
+  })()}
+
           </div>
 
           {/* Previous Appointments */}
-          <h5 className="mb-4 mt-4" style={{ fontSize: "24px" }}>
+          <h5 className="mb-3 mt-3" style={{ fontSize: "24px" }}>
             Previous appointments
           </h5>
-          <div className="row">
+          {/* <div className="row">
             {appointments.past.length > 0 ? (
 appointments.past
   .filter(
@@ -347,7 +409,25 @@ appointments.past
             ) : (
               <p>No past appointments</p>
             )}
-          </div>
+          </div> */}
+          {(() => {
+  const filteredPast = (appointments.past || []).filter(
+    (a) =>
+      a.status === "booked" &&
+      ((a.type === "video" && activeTab === "virtual") ||
+        (a.type === "clinic" && activeTab === "clinic"))
+  );
+
+  return (
+    <div className="row">
+      {filteredPast.length > 0 ? (
+        filteredPast.map((appt) => renderCard(appt, true))
+      ) : (
+        <p>No past appointments</p>
+      )}
+    </div>
+  );
+})()}
         </div>
       </div>
 

@@ -2,6 +2,9 @@ const Appointment = require("../models/Appointment");
 const Doctor = require("../models/doctorModel");
 const User = require("../models/user");
 const DoctorAvailability = require("../models/doctorAvailability"); // you already have
+const UserNotification = require("../models/userNotification");
+const DoctorNotification=require("../models/doctorNotification");
+const {sendAppointmentNotifications}=require("../controllers/notificationController")
 const Razorpay = require("razorpay");
 const crypto = require("crypto");
 const cors = require("cors");
@@ -127,13 +130,18 @@ exports.getUserAppointments = async (req, res) => {
 
     const doctorIds = [...new Set(appointments.map(a => a.doctorId?._id))];
     const doctorAvailability = await DoctorAvailability.find({
-      doctor: { $in: doctorIds }
+      doctor: { $in: doctorIds },
+       date: { $in: appointments.map(a => new Date(a.date)) },
     }).lean();
 
     const slotMap = {};
+    // doctorAvailability.forEach(doc => {
+    //   slotMap[doc.doctor] = doc.slotDuration;
+    // });
     doctorAvailability.forEach(doc => {
-      slotMap[doc.doctor] = doc.slotDuration;
-    });
+  const dateKey = moment(doc.date).format("YYYY-MM-DD");
+  slotMap[`${doc.doctor}_${dateKey}`] = doc.slotDuration;
+});
 
     const onGoing = [];
     const upcoming = [];
@@ -154,10 +162,18 @@ exports.getUserAppointments = async (req, res) => {
     });
 
     appointments.forEach((appt) => {
-      const slotDuration = slotMap[appt.doctorId?._id] || 30;
+            const dateKey = moment(appt.date).format("YYYY-MM-DD");
+
+      
+      const slotDuration = slotMap[`${appt.doctorId?._id}_${dateKey}`] || 30;
+
+  const timeFormat = appt.time.includes("AM") || appt.time.includes("PM")
+    ? "YYYY-MM-DD hh:mm A"
+    : "YYYY-MM-DD HH:mm";
       const startMoment = moment.tz(
         `${moment(appt.date).format("YYYY-MM-DD")} ${appt.time}`,
-        "YYYY-MM-DD hh:mm A",
+        // "YYYY-MM-DD hh:mm A",
+        timeFormat,
         "Asia/Kolkata"
       );
 
@@ -578,6 +594,20 @@ exports.getDoctorAppointments = async (req, res) => {
 // };
 
 
+
+// ✅ Utility: Schedule a notification (for “5 min before appointment”)
+const scheduleNotification = (model, data, delayMs) => {
+  setTimeout(async () => {
+    try {
+      await model.create(data);
+      console.log("⏰ Scheduled notification sent:", data.message);
+    } catch (err) {
+      console.error("❌ Error sending scheduled notification:", err);
+    }
+  }, delayMs);
+};
+
+
 // Razorpay instance
 const razorpay = new Razorpay({
   key_id: process.env.RAZORPAY_KEY_ID,
@@ -697,7 +727,9 @@ exports.confirmPayment = async (req, res) => {
     if (generatedSignature !== razorpaySignature)
       return res.status(400).json({ message: "Payment verification failed" });
 
-    const appointment = await Appointment.findById(appointmentId);
+const appointment = await Appointment.findById(appointmentId)
+      .populate("doctorId", "name")
+      .populate("userId", "full_name");
     if (!appointment)
       return res.status(404).json({ message: "Appointment not found" });
 
@@ -727,6 +759,53 @@ exports.confirmPayment = async (req, res) => {
       $push: { appointments: subDoc },
     });
 
+     // ✅ Send Notifications
+    // await UserNotification.create({
+    //   userId: appointment.userId._id,
+    //   message: {
+    //     text: `Your appointment with Dr. ${appointment.doctorId.name} is confirmed for ${appointment.date} at ${appointment.time}.`,
+    //   },
+    // });
+
+    // await DoctorNotification.create({
+    //   doctorId: appointment.doctorId._id,
+    //   message: {
+    //     text: `You have a new appointment with ${appointment.userId.full_name} on ${appointment.date} at ${appointment.time}.`,
+    //   },
+    // });
+
+    // // 🕔 Schedule Reminder 5 minutes before
+    // const appointmentDateTime = moment.tz(
+    //   `${moment(appointment.date).format("YYYY-MM-DD")} ${appointment.time}`,
+    //   "YYYY-MM-DD hh:mm A",
+    //   "Asia/Kolkata"
+    // ).toDate();
+
+    // const fiveMinBefore = new Date(appointmentDateTime.getTime() - 5 * 60 * 1000);
+    // const delayMs = fiveMinBefore.getTime() - Date.now();
+
+    // if (delayMs > 0) {
+    //   scheduleNotification(
+    //     UserNotification,
+    //     {
+    //       userId: appointment.userId._id,
+    //       message: { text: "⏰ Reminder: Your appointment starts in 5 minutes." },
+    //     },
+    //     delayMs
+    //   );
+
+    //   scheduleNotification(
+    //     DoctorNotification,
+    //     {
+    //       doctorId: appointment.doctorId._id,
+    //       message: { text: "⏰ Reminder: You have an appointment in 5 minutes." },
+    //     },
+    //     delayMs
+    //   );
+    // } else {
+    //   console.log("⚠️ Appointment time too close or already passed. Skipping reminder.");
+    // }
+    await sendAppointmentNotifications(appointment)
     res.status(200).json({
       message: "Appointment booked successfully after payment",
       appointment,
@@ -787,6 +866,22 @@ exports.razorpayWebhook = async (req, res) => {
       appointment.status = "booked";
       appointment.razorpayPaymentId = paymentEntity.id;
       await appointment.save();
+
+await UserNotification.create({
+        userId: appointment.userId,
+        message: {
+          text: `Payment successful! Your appointment with doctor ${appointment.doctorId} is confirmed.`,
+        },
+      });
+
+      await DoctorNotification.create({
+        doctorId: appointment.doctorId,
+        message: {
+          text: `New confirmed appointment from user ${appointment.userId}.`,
+        },
+      });
+
+
 
       // Subdocument to push to User & Doctor
       const subDoc = {

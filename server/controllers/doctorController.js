@@ -1,6 +1,6 @@
 const Doctor = require("../models/doctorModel");
 const mongoose = require("mongoose");
-const generateToken = require("../utils/generateToken");
+const {generateToken} = require("../utils/generateToken");
 const Category = require("../models/categoryModel");
 const { uploadToCloudinary } = require("../utils/cloudinaryUpload"); 
 const { generateOTP, sendOTP } = require("../utils/otpHelper");
@@ -273,7 +273,7 @@ const doctor = email
     await doctor.save();
 
     res.json({
-      token: generateToken(doctor._id),
+      token: generateToken(doctor._id,"doctor"),
       doctor: {
         id: doctor._id,
         name: doctor.name,
@@ -399,7 +399,7 @@ const verifyLoginOTP = async (req, res) => {
     await doctor.save();
 
     res.json({
-      token: generateToken(doctor._id),
+      token: generateToken(doctor._id,"doctor"),
       doctor: {
         id: doctor._id,
         name: doctor.name,
