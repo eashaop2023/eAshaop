@@ -117,25 +117,73 @@ exports.getUserAppointments = async (req, res) => {
     const { userId } = req.params;
 
     const appointments = await Appointment.find({ userId })
-      .populate({
-        path: "doctorId",
-        select: "name speciality email mobile",
-      })
-      .populate({
-        path: "userId",
-        select: "full_name email phone_number",
-      });
+      .populate(
+        "doctorId",
+        "name education speciality hospitalName hospitalLocation consultationMode email mobile profileImage"
+      )
+      .lean();
 
-    if (!appointments || appointments.length === 0) {
-      return res
-        .status(404)
-        .json({ message: "No appointments found for this user" });
-    }
+    const now = moment().tz("Asia/Kolkata");
 
-    res.status(200).json({ appointments });
+    const doctorIds = [...new Set(appointments.map(a => a.doctorId?._id))];
+    const doctorAvailability = await DoctorAvailability.find({
+      doctor: { $in: doctorIds }
+    }).lean();
+
+    const slotMap = {};
+    doctorAvailability.forEach(doc => {
+      slotMap[doc.doctor] = doc.slotDuration;
+    });
+
+    const onGoing = [];
+    const upcoming = [];
+    const past = [];
+
+    const formatAppointment = (appt, startTime, endTime) => ({
+      appointmentId: appt._id,
+      type: appt.type,
+      date: appt.date,
+      time: appt.time,
+      status: appt.status,
+      startTime,
+      endTime,
+      amount: appt.amount,
+      doctor: appt.doctorId || null,
+      dependent: appt.dependent || null,
+      jitsiLink: appt.jitsiLink || null,
+    });
+
+    appointments.forEach((appt) => {
+      const slotDuration = slotMap[appt.doctorId?._id] || 30;
+      const startMoment = moment.tz(
+        `${moment(appt.date).format("YYYY-MM-DD")} ${appt.time}`,
+        "YYYY-MM-DD hh:mm A",
+        "Asia/Kolkata"
+      );
+
+      const endMoment = moment(startMoment).add(slotDuration, "minutes");
+
+      if (now.isBetween(startMoment, endMoment)) {
+        onGoing.push(formatAppointment(appt, startMoment.format("hh:mm A"), endMoment.format("hh:mm A")));
+      } else if (startMoment.isAfter(now)) {
+        upcoming.push(formatAppointment(appt, startMoment.format("hh:mm A"), endMoment.format("hh:mm A")));
+      } else {
+        past.push(formatAppointment(appt, startMoment.format("hh:mm A"), endMoment.format("hh:mm A")));
+      }
+    });
+
+    res.status(200).json({
+      totalOngoing: onGoing.length,
+      totalUpcoming: upcoming.length,
+      totalPast: past.length,
+      onGoing,
+      upcoming,
+      past,
+    });
+
   } catch (error) {
     console.error("Get User Appointments Error:", error);
-    res.status(500).json({ message: "Server error", error: error.message });
+    res.status(500).json({ message: error.message });
   }
 };
 
@@ -207,71 +255,71 @@ exports.getAllAppointments = async (req, res) => {
 
 // GET /api/appointments/user/:userId
 
-exports.getUserAppointments = async (req, res) => {
-  try {
-    const { userId } = req.params;
-    const appointments = await Appointment.find({ userId })
-      .populate(
-        "doctorId",
-        "name education speciality hospitalName hospitalLocation consultationMode email mobile profileImage"
-      )
-      .lean();
+// exports.getUserAppointments = async (req, res) => {
+//   try {
+//     const { userId } = req.params;
+//     const appointments = await Appointment.find({ userId })
+//       .populate(
+//         "doctorId",
+//         "name education speciality hospitalName hospitalLocation consultationMode email mobile profileImage"
+//       )
+//       .lean();
 
-    const now = moment().tz("Asia/Kolkata"); // Current IST time
+//     const now = moment().tz("Asia/Kolkata"); // Current IST time
 
-    const formatAppointment = (appt) => ({
-      appointmentId: appt._id,
-      type: appt.type,
-      date: appt.date,
-      time: appt.time,
-      status: appt.status,
-      amount: appt.amount,
-      doctor: appt.doctorId
-        ? {
-          name: appt.doctorId.name,
-          speciality: appt.doctorId.speciality,
-          education: appt.doctorId.education,
-          consultationMode: appt.doctorId.consultationMode,
-          hospitalName: appt.doctorId.hospitalName,
-          hospitalLocation: appt.doctorId.hospitalLocation,
-          email: appt.doctorId.email,
-          mobile: appt.doctorId.mobile,
-          profileImage: appt.doctorId.profileImage,
-        }
-        : null,
-      dependent: appt.dependent || null,
-      jitsiLink: appt.jitsiLink || null,
-    });
+//     const formatAppointment = (appt) => ({
+//       appointmentId: appt._id,
+//       type: appt.type,
+//       date: appt.date,
+//       time: appt.time,
+//       status: appt.status,
+//       amount: appt.amount,
+//       doctor: appt.doctorId
+//         ? {
+//           name: appt.doctorId.name,
+//           speciality: appt.doctorId.speciality,
+//           education: appt.doctorId.education,
+//           consultationMode: appt.doctorId.consultationMode,
+//           hospitalName: appt.doctorId.hospitalName,
+//           hospitalLocation: appt.doctorId.hospitalLocation,
+//           email: appt.doctorId.email,
+//           mobile: appt.doctorId.mobile,
+//           profileImage: appt.doctorId.profileImage,
+//         }
+//         : null,
+//       dependent: appt.dependent || null,
+//       jitsiLink: appt.jitsiLink || null,
+//     });
 
-    const upcoming = [];
-    const past = [];
+//     const upcoming = [];
+//     const past = [];
 
-    appointments.forEach((appt) => {
-      // Combine date + time into full datetime
-      const apptDateTime = moment.tz(
-        `${moment(appt.date).format("YYYY-MM-DD")} ${appt.time}`,
-        "YYYY-MM-DD hh:mm A",
-        "Asia/Kolkata"
-      );
+//     appointments.forEach((appt) => {
+//       // Combine date + time into full datetime
+//       const apptDateTime = moment.tz(
+//         `${moment(appt.date).format("YYYY-MM-DD")} ${appt.time}`,
+//         "YYYY-MM-DD hh:mm A",
+//         "Asia/Kolkata"
+//       );
 
-      if (apptDateTime.isSameOrAfter(now)) {
-        upcoming.push(formatAppointment(appt));
-      } else {
-        past.push(formatAppointment(appt));
-      }
-    });
+//       if (apptDateTime.isSameOrAfter(now)) {
+//         upcoming.push(formatAppointment(appt));
+//       } else {
+//         past.push(formatAppointment(appt));
+//       }
+//     });
 
-    res.status(200).json({
-      totalUpcoming: upcoming.length,
-      totalPast: past.length,
-      upcoming,
-      past,
-    });
-  } catch (error) {
-    console.error("Get User Appointments Error:", error);
-    res.status(500).json({ message: error.message });
-  }
-};
+//     res.status(200).json({
+//       totalUpcoming: upcoming.length,
+//       totalPast: past.length,
+//       upcoming,
+//       past,
+//     });
+//   } catch (error) {
+//     console.error("Get User Appointments Error:", error);
+//     res.status(500).json({ message: error.message });
+//   }
+// };
 // GET /api/appointments/doctor/:doctorId
 exports.getDoctorAppointments = async (req, res) => {
   try {
@@ -323,10 +371,21 @@ exports.getDoctorAppointments = async (req, res) => {
       return user;
     });
 
+    const appointmentOngoing = await Appointment.find({
+      doctorId,
+      date: { $lte: now },
+      status: 'booked',
+    }).populate("userId", "full_name email phone_number");
+
     const upcoming = await Appointment.find({
       doctorId: doctorId, // make sure field matches schema
       date: { $gte: now }, // 'date' is the correct field
     }).populate("userId", "full_name email phone_number");
+    const ongoing = appointmentOngoing.filter(app => {
+      const startDate = app.date; // assuming app.date is a Date object
+      const endDate = new Date(startDate.getTime() + slotDuration * 60000);
+      return endDate >= now;
+    });
 
     const past = await Appointment.find({
       doctorId: doctorId,
@@ -336,6 +395,7 @@ exports.getDoctorAppointments = async (req, res) => {
     res.status(200).json({
       totalAppointments: past.length,
       upcoming,
+      ongoing,
       past,
       users
     });

@@ -79,7 +79,6 @@ const userSchema = new Schema(
         status: { type: String },
       },
     ],
-
     address: { type: String, trim: true, minlength: 3,maxlength:100 },
     language_preferred: { type: String, trim: true },
     height: { type: Number, min: 20, max: 400 },

@@ -3,7 +3,8 @@ const dotenv = require("dotenv");
 const mongoose = require("mongoose");
 const bodyParser = require("body-parser");
 const cors = require("cors");
-const multer=require("multer")
+const multer=require("multer");
+const http = require("http");
 
 dotenv.config();
 console.log("Loaded CLOUD_NAME:", process.env.CLOUDINARY_CLOUD_NAME);
@@ -18,19 +19,24 @@ const patientRoutes = require("./routes/patientRoutes");
 const contactRoutes = require("./routes/contactRoutes");
 const apiRoutes = require("./routes/api/index");
 const appointmentRoutes = require("./routes/appointmentRoutes");
+const reviewRoutes = require("./routes/reviewAndRatingRoutes/reviewRoutes");
 
 const User = require("./models/user");
 const Doctor = require("./models/doctorModel");
 const Appointment = require("./models/Appointment");
 
 const app = express();
+const server = http.createServer(app);
+const {initSocket}=require("./services/socketService");
+const io = initSocket(server);
+app.set("io", io);
 
 // -------------------- MIDDLEWARES --------------------
 // CORS: allow your frontend URL
 app.use(
   cors({
     origin: ["https://eashaop.com","https://www.eashaop.com", "http://localhost:5500", "http://127.0.0.1:5500", "http://127.0.0.1:5173", "http://localhost:5173"], // frontend URL
-    methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+    methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS","PATCH"],
     credentials: true,
   })
 );
@@ -60,6 +66,7 @@ app.use("/api/patients", patientRoutes);
 app.use("/api/contact", contactRoutes);
 app.use("/api", apiRoutes);
 app.use("/api/appointments", appointmentRoutes);
+app.use('/api', reviewRoutes)
 
 // -------------------- CRON JOB --------------------
 const cron = require("node-cron");
@@ -69,48 +76,39 @@ cron.schedule("* * * * *", async () => {
     const now = new Date();
     const fiveMinsLater = new Date(now.getTime() + 5 * 60 * 1000);
 
+    // Find all video appointments without jitsiLink and booked
     const appointments = await Appointment.find({
       type: "video",
       jitsiLink: null,
       status: "booked",
-      date: {
-        $gte: new Date(
-          fiveMinsLater.getFullYear(),
-          fiveMinsLater.getMonth(),
-          fiveMinsLater.getDate()
-        ),
-        $lte: new Date(
-          fiveMinsLater.getFullYear(),
-          fiveMinsLater.getMonth(),
-          fiveMinsLater.getDate(),
-          23,
-          59,
-          59
-        ),
-      },
-      time: `${fiveMinsLater.getHours()}:${String(
-        fiveMinsLater.getMinutes()
-      ).padStart(2, "0")}`,
     });
 
     for (let appt of appointments) {
-      const jitsiLink = `https://meet.jit.si/EashaOP-${appt._id}-${Date.now()}`;
-      appt.jitsiLink = jitsiLink;
-      await appt.save();
+      // Combine date + time fields into a Date object for comparison
+      const [hourStr, minuteStr] = appt.time.split(":");
+      const apptDateTime = new Date(appt.date);
+      apptDateTime.setHours(parseInt(hourStr), parseInt(minuteStr), 0, 0);
 
-      await User.updateOne(
-        { _id: appt.userId },
-        { $set: { "appointments.$[elem].jitsiLink": jitsiLink } },
-        { arrayFilters: [{ "elem.appointmentId": appt._id }] }
-      );
+      // If the appointment starts within the next 5 minutes
+      if (apptDateTime - now <= 5 * 60 * 1000 && apptDateTime > now) {
+        const jitsiLink = `https://meet.jit.si/EashaOP-${appt._id}-${Date.now()}`;
+        appt.jitsiLink = jitsiLink;
+        await appt.save();
 
-      await Doctor.updateOne(
-        { _id: appt.doctorId },
-        { $set: { "appointments.$[elem].jitsiLink": jitsiLink } },
-        { arrayFilters: [{ "elem.appointmentId": appt._id }] }
-      );
+        await User.updateOne(
+          { _id: appt.userId },
+          { $set: { "appointments.$[elem].jitsiLink": jitsiLink } },
+          { arrayFilters: [{ "elem.appointmentId": appt._id }] }
+        );
 
-      console.log("Generated Jitsi link for appointment:", appt._id);
+        await Doctor.updateOne(
+          { _id: appt.doctorId },
+          { $set: { "appointments.$[elem].jitsiLink": jitsiLink } },
+          { arrayFilters: [{ "elem.appointmentId": appt._id }] }
+        );
+
+        console.log("Generated Jitsi link for appointment:", appt._id);
+      }
     }
   } catch (err) {
     console.error("Error generating Jitsi links:", err);
@@ -119,7 +117,7 @@ cron.schedule("* * * * *", async () => {
 
 // -------------------- SERVER --------------------
 const PORT = process.env.PORT || 5000;
-app.listen(PORT, () => {
+server.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
   console.log(
     "Vonage API Key loaded:",
