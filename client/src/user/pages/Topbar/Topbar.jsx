@@ -10,6 +10,7 @@ import Sidebar from '../../components/categorypage/Sidebar';
 import { useLocation } from 'react-router-dom';
 import dashboard from "../../assets/icons/dashboard.svg";
 import doctor from "../../assets/icons/doctor.svg";
+
 import appointments from "../../assets/icons/appointments.svg";
 import medications from "../../assets/icons/medications.svg";
 import lab from "../../assets/icons/lab.svg";
@@ -26,7 +27,7 @@ const Topbar = ({ toggleSidebar: propToggleSidebar, isMobile: propIsMobile } = {
     const [notifications, setNotifications] = useState([]);
       const [showDropdown, setShowDropdown] = useState(false);
       const [expandedIds, setExpandedIds] = useState([]);
-const dropdownRef = React.useRef(null);
+const dropdownRef = React.useRef(null);                                                 
 
 useEffect(() => {
   function handleClickOutside(event) {
@@ -442,7 +443,7 @@ useEffect(() => {
 {showDropdown && (
   <div
     className="notification-dropdown"
-    ref={dropdownRef}
+    // ref={dropdownRef}
     style={{
       position: "absolute",
       top: "30px",
