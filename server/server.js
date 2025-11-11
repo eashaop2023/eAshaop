@@ -6,6 +6,7 @@ const cors = require("cors");
 const multer=require("multer");
 const http = require("http");
 
+const { notFound, errorHandler } = require('./middlewares/error');
 dotenv.config();
 console.log("Loaded CLOUD_NAME:", process.env.CLOUDINARY_CLOUD_NAME);
 
@@ -67,6 +68,9 @@ app.use("/api/contact", contactRoutes);
 app.use("/api", apiRoutes);
 app.use("/api/appointments", appointmentRoutes);
 app.use('/api', reviewRoutes)
+
+app.use(notFound);
+app.use(errorHandler);
 
 // -------------------- CRON JOB --------------------
 const cron = require("node-cron");
