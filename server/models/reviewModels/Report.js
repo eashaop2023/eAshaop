@@ -1,9 +1,9 @@
-import mongoose from "mongoose";
+const mongoose = require('mongoose');
 
 const reportSchema = new mongoose.Schema({
     targetType: {
         type: String,
-        enum: ["review", "comment"],
+        enum: ['review', 'comment'],
         required: true
     },
     targetId: {
@@ -12,7 +12,7 @@ const reportSchema = new mongoose.Schema({
     },
     reporter: {
         type: mongoose.Schema.Types.ObjectId,
-        ref: "User",
+        ref: 'User',
         required: true
     },
     reason: {
@@ -22,9 +22,9 @@ const reportSchema = new mongoose.Schema({
     message: String,
     status: {
         type: String,
-        enum: ["pending", "reviewed", "dismissed"],
-        default: "pending"
+        enum: ['pending', 'reviewed', 'dismissed'],
+        default: 'pending'
     }
 }, { timestamps: true });
 
-export default mongoose.model("Report", reportSchema);
+module.exports = mongoose.model('Report', reportSchema);

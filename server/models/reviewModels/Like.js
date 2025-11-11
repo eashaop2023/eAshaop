@@ -1,17 +1,17 @@
 const mongoose = require('mongoose');
 const likeSchema = mongoose.Schema({
     review: {
-        typeof: mongoose.Schema.ObjectId,
+        type: mongoose.Schema.ObjectId,
         ref: 'Review',
-        require: trusted
+        required: true
     },
     user: {
         type: mongoose.Schema.ObjectId,
         ref: 'User',
-        require: true
+        required: true
     },
 }, { timestamps: true })
 
 likeSchema.index({ review: 1, user: 1 }, { unique: true })
 
-export default mongoose.model('Like', likeSchema)
+module.export = mongoose.model('Like', likeSchema)
