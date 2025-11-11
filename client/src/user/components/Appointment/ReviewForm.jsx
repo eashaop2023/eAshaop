@@ -4,21 +4,24 @@ import StarIcon from '@mui/icons-material/Star';
 import { API_BASE_URL } from '../../../api-config';
 import { toast } from 'react-toastify';
 
-const ReviewForm = ({ rating = 0,doctorId,userId }) => {
+const ReviewForm = ({ rating = 0, doctorId, userId }) => {
 
   // console.log(rating,doctorId,userId);
-  
+
   const [ratingValue, setRatingValue] = useState(0);
   // const [comment, setComment] = useState('');
 
   useEffect(() => {
-    const numeric = Number(rating);
-    if (!isNaN(numeric)) {
-      const rounded = Math.round(numeric * 2) / 2;
-      setRatingValue(rounded);
-    } else {
-      setRatingValue(0);
-    }
+    fetch(`${API_BASE_URL}/api/review?userId=${userId}&doctorId=${doctorId}`)
+      .then(res => res.json())
+      .then(data => {
+        if (Array.isArray(data) && data.length > 0) {
+          const lastReview = data[data.length - 1];
+          setRatingValue(lastReview.rating);
+        }
+        console.log(data);
+      })
+      .catch(err => console.error(err));
   }, [rating]);
 
   // const handleSubmit = (event) => {
@@ -44,7 +47,7 @@ const ReviewForm = ({ rating = 0,doctorId,userId }) => {
       const data = await res.json();
       if (!res.ok) throw new Error(data.message || "Failed to send message");
       toast.success(data.message || "Message sent successfully!");
-      console.log("DATA",data);
+      console.log("DATA", data);
 
     } catch (err) {
       toast.error(err.message);
@@ -77,22 +80,9 @@ const ReviewForm = ({ rating = 0,doctorId,userId }) => {
         emptyIcon={<StarIcon sx={{ opacity: 0.3, fontSize: 40 }} />}
         onChange={(event, newValue) => setRatingValue(newValue)}
       />
-
-      {/* <TextField
-        label="Your comment"
-        multiline
-        rows={2}
-        value={comment}
-        onChange={(e) => setComment(e.target.value)}
-        variant="outlined"
-        fullWidth
-        placeholder="Write your review..."
-      /> */}
-
-
-      <Button type="submit" sx={{ backgroundColor: "rgb(0, 169, 157)" }} variant="contained" color="primary" fullWidth>
+      {/* <Button type="submit" sx={{ backgroundColor: "rgb(0, 169, 157)" }} variant="contained" color="primary" fullWidth>
         Submit Review
-      </Button>
+      </Button> */}
     </Box>
   );
 };

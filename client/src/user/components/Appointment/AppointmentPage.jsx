@@ -445,22 +445,22 @@ export default function AppointmentPage() {
                   fontSize: "22px",
                   fontWeight: "700",
                   color: "#2c3e50",
-                  margin: "0 0 16px 0",
+                  // margin: "0 0 16px 0",
                   letterSpacing: "0.5px",
-                  borderBottom: "2px solid #e0e0e0",
+                  // borderBottom: "2px solid #e0e0e0",
                   padding: "10px 0 8px 0",
-                  zIndex: 10, 
+                  zIndex: 100, 
                 }}
               >
                 Overall Reviews & Comments
               </h3>
 
-              <div style={{ marginBottom: "20px" }}>
-                <ReviewForm rating={doctor?.averageRating} doctorId={doctorId} userId={userId} />
-              </div>
+              {/* <div style={{ marginBottom: "20px" }}>
+                <ReviewForm  doctorId={doctorId} userId={userId} />
+              </div> */}
 
-              <div style={{ borderTop: "1px solid #ddd", paddingTop: "10px" }}>
-                <CommentSection />
+              <div style={{ borderTop: "1px solid #ddd", paddingTop: "0px" }}>
+                <CommentSection doctorId={doctorId} userId={userId} />
               </div>
             </div>
 
