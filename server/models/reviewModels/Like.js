@@ -14,4 +14,4 @@ const likeSchema = mongoose.Schema({
 
 likeSchema.index({ review: 1, user: 1 }, { unique: true })
 
-module.export = mongoose.model('Like', likeSchema)
+module.exports = mongoose.model('Like', likeSchema)

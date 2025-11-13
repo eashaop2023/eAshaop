@@ -33,6 +33,7 @@ const createOrUpdate = asyncHandler(async (req, res) => {
       createdAt: existing.createdAt,
       __v: Number(existing.__v) + 1,
     });
+    await Comment.updateMany({ ParentComment: existing._id }, { $set: { ParentComment: fresh._id } });
     return ok(res, { message: 'Comment updated', comment: fresh }, 200);
   }
   const created = await Comment.create({ review: reviewId, user: userId, message, ParentComment: ParentComment || null });
