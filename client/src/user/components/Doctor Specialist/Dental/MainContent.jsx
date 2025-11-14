@@ -11,7 +11,7 @@ import { Link } from "react-router-dom";
 import { useNavigate } from "react-router-dom";
 import { API_BASE_URL } from "../../../../api-config";
 import './MainContent.css'
-import socket from "../../../../common/socket";
+// import socket from "../../../../common/socket";
 
 import Filter from '../../../assets/filter-icon.svg'
 import "../../../components/Doctor Specialist/cardiologist/MainContent.css"
@@ -25,6 +25,7 @@ import "react-toastify/dist/ReactToastify.css";
 import { useParams } from "react-router-dom";
 import "react-toastify/dist/ReactToastify.css";
 import './MainContent.css';
+import socket from "../../../../commonComponents/socket";
 
 
 // const mockDoctors = Array(9).fill({

@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from "react";
 import axios from "axios";
 import { API_BASE_URL } from "../../../api-config";
-import socket from "../../../common/socket";
+import socket from "../../../commonComponents/socket";
+// import socket from "../../../common/socket";
 
 const PAGE_SIZE = 10;
 
