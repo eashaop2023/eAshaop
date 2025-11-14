@@ -3,7 +3,8 @@ import axios from "axios";
 import { API_BASE_URL } from "../../../api-config";
 import styled, { css } from "styled-components"; // <-- Import
 import Select from "react-select";
-import socket from "../../../common/socket";
+// import socket from "../../../common/socket";
+import socket from '../../../commonComponents/socket';
 
 const PAGE_SIZE = 10;
 
@@ -548,9 +549,9 @@ styles={{
 
   // Join doctor's personal room
   console.log("➡️ Emitting joinDoctorRoom event");
-  socket.emit("joinDoctorRoom", doctorId, (ack) => {
-    console.log("✅ joinDoctorRoom ack:", ack);
-  });
+  // 
+    socket.emit("joinDoctorRoom", doctorId);
+
 
   // Listen for real-time updates
   const onUpdated = (updatedAppointment) => {
@@ -591,26 +592,26 @@ styles={{
   socket.on("appointmentDeleted", onDeleted);
 
   // Listen to connection/disconnection
-  socket.on("connect", () => {
-    console.log("✅ Socket connected with id:", socket.id);
-  });
+  // socket.on("connect", () => {
+  //   console.log("✅ Socket connected with id:", socket.id);
+  // });
 
-  socket.on("disconnect", (reason) => {
-    console.log("⚠️ Socket disconnected:", reason);
-  });
+  // socket.on("disconnect", (reason) => {
+  //   console.log("⚠️ Socket disconnected:", reason);
+  // });
 
-  socket.on("connect_error", (err) => {
-    console.error("❌ Socket connection error:", err);
-  });
+  // socket.on("connect_error", (err) => {
+  //   console.error("❌ Socket connection error:", err);
+  // });
 
   // Cleanup
   return () => {
     console.log("🧹 Cleaning up socket listeners");
     socket.off("appointmentUpdated", onUpdated);
     socket.off("appointmentDeleted", onDeleted);
-    socket.off("connect");
-    socket.off("disconnect");
-    socket.off("connect_error");
+    // socket.off("connect");
+    // socket.off("disconnect");
+    // socket.off("connect_error");
   };
 }, [doctorId]);
 

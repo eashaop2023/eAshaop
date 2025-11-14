@@ -7,6 +7,7 @@ const userNotificationSchema = new mongoose.Schema({
   },
   message: {
       text: { type: String, required: true, trim: true },
+      link: { type: String }, 
       createdAt: { type: Date, default: Date.now,required:true },
     expiresAt: {
         type: Date,

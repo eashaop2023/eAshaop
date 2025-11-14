@@ -18,8 +18,15 @@ function initSocket(server) {
         "http://127.0.0.1:5173",
         "http://localhost:5173"
       ],
+// <<<<<<< HEAD
       methods: ["GET", "POST","PUT","DELETE", "OPTIONS","PATCH"],
+// =======
+      methods: ["GET", "POST"],
+      credentials: true,
+// >>>>>>> 70494b2c659823a4e959a7996e6f861a63dc7eb5
     },
+    pingInterval:10000,
+    pingTimeout:20000,
   });
   const activeUserStreams = {};
   const activeDoctorStreams = {};
@@ -31,6 +38,7 @@ function initSocket(server) {
       console.log(`Doctor ${doctorId} joined room`);
     });
 
+// <<<<<<< HEAD
     socket.on("joinCategoryRoom", (categoryUUID) => {
       socket.join(categoryUUID);
       console.log(`User joined category room: ${categoryUUID}`);
@@ -50,6 +58,15 @@ function initSocket(server) {
     }
     });
     
+// =======
+     socket.on("joinUser", (userId) => {
+    if (userId) {
+      socket.join(userId.toString());
+      console.log(`User ${userId} joined their room`);
+    }
+  });
+
+// >>>>>>> 70494b2c659823a4e959a7996e6f861a63dc7eb5
     socket.on("disconnect", () => {
       console.log("Socket disconnected:", socket.id);
     });
@@ -63,7 +80,6 @@ function initSocket(server) {
  
   return io;
 }
-
 function setupAppointmentChangeStream() {
   const mongoose = require("mongoose");
   mongoose.connection.once("open", () => {
@@ -90,6 +106,7 @@ function setupAppointmentChangeStream() {
 }
 
 
+// <<<<<<< HEAD
 // function setUpDoctorChangeStream(){
 //   const mongoose=require("mongoose");
 //   mongoose.connection.once("open",()=>{
@@ -259,3 +276,23 @@ function setupDoctorChangeStream(doctorId) {
 
 
 module.exports = { initSocket };
+// =======
+// --- Utility function to emit notifications anywhere ---
+// 
+function emitNotification(userId, notification) {
+  if (io) {
+    // io.to(userId.toString()).emit("newNotification", {
+    //   message: notification?.message?.text || "You have a new notification! please check.",
+    //   notification,
+    // });
+     io.to(userId.toString()).emit("newNotification", {
+      message: notification.message,  // send entire message object
+      _id: notification._id,          // also send ID (useful)
+      createdAt: notification.createdAt
+  });
+    console.log(`📩 Notification sent to user ${userId}`);
+  } else {
+    console.error("Socket.io not initialized!");
+  }}
+module.exports = { initSocket, emitNotification };
+// >>>>>>> 70494b2c659823a4e959a7996e6f861a63dc7eb5
