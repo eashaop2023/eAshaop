@@ -21,6 +21,7 @@ const contactRoutes = require("./routes/contactRoutes");
 const apiRoutes = require("./routes/api/index");
 const appointmentRoutes = require("./routes/appointmentRoutes");
 const reviewRoutes = require("./routes/reviewAndRatingRoutes/reviewRoutes");
+const whatsappRoutes = require('./routes/whatsappRoutes/whatsappRoutes')
 
 const User = require("./models/user");
 const Doctor = require("./models/doctorModel");
@@ -68,7 +69,7 @@ app.use("/api/contact", contactRoutes);
 app.use("/api", apiRoutes);
 app.use("/api/appointments", appointmentRoutes);
 app.use('/api', reviewRoutes)
-
+app.use('/api/whatsapp', whatsappRoutes)
 app.use(notFound);
 app.use(errorHandler);
 
