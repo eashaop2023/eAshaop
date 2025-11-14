@@ -56,11 +56,15 @@ export default function AppointmentPage() {
 
   const fetchSlots = async () => {
     try {
-      const dateStr = startDate.toLocaleDateString("en-CA");
-      console.log(location?.state?.id,dateStr)
-      const res = await axios.get(
-        `${API_BASE_URL}/api/doctors/${location?.state?.id}/availability/${dateStr}`
-      );      
+const dateStr = startDate.toISOString().split("T")[0];
+const doctorID = doctorId || location?.state?.doctorId || location?.state?.id;
+
+if (!doctorID) {
+  console.warn("Doctor ID not found in state");
+  return;
+}
+
+const res = await axios.get(`${API_BASE_URL}/api/doctors/${doctorID}/availability/${dateStr}`);
       let slots = res.data.slots || [];
       const today = new Date();
       today.setHours(0, 0, 0, 0);

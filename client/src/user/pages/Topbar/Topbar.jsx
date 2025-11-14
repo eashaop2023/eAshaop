@@ -20,6 +20,69 @@ import close from "../../assets/icons/close.svg";
 import open from "../../assets/icons/open.svg";
 import { ImCross } from "react-icons/im";
 import './Topbar.css';
+import { io } from "socket.io-client";
+import socket from '../../../commonComponents/socket';
+// --- Simple toast popup function
+// --- Enhanced toast popup function ---
+const showToast = (message, options = {}) => {
+  const {
+    background = "#00a99d", // default teal background
+    color = "white",
+    position = "bottom-right",
+    duration = 4000, // 4 seconds by default
+  } = options;
+
+  const toast = document.createElement("div");
+  toast.textContent = message;
+  toast.style.position = "fixed";
+  toast.style.zIndex = "9999";
+  toast.style.padding = "12px 18px";
+  toast.style.borderRadius = "8px";
+  toast.style.background = background;
+  toast.style.color = color;
+  toast.style.fontSize = "14px";
+  toast.style.boxShadow = "0 4px 12px rgba(0,0,0,0.15)";
+  toast.style.opacity = "0";
+  toast.style.transition = "opacity 0.4s ease, transform 0.4s ease";
+
+  // --- Positioning ---
+  if (position.includes("bottom")) {
+    toast.style.bottom = "20px";
+  } else {
+    toast.style.top = "20px";
+  }
+  if (position.includes("right")) {
+    toast.style.right = "20px";
+  } else {
+    toast.style.left = "20px";
+  }
+
+  // --- Animation (slide in) ---
+  toast.style.transform = "translateY(20px)";
+  document.body.appendChild(toast);
+
+  // Animate in
+  setTimeout(() => {
+    toast.style.opacity = "1";
+    toast.style.transform = "translateY(0)";
+  }, 100);
+
+  // Animate out and remove
+  setTimeout(() => {
+    toast.style.opacity = "0";
+    toast.style.transform = "translateY(20px)";
+    setTimeout(() => toast.remove(), 400);
+  }, duration);
+};
+
+// const socket = io("http://localhost:5000", {
+//   transports: ["websocket"],
+//   reconnection: true,
+//   reconnectionAttempts: Infinity,
+//   reconnectionDelay: 2000,
+// });
+
+
 
 
 const Topbar = ({ toggleSidebar: propToggleSidebar, isMobile: propIsMobile } = {}) => {
@@ -63,29 +126,109 @@ useEffect(() => {
   }, []);
 
   // --- Fetch notifications
-  useEffect(() => {
-    const storedRole = localStorage.getItem("role"); // 'user' or 'doctor'
+const fetchNotifications = async () => {
+  try {
     const storedUser = JSON.parse(localStorage.getItem("user"));
-  const userId = storedUser?.id;
-  if (!userId || !storedRole) return;
-    const fetchNotifications = async () => {
-      try {
-      const res = await fetch(`${API_BASE_URL}/api/notifications/${storedRole}/${userId}`);
-        const data = await res.json();
-      if (res.ok && data.notifications) {
-        setNotifications(data.notifications);
-      } else {
-        console.error("Error fetching notifications:", data.message);
-      }
-      } catch (err) {
-        console.error("Error fetching notifications:", err);
-      }
-    };
+    const storedRole = localStorage.getItem("role"); // 'user' or 'doctor'
+    const userId = storedUser?.id;
 
+    if (!userId || !storedRole) {
+      console.warn("No userId or role found in localStorage — skipping fetch.");
+      return;
+    }
+
+    const res = await fetch(`${API_BASE_URL}/api/notifications/${storedRole}/${userId}`);
+    const data = await res.json();
+
+    if (res.ok && Array.isArray(data.notifications)) {
+      setNotifications(data.notifications);
+      console.log("Fetched notifications:", data.notifications.length);
+    } else {
+      console.error("Failed to fetch notifications:", data.message);
+    }
+  } catch (err) {
+    console.error("Error fetching notifications:", err);
+  }
+};
+
+  // useEffect(() => {
+  //   fetchNotifications(); // Initial fetch on mount
+  // }, []);
+
+
+  // --- Real-time notifications via Socket.IO
+useEffect(() => {
+  const storedUser = JSON.parse(localStorage.getItem("user"));
+  const userId = storedUser?.id;
+  if (!userId) return;
+
+  
+
+  const joinRoomAndFetch = () => {
+    socket.emit("joinUser", userId);
+    console.log("Joined user room after connect/reconnect:", userId);
+    fetchNotifications(); // Fetch notifications on connect/reconnect
+  };
+
+  // If socket is already connected, join and fetch immediately
+  if (socket.connected) {
+    joinRoomAndFetch();
+  }
+
+  socket.on("connect", joinRoomAndFetch);
+  socket.on("reconnect", joinRoomAndFetch);
+
+  socket.on("newNotification", (data) => {
+  const messageText =
+    typeof data.message === "string"
+      ? data.message
+      : data.message?.text || "You have a new notification! Please check.";
+
+  // ✅ Show toast safely
+  showToast(messageText, {
+    background: "#00a99d",
+    position: "bottom-right",
+    duration: 5000,
+  });
+
+  // if (messageText.includes("You have a new notification")) {
+  //   return; // STOP here (do not add to dropdown)
+  // }
+
+  // ✅ Normalize data structure for your state
+  const newNotif = {
+    _id: data._id || Date.now(),
+    message: {
+      text: messageText,
+      link: data.message?.link || null,
+    },
+    isRead: false,
+  };
+
+  setNotifications((prev) => [newNotif, ...prev]);
+});
+
+ 
+  socket.on("connect_error", (err) => {
+    console.error("Socket connection error:", err.message);
+  });
+
+  return () => {
+    socket.off("newNotification");
+    socket.off("connect_error");
+    socket.off("connect", joinRoomAndFetch);
+    socket.off("reconnect", joinRoomAndFetch);
+  };
+}, []);
+
+useEffect(() => {
+  const timer = setTimeout(() => {
     fetchNotifications();
-    const interval = setInterval(fetchNotifications, 30000); // refresh every 30s
-    return () => clearInterval(interval);
-  }, []);
+  }, 500); // delay 0.5s
+  return () => clearTimeout(timer);
+}, []);
+
+
 
    // --- Unread count
   const unreadCount = notifications.filter(n => !n.isRead).length;
@@ -95,7 +238,7 @@ useEffect(() => {
       const role = localStorage.getItem("role"); // 'user' or 'doctor'
 
     try {
-    const res = await fetch(`http://localhost:5000/api/notifications/${id}/read?type=${role}`, {
+    const res = await fetch(`${API_BASE_URL}/api/notifications/${id}/read?type=${role}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
       });
@@ -549,6 +692,18 @@ useEffect(() => {
               {expandedIds.includes(note._id) ? (
                 <>
                   {note.message.text}{" "}
+                  {note.message.link && (
+          <a
+            href={note.message.link}
+            onClick={(e) => {
+              e.stopPropagation();
+              navigate(note.message.link);
+            }}
+            style={{ color: "#00A99D", textDecoration: "underline",marginRight:"10px" }}
+          >
+            Click here 
+          </a>
+        )}
                   <span
                     onClick={() =>
                       setExpandedIds((prev) =>
@@ -571,7 +726,32 @@ useEffect(() => {
                   </span>
                 </>
               ) : (
-                note.message.text
+                 <>
+        {note.message.text}{" "}
+        {note.message.link && (
+          <a
+  href={note.message.link}
+  onClick={(e) => {
+    e.preventDefault(); // stop browser reload
+    e.stopPropagation();
+
+    const link = note.message.link || "";
+
+    // ✅ Handle absolute and relative links safely
+    if (link.startsWith("http")) {
+      const url = new URL(link);
+      navigate(url.pathname); // only navigate to path part
+    } else {
+      navigate(link); // relative path
+    }
+  }}
+  style={{ color: "#00A99D", textDecoration: "underline" }}
+>
+  Click here ...
+</a>
+
+        )}
+      </>
               )}
             </p>
           </div>

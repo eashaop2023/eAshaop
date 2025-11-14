@@ -290,7 +290,8 @@ import {
   ResponsiveContainer,
 } from "recharts";
 import axios from "axios";
-import socket from "../../../common/socket";
+// import socket from "../../../common/socket";
+import socket from '../../../commonComponents/socket';
 import { API_BASE_URL } from "../../../api-config";
 
 // --- Latest Bookings Component ---
@@ -429,7 +430,7 @@ const Dashboard = () => {
       socket.off("appointmentUpdated");
       socket.off("appointmentDeleted");
       socket.off("appointmentInserted");
-      socket.disconnect();
+      // socket.disconnect();
     };
   }, []);
 

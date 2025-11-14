@@ -15,7 +15,10 @@ function initSocket(server) {
         "http://localhost:5173"
       ],
       methods: ["GET", "POST"],
+      credentials: true,
     },
+    pingInterval:10000,
+    pingTimeout:20000,
   });
 
   io.on("connection", (socket) => {
@@ -26,6 +29,13 @@ function initSocket(server) {
       console.log(`Doctor ${doctorId} joined room`);
     });
 
+     socket.on("joinUser", (userId) => {
+    if (userId) {
+      socket.join(userId.toString());
+      console.log(`User ${userId} joined their room`);
+    }
+  });
+
     socket.on("disconnect", () => {
       console.log("Socket disconnected:", socket.id);
     });
@@ -34,7 +44,6 @@ function initSocket(server) {
   setupAppointmentChangeStream();
   return io;
 }
-
 function setupAppointmentChangeStream() {
   const mongoose = require("mongoose");
   mongoose.connection.once("open", () => {
@@ -60,4 +69,22 @@ function setupAppointmentChangeStream() {
   });
 }
 
-module.exports = { initSocket };
+
+// --- Utility function to emit notifications anywhere ---
+// 
+function emitNotification(userId, notification) {
+  if (io) {
+    // io.to(userId.toString()).emit("newNotification", {
+    //   message: notification?.message?.text || "You have a new notification! please check.",
+    //   notification,
+    // });
+     io.to(userId.toString()).emit("newNotification", {
+      message: notification.message,  // send entire message object
+      _id: notification._id,          // also send ID (useful)
+      createdAt: notification.createdAt
+  });
+    console.log(`📩 Notification sent to user ${userId}`);
+  } else {
+    console.error("Socket.io not initialized!");
+  }}
+module.exports = { initSocket, emitNotification };
