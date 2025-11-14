@@ -123,6 +123,17 @@ const DoctorProfilePage = () => {
         setFiles(prev => ({ ...prev, [field]: file }));
       }
     }
+    if (file) {
+      if (field === "banner") {
+        setFormData(prev => ({
+          ...prev,
+          backgroundPhoto: file,
+          backgroundPhotoPreview: URL.createObjectURL(file),
+        }));
+      } else {
+        setFiles(prev => ({ ...prev, [field]: file }));
+      }
+    }
   };
 
   // --- Form Validation ---
@@ -145,34 +156,34 @@ const DoctorProfilePage = () => {
 
     // Age validation: Must be a number between 18 and 100.
     if (!formData.age) {
-        newErrors.age = "Age is required.";
+      newErrors.age = "Age is required.";
     } else if (isNaN(formData.age) || Number(formData.age) < 18 || Number(formData.age) > 100) {
-        newErrors.age = "Age must be between 18 and 100.";
+      newErrors.age = "Age must be between 18 and 100.";
     }
 
     // Experience validation: Must be a number between 0 and 99.
     if (!formData.experience && formData.experience !== 0) {
-        newErrors.experience = "Years of experience are required.";
+      newErrors.experience = "Years of experience are required.";
     } else if (isNaN(formData.experience) || Number(formData.experience) < 0 || Number(formData.experience) >= 100) {
-        newErrors.experience = "Experience must be between 0 and 99 years.";
+      newErrors.experience = "Experience must be between 0 and 99 years.";
     }
 
     // Consultation Fee validation: Must be a non-negative number.
     if (!formData.consultationFee && formData.consultationFee !== 0) {
-        newErrors.consultationFee = "Consultation fee is required.";
+      newErrors.consultationFee = "Consultation fee is required.";
     } else if (isNaN(formData.consultationFee) || Number(formData.consultationFee) < 0) {
-        newErrors.consultationFee = "Fee cannot be negative.";
+      newErrors.consultationFee = "Fee cannot be negative.";
     }
 
     // Phone number validation: Must contain exactly 10 digits.
     if (!formData.phone) {
-        newErrors.phone = "Phone number is required.";
+      newErrors.phone = "Phone number is required.";
     } else if (!/^\d{10}$/.test(formData.phone)) {
-        newErrors.phone = "Phone number must be exactly 10 digits.";
+      newErrors.phone = "Phone number must be exactly 10 digits.";
     }
 
     return newErrors;
- };
+  };
   // const validateForm = () => {
   //   const newErrors = {};
 
@@ -241,6 +252,10 @@ const DoctorProfilePage = () => {
         formDataToSend.append("profileImage", formData.photo);
       }
 
+      if(formData.backgroundPhoto instanceof File){
+        formDataToSend.append("backgroundImage", formData.backgroundPhoto);
+      }
+
       if (files.medicalLicense instanceof File) {
         formDataToSend.append("medicalLicense", files.medicalLicense);
       }
@@ -292,7 +307,103 @@ const DoctorProfilePage = () => {
       <h2 className="mb-4">Doctor Profile</h2>
       <form onSubmit={handleSubmit} noValidate>
         {/* Profile Image */}
-        <div className="mb-4 text-center position-relative" style={{ width: 100, margin: "0 auto" }}>
+        <div className="mb-4 text-center position-relative" style={{ width: "100%", margin: "0 auto" }}>
+          <div style={{ textAlign: "center", position: "relative", marginBottom: "80px" }}>
+            <img
+              src={formData.backgroundPhotoPreview || "https://img.freepik.com/free-vector/hospital-healthcare-service-sale-banner_23-2150394136.jpg"}
+              alt="Banner"
+              style={{
+                width: "100%",
+                height: "150px",
+                objectFit: "cover",
+                borderRadius: "30px",
+                boxSizing: "border-box",
+              }}
+            />
+            <label
+              htmlFor="bannerPhotoInput"
+              className="position-absolute end-2 bottom-1 bg-secondary text-white rounded-circle p-1"
+              style={{ cursor: "pointer", width: 25, height: 25, fontSize: 12 }}
+              title="Change Banner"
+            >
+              <i className="bi bi-pencil-fill"></i>
+            </label>
+            <input
+              type="file"
+              id="bannerPhotoInput"
+              accept="image/*"
+              className="d-none"
+              onChange={e => handleImageUpload(e, "banner")}
+            />
+
+            {formData.photoPreview ? (
+              <img
+                src={formData.photoPreview}
+                alt="Profile"
+                style={{
+                  height: "120px",
+                  width: "120px",
+                  borderRadius: "50%",
+                  objectFit: "cover",
+                  border: "3px solid white",
+                  boxShadow: "0 4px 10px rgba(0,0,0,0.3)",
+                  position: "absolute",
+                  bottom: "-60px",
+                  left: "50%",
+                  transform: "translateX(-50%)",
+                }}
+              />
+            ) : (
+              <div
+                className="d-flex justify-content-center align-items-center bg-light text-muted"
+                style={{
+                  height: "120px",
+                  width: "120px",
+                  borderRadius: "50%",
+                  border: "3px solid white",
+                  position: "absolute",
+                  bottom: "-60px",
+                  left: "50%",
+                  transform: "translateX(-50%)",
+                }}
+              >
+                Upload
+              </div>
+            )}
+            <label
+              htmlFor="profilePhotoInput"
+              className="position-absolute bg-secondary text-white rounded-circle p-1"
+              style={{
+                bottom: "-60px",
+                // left: "50%",
+                right:"48%",
+                transform: "translateX(40%)",
+                color: "white",
+                // border: "3px solid white",
+                  boxShadow: "0 4px 10px rgba(0,0,0,0.3)",
+                borderRadius: "50%",
+                cursor: "pointer",
+                width: 25,
+                height: 25,
+                fontSize: 12,
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+              }}
+              title="Change Photo"
+            >
+              <i className="bi bi-pencil-fill"></i>
+            </label>
+            <input
+              type="file"
+              id="profilePhotoInput"
+              accept="image/*"
+              className="d-none"
+              onChange={e => handleImageUpload(e, "photo")}
+            />
+          </div>
+        </div>
+        {/* <div className="mb-4 text-center position-relative" style={{ width: 100, margin: "0 auto" }}>
           <div className="border rounded-circle overflow-hidden" style={{ width: 100, height: 100 }}>
             {formData.photoPreview ? (
               <img
@@ -321,7 +432,7 @@ const DoctorProfilePage = () => {
             className="d-none"
             onChange={e => handleImageUpload(e, "photo")}
           />
-        </div>
+        </div> */}
 
         {/* Personal & Professional Details */}
         <div className="row g-3">
@@ -336,7 +447,7 @@ const DoctorProfilePage = () => {
           </div>
           <div className="col-md-4">
             <label className="form-label">Phone</label>
-            <input type="tel" className={`form-control ${errors.phone ? 'is-invalid' : ''}`} value={formData.phone} onChange={e => handleChange("phone", e.target.value.replace(/[^0-9]/g, ""))} disabled/>
+            <input type="tel" className={`form-control ${errors.phone ? 'is-invalid' : ''}`} value={formData.phone} onChange={e => handleChange("phone", e.target.value.replace(/[^0-9]/g, ""))} disabled />
             {errors.phone && <div className="invalid-feedback">{errors.phone}</div>}
           </div>
           <div className="col-md-6">

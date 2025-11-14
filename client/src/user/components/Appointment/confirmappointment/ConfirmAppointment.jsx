@@ -25,7 +25,7 @@ const ConfirmAppointment = () => {
 
   const { doctor, slot, date, member, amount, consultationType, mainUser } =
     locationState || [];
-
+  console.log(consultationType);
   if (slot && date) {
     const dateObj = new Date(date);
     const [hours, minutes] = slot.split(":").map(Number);
@@ -231,7 +231,7 @@ const ConfirmAppointment = () => {
             <Button
               variant="link"
               className="d-flex align-items-center mb-3 p-0"
-              style={{ color: "#00A99D", fontWeight: 500, fontSize: 18 }}
+              style={{ color: "#00A99D", fontWeight: 500, fontSize: 18 ,textDecoration:"none"}}
               onClick={() => navigate(-1)}
             >
               <img
@@ -243,14 +243,43 @@ const ConfirmAppointment = () => {
             </Button>
 
             {/* Doctor Image */}
-            <div className="d-flex justify-content-center mb-3">
+            <div style={{ textAlign: "center", position: "relative", marginBottom: "80px" }}>
+              <img
+                src="https://tse4.mm.bing.net/th/id/OIP.FbPafxK8AlAX53Pbit6KsAHaEK?rs=1&pid=ImgDetMain&o=7&rm=3"
+                alt="Banner"
+                style={{
+                  width: "100%",
+                  height: "150px",
+                  objectFit: "cover",
+                  borderRadius: "30px",
+                  boxSizing: "border-box",
+                }}
+              />
+              <img
+                src={doctor?.profileImage || Profile}
+                alt={doctor?.name}
+                style={{
+                  height: "120px",
+                  width: "120px",
+                  borderRadius: "50%",
+                  objectFit: "cover",
+                  border: "3px solid white",
+                  boxShadow: "0 4px 10px rgba(0,0,0,0.3)",
+                  position: "absolute",
+                  bottom: "-60px",
+                  left: "50%",
+                  transform: "translateX(-50%)",
+                }}
+              />
+            </div>
+            {/* <div className="d-flex justify-content-center mb-3">
               <img
                 src={doctor.profileImage}
                 alt={doctor.name}
                 className="rounded-circle"
                 style={{ width: 120, height: 120, objectFit: "cover" }}
               />
-            </div>
+            </div> */}
 
             {/* Doctor Info */}
             <div className="px-2">
@@ -339,7 +368,8 @@ const ConfirmAppointment = () => {
           sm={10}
           md={6}
           className="d-flex justify-content-center col-right"
-          style={{ padding: "0 15px" }}
+          style={{ padding: "0 15px",marginBottom:'20px' }}
+          
         >
           <div style={{ width: "100%", maxWidth: 410 }}>
             <h4 className="fw-medium mb-2 mt-2">Payment Details</h4>
@@ -379,6 +409,7 @@ const ConfirmAppointment = () => {
                 color: "#fff",
                 height: 42,
                 fontWeight: 500,
+
               }}
               onClick={handlePayment}
               disabled={isProcessing}

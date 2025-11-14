@@ -91,13 +91,13 @@ function SecurityAndLogin() {
 
       {/* Main Container */}
       <div
-        className={`${styles.mainContainer} container d-flex flex-column align-items-start`}
+        className={`container d-flex flex-column align-items-start`}
         style={{
           width: isMobile ? "100%" : "617px",
-          paddingTop: isMobile ? "110px" : "110px",
+          paddingTop: isMobile ? "70px" : "70px",
           marginLeft: isMobile ? "0" : "430px",
           fontFamily: "Urbanist, sans-serif",
-          marginTop:isMobile?'80px':'30px'
+          // marginTop:isMobile?'80px':'30px'
         }}
       >
         <h2 className={` ${styles.secHeader}  mb-3 mt-5`} style={{ fontWeight: "500" }}>
