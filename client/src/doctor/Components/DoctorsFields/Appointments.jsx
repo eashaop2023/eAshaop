@@ -528,6 +528,22 @@ styles={{
     return;
   }
 
+    const fetchAppointments = async () => {
+      try {
+        const response = await axios.get(
+          `${API_BASE_URL}/api/appointments/doctor/${doctorId}`
+        );
+       setOngoingAppointments(response.data.ongoing || []);
+        setUpcomingAppointments(response.data.upcoming || []);
+        setPastAppointments(response.data.past || []);
+      } catch (error) {
+        console.error("Error fetching appointments:", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+
   console.log("🔌 Initializing socket connection for doctor id:", doctorId);
 
   // Join doctor's personal room
@@ -539,34 +555,36 @@ styles={{
   // Listen for real-time updates
   const onUpdated = (updatedAppointment) => {
   console.log("📡 Received appointmentUpdated event:", updatedAppointment);
+  fetchAppointments();
 
-  // Check if this appointment already exists in upcomingAppointments
-  setUpcomingAppointments((prev) => {
-    const exists = prev.some((appt) => appt._id === updatedAppointment._id);
-    if (exists) {
-      // Update existing appointment
-      return prev.map((appt) =>
-        appt._id === updatedAppointment._id ? updatedAppointment : appt
-      );
-    } else {
-      // Add new appointment (always upcoming)
-      return [updatedAppointment, ...prev];
-    }
-  });
+  // // Check if this appointment already exists in upcomingAppointments
+  // setUpcomingAppointments((prev) => {
+  //   const exists = prev.some((appt) => appt._id === updatedAppointment._id);
+  //   if (exists) {
+  //     // Update existing appointment
+  //     return prev.map((appt) =>
+  //       appt._id === updatedAppointment._id ? updatedAppointment : appt
+  //     );
+  //   } else {
+  //     // Add new appointment (always upcoming)
+  //     return [updatedAppointment, ...prev];
+  //   }
+  // });
 
-  // Also update ongoingAppointments if it exists there
-  setOngoingAppointments((prev) =>
-    prev.map((appt) =>
-      appt._id === updatedAppointment._id ? updatedAppointment : appt
-    )
-  );
+  // // Also update ongoingAppointments if it exists there
+  // setOngoingAppointments((prev) =>
+  //   prev.map((appt) =>
+  //     appt._id === updatedAppointment._id ? updatedAppointment : appt
+  //   )
+  // );
 };
 
 
   const onDeleted = (deletedId) => {
     console.log("🗑 Received appointmentDeleted event for id:", deletedId);
-    setOngoingAppointments((prev) => prev.filter((appt) => appt._id !== deletedId));
-    setUpcomingAppointments((prev) => prev.filter((appt) => appt._id !== deletedId));
+    fetchAppointments();
+    // setOngoingAppointments((prev) => prev.filter((appt) => appt._id !== deletedId));
+    // setUpcomingAppointments((prev) => prev.filter((appt) => appt._id !== deletedId));
   };
 
   socket.on("appointmentUpdated", onUpdated);

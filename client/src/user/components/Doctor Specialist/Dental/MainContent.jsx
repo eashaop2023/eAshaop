@@ -11,6 +11,7 @@ import { Link } from "react-router-dom";
 import { useNavigate } from "react-router-dom";
 import { API_BASE_URL } from "../../../../api-config";
 import './MainContent.css'
+import socket from "../../../../common/socket";
 
 import Filter from '../../../assets/filter-icon.svg'
 import "../../../components/Doctor Specialist/cardiologist/MainContent.css"
@@ -71,6 +72,39 @@ const [selected, setSelected] = useState(
       }
     
       fetchDoctors();
+
+      socket.on("connect", () => {
+    console.log("✅ Socket connected with ID:", socket.id);
+
+    // ✅ Join the category room once connected
+    socket.emit("joinCategoryRoom", uuid, () => {
+      console.log("📡 Joined category room for:", uuid);
+    });
+  });
+
+  // ✅ Handle connection errors
+  socket.on("connect_error", (err) => {
+    console.error("❌ Socket connection error:", err.message);
+  });
+
+  // ✅ Handle disconnections
+  socket.on("disconnect", (reason) => {
+    console.warn("⚠️ Socket disconnected:", reason);
+  });
+
+  // ✅ Handle category update events
+  socket.on("categoryDoctorsUpdated", (data) => {
+    console.log("📬 Category update received:", data);
+    // Re-fetch the doctors list
+    fetchDoctors();
+  });
+
+  return () => {
+    socket.off("categoryDoctorsUpdated");
+    socket.disconnect();
+    console.log("🔌 Socket disconnected (component unmounted)");
+  };
+
     }, [uuid]);
     
     

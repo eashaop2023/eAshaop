@@ -19,8 +19,12 @@ import pharmacy from "../../assets/icons/pharmacy.svg";
 import close from "../../assets/icons/close.svg";
 import open from "../../assets/icons/open.svg";
 import { ImCross } from "react-icons/im";
-import './Topbar.css';
-
+import User from "../../assets/icons/profile.png";
+import Security from "../../assets/icons/pharmacy.svg";
+import Legal from "../../assets/icons/home-hashtag.png";
+import Payment from "../../assets/icons/Money Bag.png";
+import Family from "../../assets/icons/people.png";
+import socket from '../../../common/socket';
 
 const Topbar = ({ toggleSidebar: propToggleSidebar, isMobile: propIsMobile } = {}) => {
   const [calculatedIsMobile, setCalculatedIsMobile] = useState(window.innerWidth < 992);
@@ -57,20 +61,41 @@ useEffect(() => {
 
   useEffect(() => {
     const storedUser = JSON.parse(localStorage.getItem("user"));
-    console.log(storedUser);
     fetch(`${API_BASE_URL}/api/user/${storedUser.id}`)
       .then((res) => res.json()) // parse JSON
       .then((data) => {
-        console.log("Fetched user from API:", data?.user?.profileImage?.cloudinaryUrl);
         if (data?.user?.profileImage?.cloudinaryUrl) {
           setProfileImage(data?.user?.profileImage?.cloudinaryUrl);
         }
-        // backend should return { user: {...} } or just {...}
-        // setUser(data.user || data || storedUser);
       })
       .catch((err) => {
         console.error("Error fetching user:", err);
       })
+
+     
+      socket.emit("joinUserRoom", storedUser.id);
+      
+      socket.on("UserprofileImageUpdated", (data) => {
+     
+
+      if (data.userId === storedUser.id) {
+        const newImage = data.profileImage.cloudinaryUrl || data.profileImage;
+
+        setProfileImage(newImage);
+
+       
+        const updatedUser = {
+          ...storedUser,
+          profileImage: { cloudinaryUrl: newImage },
+        };
+        localStorage.setItem("user", JSON.stringify(updatedUser));
+      }
+    });
+
+   
+    return () => {
+      socket.off("UserprofileImageUpdated");
+    };
 
   }, []);
 
@@ -145,10 +170,10 @@ useEffect(() => {
 
   const handleLogout = async () => {
     try {
-      //  Call backend logout API
+      // ✅ Call backend logout API
       const response = await fetch(`${API_BASE_URL}/api/user/logout`, {
         method: "POST",
-        credentials: "include", // if using cookies for session
+        credentials: "include", 
         headers: {
           "Content-Type": "application/json",
         },
@@ -156,11 +181,9 @@ useEffect(() => {
 
       const data = await response.json();
       if (response.ok) {
-        //  Clear tokens or localStorage if you store them there
+        // ✅ Clear tokens or localStorage if you store them there
         localStorage.removeItem("token");
         localStorage.removeItem("user");
-
-        // Redirect to login
         navigate("/login");
       } else {
         console.error("Logout failed:", data.message);
@@ -169,6 +192,7 @@ useEffect(() => {
       console.error("Error logging out:", error);
     }
   };
+  console.log(toggleState);
 
 
   const [isOpen, setIsOpen] = useState(window.innerWidth >= 992);
@@ -257,7 +281,6 @@ useEffect(() => {
   ];
   const [random, setRandom] = useState(false);
   useEffect(() => {
-    console.log(validPaths.includes(location?.pathname));
     if (validPaths.includes(location?.pathname)) {
       setRandom(true);
     }

@@ -114,7 +114,7 @@ const doctorSchema = new mongoose.Schema(
         message: "Hospital location is required for Clinic Visit or Both",
       },
     },
-
+    backgroundImage:{type:String},
     profileImage: { type: String },
     isActive: { type: Boolean, default: true },
     lastActiveAt: { type: Date, default: Date.now },
