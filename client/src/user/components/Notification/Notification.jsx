@@ -3,11 +3,7 @@ import { Alert, AlertTitle, IconButton, Slide } from "@mui/material";
 import CloseIcon from "@mui/icons-material/Close";
 
 const Notification = ({showNotification,setShowNotification,notifications}) => {
-//   const [openNotification, setOpenNotification] = useState(false);
-
- 
-
-  
+//   const [openNotification, setOpenNotification] = useState(false); 
 
   const handleClose = () => {
     setShowNotification(false);
