@@ -298,134 +298,76 @@ useEffect(() => {
       className={` ${styles.topBarContainer}  w-100 d-flex justify-content-between align-items-center px-3 px-lg-4 py-2 border-bottom bg-white`}
       style={{ border: '1px solid #F7F7F7', position: 'fixed', zIndex: 1050 }}
     >
-      {/* Left: Logo and Menu Icon */}
       <div
         className="d-flex align-items-center"
         style={{
-          marginLeft: isMobile ? '16px' : '25px',
+          marginLeft: isMobile ? "16px" : "25px",
         }}
       >
         {isMobile && (
           <>
-            {isMobile && (
+            {!random && (
               <>
-                {
-                  !random && <>
-                    {!toggleState ? (
-                      <FiMenu
-                        size={24}
-                        style={{ cursor: "pointer", marginRight: "15px" }}
-                        onClick={() => setToggleState(true)}
-                        title="Menu"
-                      />
-                    ) : (
-                      <ImCross
-                        size={18}
-                        onClick={() => setToggleState(false)}
-                        style={{ cursor: "pointer", marginRight: "18px" }}
-                      />
-                    )}
-                    {isMobile && toggleState && (
-                      <>
-                        <div
-                          onClick={() => setToggleState(false)}
-                          style={{
-                            position: "fixed",
-                            top: "76px",
-                            left: "0",
-                            width: "100%",
-                            height: "100vh",
-                            backgroundColor: "rgba(0, 0, 0, 0.3)",
-                            zIndex: 998,
-                          }}
-                        ></div>
-                        <div
-                          style={{
-                            position: "fixed",
-                            top: "76px",
-                            left: "0",
-                            width: "70%",
-                            height: "100vh",
-                            backgroundColor: "#fff",
-                            zIndex: 999,
-                            padding: "25px 20px",
-                            overflowY: "auto",
-                            boxShadow: "2px 0 8px rgba(0,0,0,0.1)",
-                          }}
-                          onClick={(e) => e.stopPropagation()}
-                        >
-                          <ol className="list-unstyled">
-                            {menuItems.map((item, index) => (
-                              <li
-                                key={index}
-                                onClick={() => {
-                                  navigate(item.path);
-                                  setToggleState(false);
-                                }}
-                                style={{
-                                  display: "flex",
-                                  alignItems: "center",
-                                  padding: "12px 0",
-                                  cursor: "pointer",
-                                  fontSize: "16px",
-                                  color: "#333",
-                                  backgroundColor:
-                                    location.pathname === item.path ? "#f1f1f1" : "transparent",
-                                  borderRadius: "13px"
-                                }}
-                              >
-                                <img
-                                  src={item.icon}
-                                  alt={item.label}
-                                  style={{
-                                    width: "24px",
-                                    height: "24px",
-                                    marginRight: "12px",
-                                    marginLeft: "12px"
-                                  }}
-                                />
-                                <span>{item.label}</span>
-                              </li>
-                            ))}
-                          </ol>
-                        </div>
-                      </>
-                    )}
-                  </>
-                }
-              </>
-            )}
-            {/* {
-              location?.pathname == "/user/profile" || "/user/profile/security-and-login" || "/user/profile/payment-and-billing" || "/user/profile/payment-and-billing" || "/user/profile/legal" && <>
+                {!toggleState ? (
+                  <FiMenu
+                    size={24}
+                    style={{ cursor: "pointer", marginRight: "15px" }}
+                    onClick={() => setToggleState(true)}
+                    title="Menu"
+                  />
+                ) : (
+                  <ImCross
+                    size={18}
+                    onClick={() => setToggleState(false)}
+                    style={{ cursor: "pointer", marginRight: "18px" }}
+                  />
+                )}
+
                 <div
                   onClick={() => setToggleState(false)}
                   style={{
                     position: "fixed",
                     top: "76px",
-                    left: "0",
+                    left: 0,
                     width: "100%",
                     height: "100vh",
-                    backgroundColor: "rgba(0, 0, 0, 0.3)",
+                    backgroundColor: toggleState
+                      ? "rgba(0, 0, 0, 0.3)"
+                      : "rgba(0, 0, 0, 0)",
                     zIndex: 998,
+                    pointerEvents: toggleState ? "auto" : "none",
+                    transition: "background-color 0.4s ease",
                   }}
                 ></div>
+
                 <div
                   style={{
                     position: "fixed",
                     top: "76px",
-                    left: "0",
-                    width: "70%",
+                    left: 0,
+                    width: "65%",
                     height: "100vh",
                     backgroundColor: "#fff",
                     zIndex: 999,
-                    padding: "25px 20px",
+                    padding: "0px 0px",
+                    paddingLeft: "20px",
+                    paddingRight:"20px", 
+                    paddingTop:"5px",                   
                     overflowY: "auto",
-                    boxShadow: "2px 0 8px rgba(0,0,0,0.1)",
+                    boxShadow: "2px 0 8px rgba(0, 0, 0, 0.1)",
+                    transition:
+                      "transform 0.4s ease-in-out, opacity 0.4s ease-in-out",
+                    transform: toggleState
+                      ? "translateX(0)"
+                      : "translateX(-100%)",
+                    opacity: toggleState ? 1 : 0,
+                    // borderTopRightRadius: "12px",
+                    borderBottomRightRadius: "12px",
                   }}
                   onClick={(e) => e.stopPropagation()}
                 >
                   <ol className="list-unstyled">
-                    {sidebarOptions.map((item, index) => (
+                    {menuItems.map((item, index) => (
                       <li
                         key={index}
                         onClick={() => {
@@ -440,8 +382,22 @@ useEffect(() => {
                           fontSize: "16px",
                           color: "#333",
                           backgroundColor:
-                            location.pathname === item.path ? "#f1f1f1" : "transparent",
-                          borderRadius: "13px"
+                            location.pathname === item.path
+                              ? "rgba(0,169,157,0.08)"
+                              : "transparent",
+                          borderRadius: "10px",
+                          transition:
+                            "background-color 0.3s ease, transform 0.2s ease",
+                        }}
+                        onMouseEnter={(e) => {
+                          e.currentTarget.style.backgroundColor =
+                            "rgba(0,169,157,0.05)";
+                        }}
+                        onMouseLeave={(e) => {
+                          e.currentTarget.style.backgroundColor =
+                            location.pathname === item.path
+                              ? "rgba(0,169,157,0.08)"
+                              : "transparent";
                         }}
                       >
                         <img
@@ -451,7 +407,12 @@ useEffect(() => {
                             width: "24px",
                             height: "24px",
                             marginRight: "12px",
-                            marginLeft: "12px"
+                            marginLeft: "12px",
+                            filter:
+                              location.pathname === item.path
+                                ? "invert(49%) sepia(99%) saturate(443%) hue-rotate(132deg) brightness(95%) contrast(93%)"
+                                : "grayscale(100%) opacity(0.8)",
+                            transition: "filter 0.3s ease",
                           }}
                         />
                         <span>{item.label}</span>
@@ -460,69 +421,29 @@ useEffect(() => {
                   </ol>
                 </div>
               </>
-            } */}
-            {/* {isMobile && toggleState && (
-              <div
-                style={{
-                  position: "fixed",
-                  top: "76px",
-                  left: "0",
-                  width: "70%",
-                  height: "100vh",
-                  backgroundColor: "#fff",
-                  zIndex: 999,
-                  padding: "25px 20px",
-                  overflowY: "auto",
-                }}
-              >
-                <ol className="list-unstyled">
-                  {menuItems.map((item, index) => (
-                    <li
-                      key={index}
-                      onClick={() => {
-                        navigate(item.path);
-                        setToggleState(false); // auto-close after navigation
-                      }}
-                      style={{
-                        display: "flex",
-                        alignItems: "center",
-                        padding: "12px 0",
-                        // borderBottom: "1px solid #eee",
-                        cursor: "pointer",
-                        fontSize: "16px",
-                        color: "#333",
-                      }}
-                    >
-                      <img
-                        src={item.icon}
-                        alt={item.label}
-                        style={{ width: "24px", height: "24px", marginRight: "12px" }}
-                      />
-                      <span>{item.label}</span>
-                    </li>
-                  ))}
-                </ol>
-              </div>
-            )} */}
-
+            )}
           </>
-
         )}
+
+
         <img
           src={logo}
           alt="Logo"
           className="img-fluid hover:cursor-pointer"
           style={{
-            width: '72px',
-            height: '60px',
+            width: "72px",
+            height: "60px",
             marginRight: "40px",
             marginLeft: random ? "40px" : ""
           }}
-          onClick={() => { navigate("/user/dashboard") }}
+          onClick={() => {
+            navigate("/user/dashboard");
+          }}
         />
       </div>
 
-      {/* Right: Notification + Bell + Profile Pic */}
+
+
       <div className="d-flex align-items-center ms-auto">
 
         <FiLogOut

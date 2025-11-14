@@ -400,9 +400,8 @@
 
 // export default CommentSection;
 
-
 import React, { useEffect, useState } from 'react';
-import { TextField, Button, Avatar, Typography, Box, Paper, IconButton } from '@mui/material';
+import { TextField, Button, Avatar, Typography, Box, Paper, IconButton, Menu, MenuItem } from '@mui/material';
 import ThumbUpOutlinedIcon from '@mui/icons-material/ThumbUpOutlined';
 import ThumbUpIcon from '@mui/icons-material/ThumbUp';
 import ThumbDownOutlinedIcon from '@mui/icons-material/ThumbDownOutlined';
@@ -411,6 +410,8 @@ import { API_BASE_URL } from '../../../api-config';
 import { toast } from 'react-toastify';
 import { Rating } from '@mui/material';
 import StarIcon from '@mui/icons-material/Star';
+import MoreVertIcon from '@mui/icons-material/MoreVert';
+import ReportsPage from './ReportsPage';
 
 function normalizeReviewToComment(review) {
     console.log(review);
@@ -421,57 +422,66 @@ function normalizeReviewToComment(review) {
     '/path/to/avatar.jpg';
 
   return {
-    id: review._id || review.id || Date.now().toString(),
-    username: review?.user?.full_name || review?.user?.fullName || 'Unknown',
+    id: review._id || review.id || `rev-${Date.now()}`,
+    username: review?.user?.full_name || review?.user?.fullName || review?.user?.name || 'Unknown',
     avatar,
     timestamp: review?.createdAt ? new Date(review.createdAt).toLocaleString() : new Date().toLocaleString(),
     text: review?.comment || review?.text || '',
     rating: typeof review?.rating === 'number' ? review.rating : 0,
     replies: Array.isArray(review.replies) ? review.replies : [],
-    likes: 0,
+    likes: typeof review.likes === 'number' ? review.likes : 0,
     liked: false,
-    dislikes: 0,
+    dislikes: typeof review.dislikes === 'number' ? review.dislikes : 0,
     disliked: false,
-    raw: review, 
+    raw: review,
   };
 }
 
 function CommentSection({ doctorId, userId }) {
+
+  const storedUser = JSON.parse(localStorage.getItem("user"));
   const currentUser = {
-    username: 'Current User',
-    avatar: '/path/to/avatar.jpg',
+    username: storedUser?.full_name,
   };
+
 
   const [comments, setComments] = useState([]);
   const [ratingValue, setRatingValue] = useState(0);
   const [newCommentText, setNewCommentText] = useState('');
   const [loading, setLoading] = useState(false);
+  const [run, setRun] = useState(false);
 
   useEffect(() => {
     if (!doctorId) return;
     setLoading(true);
-    fetch(`${API_BASE_URL}/api/review?doctorId=${doctorId}`)
+
+    fetch(`${API_BASE_URL}/api/reviews?doctorId=${doctorId}`)
       .then((res) => res.json())
-      .then((data) => {
-        if (Array.isArray(data)) {
-          const mapped = data
-            .filter((r) => !r.isDeleted)
-            .map((r) => normalizeReviewToComment(r))
-            .sort((a, b) => {
-              const ta = a.raw?.createdAt ? new Date(a.raw.createdAt).getTime() : 0;
-              const tb = b.raw?.createdAt ? new Date(b.raw.createdAt).getTime() : 0;
-              return tb - ta;
-            });
-          setComments(mapped);
-          const myReview = data.find((r) => String(r.user?._id) === String(userId) || String(r.user?._id) === String(userId));
-          if (myReview) setRatingValue(myReview.rating || 0);
+      .then((payload) => {
+        const reviews = Array.isArray(payload) ? payload : Array.isArray(payload?.data) ? payload.data : [];
+        const mapped = reviews
+          .filter((r) => !r?.isDeleted)
+          .map((r) => normalizeReviewToComment(r))
+          .sort((a, b) => {
+            const ta = a.raw?.createdAt ? new Date(a.raw.createdAt).getTime() : 0;
+            const tb = b.raw?.createdAt ? new Date(b.raw.createdAt).getTime() : 0;
+            return tb - ta;
+          });
+
+        setComments(mapped);
+        const myReview = reviews.find((r) => String(r?.user?._id) === String(userId) || String(r?.user?._id) === String(userId));
+        if (myReview && typeof myReview.rating === 'number') {
+          setRatingValue(myReview.rating);
         } else {
-          console.warn('Unexpected /api/review response:', data);
+          setRatingValue(0);
         }
       })
-      .catch((err) => console.error(err))
+      .catch((err) => {
+        console.error('Failed to fetch reviews:', err);
+        toast.error('Failed to load reviews');
+      })
       .finally(() => setLoading(false));
-  }, [doctorId, userId]);
+  }, [doctorId, userId, run]);
 
   const handleAddComment = async (e) => {
     e?.preventDefault?.();
@@ -505,7 +515,7 @@ function CommentSection({ doctorId, userId }) {
     setNewCommentText('');
 
     try {
-      const res = await fetch(`${API_BASE_URL}/api/review`, {
+      const res = await fetch(`${API_BASE_URL}/api/reviews`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload),
@@ -514,8 +524,9 @@ function CommentSection({ doctorId, userId }) {
       if (!res.ok) throw new Error(data.message || 'Failed to post review');
 
       const created = normalizeReviewToComment(data);
-      setComments((prev) => [created, ...prev.filter((c) => !String(c.id).startsWith('temp-'))]);
+      // setComments((prev) => [created, ...prev.filter((c) => !String(c.id).startsWith('temp-'))]);
       toast.success(data.message || 'Review posted');
+      setRun((r) => !r);
     } catch (err) {
       setComments((prev) => prev.filter((c) => !String(c.id).startsWith('temp-')));
       toast.error(err.message || 'Failed to post review');
@@ -526,52 +537,99 @@ function CommentSection({ doctorId, userId }) {
     setComments((prev) => prev.map((c) => (c.id === id ? { ...c, text: newText } : c)));
   };
 
-  const handleAddReply = (commentId, replyText, user) => {
-    setComments((prev) =>
-      prev.map((c) =>
-        c.id === commentId
-          ? {
-              ...c,
-              replies: [
-                ...c.replies,
-                {
-                  id: Date.now().toString(),
-                  text: replyText,
-                  username: user.username,
-                  avatar: user.avatar,
-                  timestamp: new Date().toLocaleString(),
-                  likes: 0,
-                  liked: false,
-                  dislikes: 0,
-                  disliked: false,
-                },
-              ],
-            }
-          : c
-      )
-    );
+  const handleAddReply = async (commentId, replyText, user) => {
+    console.log(replyText);
+    const payload = {
+      doctorId,
+      userId,
+      "reviewId": commentId,
+      "message": replyText,
+    };
+    try {
+      const res = await fetch(`${API_BASE_URL}/api/comments`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.message || 'Failed to post review');
+      console.log(data);
+      // const created = normalizeReviewToComment(data);
+      toast.success(data.message || 'Review posted');
+    } catch (err) {
+      setComments((prev) => prev.filter((c) => !String(c.id).startsWith('temp-')));
+      toast.error(err.message || 'Failed to post review');
+    }
+
+    // setComments((prev) =>
+    //   prev.map((c) =>
+    //     c.id === commentId
+    //       ? {
+    //         ...c,
+    //         replies: [
+    //           ...c.replies,
+    //           {
+    //             id: Date.now().toString(),
+    //             text: replyText,
+    //             username: user.username,
+    //             avatar: user.avatar,
+    //             timestamp: new Date().toLocaleString(),
+    //             likes: 0,
+    //             liked: false,
+    //             dislikes: 0,
+    //             disliked: false,
+    //           },
+    //         ],
+    //       }
+    //       : c
+    //   )
+    // );
   };
 
-  const handleToggleLike = (commentId) => {
-    setComments((prev) =>
-      prev.map((c) => {
-        if (c.id !== commentId) return c;
-        const liked = !c.liked;
-        const likes = liked ? c.likes + 1 : Math.max(0, c.likes - 1);
-        return { ...c, liked, likes, ...(liked ? { disliked: false } : {}) };
-      })
-    );
+  const handleToggleLike = async (commentId, name) => {
+
+    const payload = {
+      "commentId": commentId?.id,
+      "userId": commentId?.raw?.user?._id,
+    };
+    
+    try {
+      const res = await fetch(`${API_BASE_URL}/api/comments`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.message || 'Failed to post review');
+      console.log(data);
+      // const created = normalizeReviewToComment(data);
+      toast.success(data.message || 'Review posted');
+    } catch (err) {
+      setComments((prev) => prev.filter((c) => !String(c.id).startsWith('temp-')));
+      toast.error(err.message || 'Failed to post review');
+    }
+
+    // setComments((prev) =>
+    //   prev.map((c) => {
+    //     if (c.id !== commentId) return c;
+    //     const liked = !c.liked;
+    //     const likes = liked ? c.likes + 1 : Math.max(0, c.likes - 1);
+    //     return { ...c, liked, likes, ...(liked ? { disliked: false } : {}) };
+    //   })
+    // );
+
   };
 
-  const handleToggleDislike = (commentId) => {
-    setComments((prev) =>
-      prev.map((c) => {
-        if (c.id !== commentId) return c;
-        const disliked = !c.disliked;
-        const dislikes = disliked ? c.dislikes + 1 : Math.max(0, c.dislikes - 1);
-        return { ...c, disliked, dislikes, ...(disliked ? { liked: false } : {}) };
-      })
-    );
+  const handleToggleDislike = (commentId, name) => {
+    console.log(commentId, name)
+    // setComments((prev) =>
+    //   prev.map((c) => {
+    //     if (c.id !== commentId) return c;
+    //     const disliked = !c.disliked;
+    //     const dislikes = disliked ? c.dislikes + 1 : Math.max(0, c.dislikes - 1);
+    //     return { ...c, disliked, dislikes, ...(disliked ? { liked: false } : {}) };
+    //   })
+    // );
   };
 
   const handleToggleLikeReply = (commentId, replyId) => {
@@ -579,9 +637,9 @@ function CommentSection({ doctorId, userId }) {
       prev.map((c) => {
         if (c.id !== commentId) return c;
         const replies = c.replies.map((r) => {
-          if (r.id !== replyId) return r;
+          if (String(r.id || r._id) !== String(replyId)) return r;
           const liked = !r.liked;
-          const likes = liked ? r.likes + 1 : Math.max(0, r.likes - 1);
+          const likes = liked ? (r.likes || 0) + 1 : Math.max(0, (r.likes || 0) - 1);
           return { ...r, liked, likes, ...(liked ? { disliked: false } : {}) };
         });
         return { ...c, replies };
@@ -594,9 +652,9 @@ function CommentSection({ doctorId, userId }) {
       prev.map((c) => {
         if (c.id !== commentId) return c;
         const replies = c.replies.map((r) => {
-          if (r.id !== replyId) return r;
+          if (String(r.id || r._id) !== String(replyId)) return r;
           const disliked = !r.disliked;
-          const dislikes = disliked ? r.dislikes + 1 : Math.max(0, r.dislikes - 1);
+          const dislikes = disliked ? (r.dislikes || 0) + 1 : Math.max(0, (r.dislikes || 0) - 1);
           return { ...r, disliked, dislikes, ...(disliked ? { liked: false } : {}) };
         });
         return { ...c, replies };
@@ -659,6 +717,7 @@ function CommentSection({ doctorId, userId }) {
               onToggleDislike={handleToggleDislike}
               onToggleLikeReply={handleToggleLikeReply}
               onToggleDislikeReply={handleToggleDislikeReply}
+            // onToggleReply={handleReply}
             />
           ))}
 
@@ -673,16 +732,20 @@ function CommentSection({ doctorId, userId }) {
   );
 }
 
-function CommentItem({ comment, currentUser, onEdit, onReply, onToggleLike, onToggleDislike, onToggleLikeReply, onToggleDislikeReply }) {
+function CommentItem({ comment, currentUser, onEdit, onReply, onToggleLike, onToggleDislike, onToggleLikeReply, onToggleDislikeReply, onToggleReply }) {
   const [editingText, setEditingText] = useState(comment.text);
   const [showEditInput, setShowEditInput] = useState(false);
   const [replyText, setReplyText] = useState('');
   const [showReplyInput, setShowReplyInput] = useState(false);
   const isOwner = comment.username === currentUser.username;
+  const [openReview, setOpenReview] = useState(false);
+  const [repleyedComments, setRepleyedComments] = useState([]);
+  const [replyComment, setReplyComment] = useState("");
 
   useEffect(() => {
     setEditingText(comment.text);
   }, [comment.text]);
+
 
   const handleReplyClick = () => {
     setShowReplyInput(!showReplyInput);
@@ -693,64 +756,151 @@ function CommentItem({ comment, currentUser, onEdit, onReply, onToggleLike, onTo
     setShowEditInput(!showEditInput);
     setEditingText(comment.text);
   };
+  console.log(openReview);
+  const handleReply = async (a) => {
+    setOpenReview((q) => !q);
+    if (!openReview) {
 
+      try {
+        const res = await fetch(`${API_BASE_URL}/api/reviews/${a}/comments`);
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.message || 'Failed to post review');
+        console.log(data?.data);
+        setRepleyedComments(data?.data);
+
+        // toast.success(data.message || 'Review posted');
+      } catch (err) {
+        // toast.error(err.message || 'Failed to post review');
+      }
+    }
+
+  }
+  const openViews = async (a) => {
+    setOpenReview(true);
+    console.log("HI");
+    try {
+      const res = await fetch(`${API_BASE_URL}/api/reviews/${a}/comments`);
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.message || 'Failed to post review');
+      console.log(data?.data);
+      setRepleyedComments(data?.data);
+      // toast.success(data.message || 'Review posted');
+    } catch (err) {
+      // toast.error(err.message || 'Failed to post review');
+    }
+  }
+
+  const [anchorEl, setAnchorEl] = useState(null);
+  const [reportOpen, setOpenReport] = useState(false);
+  const open = Boolean(anchorEl);
+
+  const handleClick = (event) => {
+    setAnchorEl(event.currentTarget);
+  };
+
+  const handleClose = () => {
+    setAnchorEl(null);
+    setOpenReport(false);
+  };
   return (
     <Paper elevation={1} sx={{ p: 2, mb: 2 }}>
       <Box sx={{ display: 'flex', alignItems: 'flex-start', mb: 1 }}>
         <Avatar src={comment.avatar} sx={{ mr: 1 }} />
         <Box sx={{ flex: 1 }}>
-          <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+          <Box sx={{ display: 'flex', alignItems: "center", justifyContent: 'space-between', width: "100%" }}>
+
             <Box>
-              <Typography variant="subtitle2">{comment.username}</Typography>
+              <Typography>{comment.username}</Typography>
               <Typography variant="caption" color="text.secondary">{comment.timestamp}</Typography>
             </Box>
 
-            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-              {/* show rating for this review if present
-              {typeof comment.rating === 'number' && comment.rating > 0 && (
-                <Rating size="small" value={comment.rating} precision={0.5} readOnly />
-              )} */}
-{/* 
-              <IconButton size="small" onClick={() => onToggleLike(comment.id)} aria-label="like comment">
-                {comment.liked ? <ThumbUpIcon fontSize="small" /> : <ThumbUpOutlinedIcon fontSize="small" />}
+            <Box sx={{ display: "flex", alignItems: "center", paddingTop: "0" }}>
+              <IconButton size="small" onClick={() => onToggleLike(comment, "like")}>
+                {comment.liked ? (
+                  <ThumbUpIcon fontSize="small" sx={{ paddingRight: "3px" }} />
+                ) : (
+                  <ThumbUpOutlinedIcon fontSize="small" sx={{ paddingRight: "3px" }} />
+                )}
+                <Typography variant="caption">{comment.likes}</Typography>
               </IconButton>
-              <Typography variant="caption">{comment.likes}</Typography>
 
-              <IconButton size="small" onClick={() => onToggleDislike(comment.id)} aria-label="dislike comment">
-                {comment.disliked ? <ThumbDownIcon fontSize="small" /> : <ThumbDownOutlinedIcon fontSize="small" />}
-              </IconButton> */}
-              {/* <Typography variant="caption">{comment.dislikes}</Typography> */}
+              <IconButton size="small" onClick={() => onToggleDislike(comment.id, "unLike")}>
+                {comment.disliked ? (
+                  <ThumbDownIcon fontSize="small" sx={{ paddingRight: "3px" }} />
+                ) : (
+                  <ThumbDownOutlinedIcon fontSize="small" sx={{ paddingRight: "3px" }} />
+                )}
+                <Typography variant="caption">{comment.dislikes}</Typography>
+              </IconButton>
+
+              <IconButton onClick={handleClick}>
+                <MoreVertIcon />
+              </IconButton>
             </Box>
+
+            <Menu
+              anchorEl={anchorEl}
+              open={open}
+              onClose={handleClose}
+              anchorOrigin={{ vertical: "bottom", horizontal: "right" }}
+              transformOrigin={{ vertical: "top", horizontal: "right" }}
+            >
+              <MenuItem onClick={() => setOpenReport(true)}>Report</MenuItem>
+            </Menu>
+
+            {reportOpen && (
+              <ReportsPage
+                open={reportOpen}
+                setOpenReport={setOpenReport}
+                comment={comment}
+                setAnchorEl={setAnchorEl}
+              />
+            )}
           </Box>
+
 
           <Typography variant="body1" sx={{ mt: 0.5 }}>{comment.text}</Typography>
-
           <Box sx={{ mt: 1 }}>
             <Button size="small" onClick={handleReplyClick}>Reply</Button>
-            {isOwner && <Button size="small" onClick={handleEditClick}>Edit</Button>}
+            {/* {isOwner && <Button size="small" onClick={handleEditClick}>Edit</Button>} */}
+            <Button size='small' onClick={() => handleReply(comment.id)} >{openReview ? <div>Close Reply's</div> : <div>View Reply's</div>}</Button>
+            {
+              openReview &&
+              <div>
+                {repleyedComments?.length === 0 ? (
+                  <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
+                    No replies found
+                  </Typography>
+                ) : (
+                  repleyedComments?.map((reply) => (
+                    <Box
+                      key={reply.id || reply._id}
+                      sx={{ mt: 1, pl: 0, display: 'flex', gap: 1, alignItems: 'flex-start' }}
+                    >
+                      <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', pt: '6px' }}>
+                        <Typography variant="caption">{reply.dislikes}</Typography>
+                      </Box>
+
+                      <Box sx={{ pl: 1, borderLeft: '2px solid #eee', flex: 1 }}>
+                        <Typography variant="subtitle2">
+                          {reply.username || reply.user?.full_name}
+                        </Typography>
+
+                        <Typography variant="caption" color="text.secondary">
+                          {reply.createdAt}
+                        </Typography>
+
+                        <Typography sx={{ mt: 0.3 }}>
+                          {reply.message}
+                        </Typography>
+                      </Box>
+                    </Box>
+                  ))
+                )}
+              </div>
+
+            }
           </Box>
-
-          {Array.isArray(comment.replies) && comment.replies.map((reply) => (
-            <Box key={reply.id || reply._id} sx={{ mt: 1, pl: 0, display: 'flex', gap: 1, alignItems: 'flex-start' }}>
-              <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', pt: '6px' }}>
-                <IconButton size="small" onClick={() => onToggleLikeReply(comment.id, reply.id || reply._id)} aria-label="like reply">
-                  {reply.liked ? <ThumbUpIcon fontSize="small" /> : <ThumbUpOutlinedIcon fontSize="small" />}
-                </IconButton>
-                <Typography variant="caption">{reply.likes}</Typography>
-
-                <IconButton size="small" onClick={() => onToggleDislikeReply(comment.id, reply.id || reply._id)} aria-label="dislike reply">
-                  {reply.disliked ? <ThumbDownIcon fontSize="small" /> : <ThumbDownOutlinedIcon fontSize="small" />}
-                </IconButton>
-                <Typography variant="caption">{reply.dislikes}</Typography>
-              </Box>
-
-              <Box sx={{ pl: 1, borderLeft: '2px solid #eee', flex: 1 }}>
-                <Typography variant="subtitle2">{reply.username || reply.user?.full_name}</Typography>
-                <Typography variant="caption" color="text.secondary">{reply.timestamp}</Typography>
-                <Typography sx={{ mt: 0.3 }}>{reply.text}</Typography>
-              </Box>
-            </Box>
-          ))}
         </Box>
       </Box>
 
@@ -762,18 +912,25 @@ function CommentItem({ comment, currentUser, onEdit, onReply, onToggleLike, onTo
             rows={1}
             placeholder="Write a reply..."
             value={replyText}
-            onChange={(e) => setReplyText(e.target.value)}
+            onChange={(e) => {
+              const input = e.target.value;
+              const cleaned = input.replace(`@${comment.username} `, "");
+              setReplyText(input);
+              setReplyComment(cleaned);
+            }}
             variant="outlined"
             sx={{ mb: 1 }}
           />
+
           <Button
             variant="contained"
             fullWidth
             onClick={() => {
               if (replyText.trim()) {
-                onReply(comment.id, replyText, currentUser);
+                onReply(comment.id, replyComment, currentUser);
                 setReplyText('');
                 setShowReplyInput(false);
+                openViews(comment.id);
               }
             }}
           >
@@ -813,3 +970,25 @@ function CommentItem({ comment, currentUser, onEdit, onReply, onToggleLike, onTo
 }
 
 export default CommentSection;
+// {Array.isArray(comment.replies) && comment.replies.map((reply) => (
+//                   <Box key={reply.id || reply._id} sx={{ mt: 1, pl: 0, display: 'flex', gap: 1, alignItems: 'flex-start' }}>
+//                     <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', pt: '6px' }}>
+//                       <IconButton size="small" onClick={() => onToggleLikeReply(comment.id, reply.id || reply._id)} aria-label="like reply">
+//                         {reply.liked ? <ThumbUpIcon fontSize="small" /> : <ThumbUpOutlinedIcon fontSize="small" />}
+//                       </IconButton>
+//                       <Typography variant="caption">{reply.likes}</Typography>
+
+//                       <IconButton size="small" onClick={() => onToggleDislikeReply(comment.id, reply.id || reply._id)} aria-label="dislike reply">
+//                         {reply.disliked ? <ThumbDownIcon fontSize="small" /> : <ThumbDownOutlinedIcon fontSize="small" />}
+//                       </IconButton>
+//                       <Typography variant="caption">{reply.dislikes}</Typography>
+//                     </Box>
+
+//                     <Box sx={{ pl: 1, borderLeft: '2px solid #eee', flex: 1 }}>
+//                       <Typography variant="subtitle2">{reply.username || reply.user?.full_name}</Typography>
+//                       <Typography variant="caption" color="text.secondary">{reply.timestamp}</Typography>
+//                       <Typography sx={{ mt: 0.3 }}>{reply.text}</Typography>
+//                     </Box>
+//                     <p></p>
+//                   </Box>
+//                 ))}
