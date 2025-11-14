@@ -2,104 +2,80 @@
 const UserNotification = require("../models/userNotification");
 const DoctorNotification = require("../models/doctorNotification");
 const Appointment = require("../models/Appointment");
-
-// Utility: Schedule a notification (for “5 min before”)
-const scheduleNotification = (model, data, delayMs) => {
-  setTimeout(async () => {
-    try {
-      await model.create(data);
-      console.log("Scheduled notification sent:", data.message);
-    } catch (err) {
-      console.error("Error sending scheduled notification:", err);
-    }
-  }, delayMs);
-};
+const { emitNotification } = require("../services/socketService");
+const cron = require("node-cron");
+const mongoose = require("mongoose");
 
 // 📅 Trigger notifications after appointment booking
 exports.sendAppointmentNotifications = async (appointment) => {
   try {
-    const { userId, doctorId, date, time, status } = appointment;
+    const { userId, doctorId, date, status } = appointment;
+
 
     // Get doctor/user details
     const populated = await Appointment.findById(appointment._id)
       .populate("doctorId", "name")
       .populate("userId", "full_name");
 
-           const appointmentDate = new Date(date);
-const formattedDate = appointmentDate.toLocaleDateString("en-US", {
-  weekday: "long",   // 👉 gives full day name (e.g., Monday)
-  year: "numeric",
-  month: "long",
-  day: "numeric",
-});
-                   const formattedTime = appointmentDate.toLocaleTimeString([], {
+    const appointmentDate = new Date(date);
+    const formattedDate = appointmentDate.toLocaleDateString("en-US", {
+      weekday: "long",
+      year: "numeric",
+      month: "long",
+      day: "numeric",
+    });
+    const formattedTime = appointmentDate.toLocaleTimeString([], {
       hour: "2-digit",
       minute: "2-digit",
-      hour12: false, // set true if you want 12-hour format
+      hour12: false,
     });
 
-
-
-
-
-
-
     // User: Appointment booked or pending
-    let userMessage =
+    const userMessage =
       status === "pending"
         ? "Your appointment request is pending approval."
         : `Your appointment with Dr. ${populated.doctorId.name} is confirmed for ${formattedDate} at ${formattedTime}.`;
 
-    await UserNotification.create({
+    const userNotif = await UserNotification.create({
       userId,
       message: { text: userMessage },
     });
 
+    // Doctor message
     const doctorMessage = `You have a new appointment with ${populated.userId.full_name} on ${formattedDate} at ${formattedTime}.`;
 
-
-    // Doctor: Appointment booked
-    await DoctorNotification.create({
+    const doctorNotif = await DoctorNotification.create({
       doctorId,
       message: { text: doctorMessage },
     });
 
-    // ⏱ Schedule 5-min before notifications
-    const appointmentDateTime = new Date(date);
-    const appointmentTime = new Date(appointmentDateTime.getTime() - 5 * 60 * 1000);
-    const delayMs = appointmentTime - Date.now();
+    // ✅ Emit real-time notifications via socket
+    emitNotification(userId, {
+      message: "You have a new notification! Please check.",
+      notification: userNotif,
+    });
 
-    if (delayMs > 0) {
-      scheduleNotification(
-        UserNotification,
-        { userId, message: { text: "⏰ Reminder: Your appointment starts in 5 minutes." } },
-        delayMs
-      );
+    emitNotification(doctorId, {
+      message: "You have a new notification! Please check.",
+      notification: doctorNotif,
+    });
 
-      scheduleNotification(
-        DoctorNotification,
-        { doctorId, message: { text: "⏰ Reminder: You have an appointment in 5 minutes." } },
-        delayMs
-      );
-    }
-    console.log("Notifications scheduled for appointment:", appointment._id);
+    console.log("Notifications created for appointment:", appointment._id);
   } catch (error) {
     console.error("Error creating notifications:", error);
   }
 };
 
-
 // PATCH /api/notifications/:id/read?type=user OR doctor
 exports.markNotificationAsRead = async (req, res) => {
   try {
-    const { id } = req.params; // notification ID
-    const { type } = req.query; // 'user' or 'doctor'
+    const { id } = req.params;
+    const { type } = req.query;
 
     if (!id || !type)
       return res.status(400).json({ message: "Notification ID and type are required" });
 
     const Model = type === "doctor" ? DoctorNotification : UserNotification;
-
     const notification = await Model.findByIdAndUpdate(
       id,
       { isRead: true },
@@ -119,8 +95,8 @@ exports.markNotificationAsRead = async (req, res) => {
 // PATCH /api/notifications/mark-all-read?type=user OR doctor
 exports.markAllAsRead = async (req, res) => {
   try {
-    const { type } = req.query; // 'user' or 'doctor'
-    const { userId, doctorId } = req.body; // send from frontend
+    const { type } = req.query;
+    const { userId, doctorId } = req.body;
 
     if (!type)
       return res.status(400).json({ message: "Notification type is required" });
@@ -140,4 +116,60 @@ exports.markAllAsRead = async (req, res) => {
   }
 };
 
+// 🕐 CRON JOB — runs every minute to send “5 minutes before” reminders
+cron.schedule("* * * * *", async () => {
+  try {
+    const now = new Date();
+    const fiveMinLater = new Date(now.getTime() + 5 * 60 * 1000);
 
+    const upcomingAppointments = await Appointment.find({
+      date: { $gte: now, $lte: fiveMinLater },
+      reminderSent: { $ne: true },
+    })
+      .populate("userId", "full_name")
+      .populate("doctorId", "name");
+
+    if (upcomingAppointments.length > 0) {
+      console.log(`🕒 Found ${upcomingAppointments.length} upcoming appointments.`);
+
+      for (const appointment of upcomingAppointments) {
+        // Create reminder notifications
+
+         const baseUrl = process.env.CLIENT_ORIGIN || "http://localhost:5173";
+        const userNotif = await UserNotification.create({
+          userId: appointment.userId._id,
+          message: {
+    text: "⏰ Reminder: Your appointment starts in 5 minutes. To Join 👉 ",
+    link: "/user/appointment", // optional, for reference
+           },
+        });
+
+        const doctorNotif = await DoctorNotification.create({
+          doctorId: appointment.doctorId._id,
+          message: { text: "⏰ Reminder: You have an appointment in 5 minutes." },
+        });
+
+        // Emit via socket (real-time)
+        emitNotification(appointment.userId._id, {
+          message: "⏰ Reminder: Your appointment starts in 5 minutes.",
+          notification: userNotif,
+        });
+
+        emitNotification(appointment.doctorId._id, {
+          message: "⏰ Reminder: You have an appointment in 5 minutes.",
+          notification: doctorNotif,
+        });
+
+        // Mark appointment so it won't send again
+        appointment.reminderSent = true;
+        await appointment.save();
+
+        console.log(
+          `✅ Reminder created for ${appointment.userId.full_name} and ${appointment.doctorId.name}`
+        );
+      }
+    }
+  } catch (err) {
+    console.error("❌ Error running reminder cron:", err);
+  }
+});

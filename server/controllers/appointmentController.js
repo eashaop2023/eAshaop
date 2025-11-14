@@ -759,52 +759,6 @@ const appointment = await Appointment.findById(appointmentId)
       $push: { appointments: subDoc },
     });
 
-     // ✅ Send Notifications
-    // await UserNotification.create({
-    //   userId: appointment.userId._id,
-    //   message: {
-    //     text: `Your appointment with Dr. ${appointment.doctorId.name} is confirmed for ${appointment.date} at ${appointment.time}.`,
-    //   },
-    // });
-
-    // await DoctorNotification.create({
-    //   doctorId: appointment.doctorId._id,
-    //   message: {
-    //     text: `You have a new appointment with ${appointment.userId.full_name} on ${appointment.date} at ${appointment.time}.`,
-    //   },
-    // });
-
-    // // 🕔 Schedule Reminder 5 minutes before
-    // const appointmentDateTime = moment.tz(
-    //   `${moment(appointment.date).format("YYYY-MM-DD")} ${appointment.time}`,
-    //   "YYYY-MM-DD hh:mm A",
-    //   "Asia/Kolkata"
-    // ).toDate();
-
-    // const fiveMinBefore = new Date(appointmentDateTime.getTime() - 5 * 60 * 1000);
-    // const delayMs = fiveMinBefore.getTime() - Date.now();
-
-    // if (delayMs > 0) {
-    //   scheduleNotification(
-    //     UserNotification,
-    //     {
-    //       userId: appointment.userId._id,
-    //       message: { text: "⏰ Reminder: Your appointment starts in 5 minutes." },
-    //     },
-    //     delayMs
-    //   );
-
-    //   scheduleNotification(
-    //     DoctorNotification,
-    //     {
-    //       doctorId: appointment.doctorId._id,
-    //       message: { text: "⏰ Reminder: You have an appointment in 5 minutes." },
-    //     },
-    //     delayMs
-    //   );
-    // } else {
-    //   console.log("⚠️ Appointment time too close or already passed. Skipping reminder.");
-    // }
     await sendAppointmentNotifications(appointment)
     res.status(200).json({
       message: "Appointment booked successfully after payment",
@@ -867,18 +821,31 @@ exports.razorpayWebhook = async (req, res) => {
       appointment.razorpayPaymentId = paymentEntity.id;
       await appointment.save();
 
-await UserNotification.create({
+      const { emitNotification } = require("../services/socketService");
+
+      const userNotif = await UserNotification.create({
         userId: appointment.userId,
         message: {
           text: `Payment successful! Your appointment with doctor ${appointment.doctorId} is confirmed.`,
         },
       });
 
-      await DoctorNotification.create({
+      const doctorNotif = await DoctorNotification.create({
         doctorId: appointment.doctorId,
         message: {
           text: `New confirmed appointment from user ${appointment.userId}.`,
         },
+      });
+
+      // Emit real-time notifications
+      emitNotification(appointment.userId, {
+        message: "You have a new notification! Please check.",
+        notification: userNotif,
+      });
+
+      emitNotification(appointment.doctorId, {
+        message: "You have a new notification! Please check.",
+        notification: doctorNotif,
       });
 
 

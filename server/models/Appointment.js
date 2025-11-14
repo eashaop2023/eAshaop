@@ -21,6 +21,11 @@ const appointmentSchema = new mongoose.Schema({
   },
 
   jitsiLink: { type: String, default: null },
+  reminderSent: {
+  type: Boolean,
+  default: false,
+},
+
   razorpayOrderId: { type: String, default: null },
   createdAt: { type: Date, default: Date.now }
 });
