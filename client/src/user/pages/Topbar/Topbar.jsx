@@ -10,6 +10,7 @@ import Sidebar from '../../components/categorypage/Sidebar';
 import { useLocation } from 'react-router-dom';
 import dashboard from "../../assets/icons/dashboard.svg";
 import doctor from "../../assets/icons/doctor.svg";
+
 import appointments from "../../assets/icons/appointments.svg";
 import medications from "../../assets/icons/medications.svg";
 import lab from "../../assets/icons/lab.svg";
@@ -18,14 +19,31 @@ import pharmacy from "../../assets/icons/pharmacy.svg";
 import close from "../../assets/icons/close.svg";
 import open from "../../assets/icons/open.svg";
 import { ImCross } from "react-icons/im";
-import User from "../../assets/icons/profile.png";
-import Security from "../../assets/icons/pharmacy.svg";
-import Legal from "../../assets/icons/home-hashtag.png";
-import Payment from "../../assets/icons/Money Bag.png";
-import Family from "../../assets/icons/people.png";
+import './Topbar.css';
+
 
 const Topbar = ({ toggleSidebar: propToggleSidebar, isMobile: propIsMobile } = {}) => {
   const [calculatedIsMobile, setCalculatedIsMobile] = useState(window.innerWidth < 992);
+    const [notifications, setNotifications] = useState([]);
+      const [showDropdown, setShowDropdown] = useState(false);
+      const [expandedIds, setExpandedIds] = useState([]);
+const dropdownRef = React.useRef(null);                                                 
+
+useEffect(() => {
+  function handleClickOutside(event) {
+    if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
+      setShowDropdown(false);
+    }
+  }
+
+  if (showDropdown) {
+    document.addEventListener("mousedown", handleClickOutside);
+  } else {
+    document.removeEventListener("mousedown", handleClickOutside);
+  }
+
+  return () => document.removeEventListener("mousedown", handleClickOutside);
+}, [showDropdown]);
 
   useEffect(() => {
     const handleResize = () => setCalculatedIsMobile(window.innerWidth < 992);
@@ -56,6 +74,67 @@ const Topbar = ({ toggleSidebar: propToggleSidebar, isMobile: propIsMobile } = {
 
   }, []);
 
+  // --- Fetch notifications
+  useEffect(() => {
+    const storedRole = localStorage.getItem("role"); // 'user' or 'doctor'
+    const storedUser = JSON.parse(localStorage.getItem("user"));
+  const userId = storedUser?.id;
+  if (!userId || !storedRole) return;
+    const fetchNotifications = async () => {
+      try {
+      const res = await fetch(`${API_BASE_URL}/api/notifications/${storedRole}/${userId}`);
+        const data = await res.json();
+      if (res.ok && data.notifications) {
+        setNotifications(data.notifications);
+      } else {
+        console.error("Error fetching notifications:", data.message);
+      }
+      } catch (err) {
+        console.error("Error fetching notifications:", err);
+      }
+    };
+
+    fetchNotifications();
+    const interval = setInterval(fetchNotifications, 30000); // refresh every 30s
+    return () => clearInterval(interval);
+  }, []);
+
+   // --- Unread count
+  const unreadCount = notifications.filter(n => !n.isRead).length;
+
+   // --- Mark as read
+  const handleMarkRead = async (id) => {
+      const role = localStorage.getItem("role"); // 'user' or 'doctor'
+
+    try {
+    const res = await fetch(`http://localhost:5000/api/notifications/${id}/read?type=${role}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+      });
+        const data = await res.json();
+
+      if (res.ok) {
+       console.log(" Marked as read:", data.notification);
+
+        setNotifications((prev) =>
+          prev.map((n) => (n._id === id ? { ...n, isRead: true } : n))
+        );
+              setExpandedIds((prev) => [...prev, id]);
+
+      } else{
+      console.error(" Error:", data.message);
+      }
+    } catch (err) {
+      console.error("Error marking notification as read:", err);
+    }
+  };
+
+  // --- Toggle dropdown
+  const handleBellClick = () => setShowDropdown((prev) => !prev);
+
+
+
+
   const [toggleState, setToggleState] = useState(false);
 
   const navigate = useNavigate();
@@ -66,7 +145,7 @@ const Topbar = ({ toggleSidebar: propToggleSidebar, isMobile: propIsMobile } = {
 
   const handleLogout = async () => {
     try {
-      // ✅ Call backend logout API
+      //  Call backend logout API
       const response = await fetch(`${API_BASE_URL}/api/user/logout`, {
         method: "POST",
         credentials: "include", // if using cookies for session
@@ -77,7 +156,7 @@ const Topbar = ({ toggleSidebar: propToggleSidebar, isMobile: propIsMobile } = {
 
       const data = await response.json();
       if (response.ok) {
-        // ✅ Clear tokens or localStorage if you store them there
+        //  Clear tokens or localStorage if you store them there
         localStorage.removeItem("token");
         localStorage.removeItem("user");
 
@@ -429,11 +508,185 @@ const Topbar = ({ toggleSidebar: propToggleSidebar, isMobile: propIsMobile } = {
           onClick={handleLogout}
           title="Logout"
         />
-        <img
-          src={notification}
-          alt="Notification"
-          style={{ width: '22px', height: '22px', marginRight: '15px', cursor: "pointer" }}
-        />
+
+{/*  Notification Bell */}
+<div style={{ position: "relative", marginRight: "15px" }} ref={dropdownRef}>
+  <img
+    src={notification}
+    alt="Notification"
+    style={{ width: '22px', height: '22px', cursor: "pointer" }}
+    onClick={() => setShowDropdown((prev) => !prev)}
+  />
+
+  {/*  Unread Count Badge */}
+  {unreadCount > 0 && (
+    <span
+      style={{
+        position: "absolute",
+        top: "-5px",
+        right: "-5px",
+        background: "red",
+        color: "white",
+        borderRadius: "50%",
+        fontSize: "10px",
+        width: "16px",
+        height: "16px",
+        textAlign: "center",
+        lineHeight: "16px",
+      }}
+    >
+      {unreadCount}
+    </span>
+  )}
+
+  {/* Dropdown */}
+{showDropdown && (
+  <div
+    className="notification-dropdown"
+    // ref={dropdownRef}
+    style={{
+      position: "absolute",
+      top: "30px",
+      right: "0",
+      background: "#fff",
+      border: "1px solid #ddd",
+      borderRadius: "10px",
+      boxShadow: "0 2px 8px rgba(0,0,0,0.1)",
+      zIndex: 2000,
+      overflow: "hidden", // Prevent header from scrolling
+    }}
+  >
+    {/* --- HEADER (Fixed) --- */}
+    <div
+      style={{
+        display: "flex",
+        justifyContent: "space-between",
+        alignItems: "center",
+        padding: "10px",
+        borderBottom: "1px solid #eee",
+        position: "sticky",
+        top: 0,
+        background: "#fff",
+        zIndex: 10,
+      }}
+    >
+      <strong>Notifications</strong>
+      <div style={{ display: "flex", gap: "10px", alignItems: "center" }}>
+        <button
+          onClick={async () => {
+            const role = localStorage.getItem("role");
+            const user = JSON.parse(localStorage.getItem("user"));
+            const id = user?.id;
+            if (!id || !role) return;
+
+            try {
+              const res = await fetch(
+                `${API_BASE_URL}/api/notifications/mark-all-read?type=${role}`,
+                {
+                  method: "PATCH",
+                  headers: { "Content-Type": "application/json" },
+                  body: JSON.stringify({
+                    userId: role === "user" ? id : undefined,
+                    doctorId: role === "doctor" ? id : undefined,
+                  }),
+                }
+              );
+              if (res.ok) {
+                setNotifications((prev) =>
+                  prev.map((n) => ({ ...n, isRead: true }))
+                );
+              }
+            } catch (err) {
+              console.error("Error marking all read:", err);
+            }
+          }}
+          style={{
+            background: "transparent",
+            border: "none",
+            color: "#007bff",
+            fontSize: "13px",
+            cursor: "pointer",
+          }}
+        >
+          Mark all as read
+        </button>
+        <span
+          onClick={() => setShowDropdown(false)}
+          style={{
+            cursor: "pointer",
+            color: "#555",
+            fontSize: "16px",
+            marginRight: "5px",
+          }}
+        >
+          ✕
+        </span>
+      </div>
+    </div>
+
+    {/* --- SCROLLABLE LIST --- */}
+    <div
+      className="notification-list"
+      style={{
+        maxHeight: "300px",
+        overflowY: "auto",
+        scrollbarWidth: "none", // Firefox
+      }}
+    >
+      {notifications.length > 0 ? (
+        notifications.map((note) => (
+          <div
+            key={note._id}
+            style={{
+              backgroundColor: note.isRead ? "#f9f9f9" : "#00a99d", // ✨ Change unread color here
+              padding: "10px",
+              borderRadius: "8px",
+              margin: "8px 10px",
+              border: "1px solid #eee",
+            }}
+          >
+            <p style={{ margin: 0, fontSize: "14px", color: "#333" }}>
+              {expandedIds.includes(note._id) ? (
+                <>
+                  {note.message.text}{" "}
+                  <span
+                    onClick={() =>
+                      setExpandedIds((prev) =>
+                        prev.filter((id) => id !== note._id)
+                      )
+                    }
+                    style={{ color: "#007bff", cursor: "pointer" }}
+                  >
+                    less
+                  </span>
+                </>
+              ) : note.message.text.length > 40 ? (
+                <>
+                  {note.message.text.slice(0, 40)}...
+                  <span
+                    onClick={() => handleMarkRead(note._id)}
+                    style={{ color: "#007bff", cursor: "pointer" }}
+                  >
+                    more
+                  </span>
+                </>
+              ) : (
+                note.message.text
+              )}
+            </p>
+          </div>
+        ))
+      ) : (
+        <p style={{ textAlign: "center", color: "#888", padding: "10px" }}>
+          No notifications
+        </p>
+      )}
+    </div>
+  </div>
+)}
+</div>
+
+         {/* Profile Image */}
 
         <img
           src={profileImage}

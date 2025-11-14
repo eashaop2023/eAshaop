@@ -26,6 +26,7 @@ const whatsappRoutes = require('./routes/whatsappRoutes/whatsappRoutes')
 const User = require("./models/user");
 const Doctor = require("./models/doctorModel");
 const Appointment = require("./models/Appointment");
+const notificationRoutes=require("./routes/notificationRoutes");
 
 const app = express();
 const server = http.createServer(app);
@@ -72,6 +73,7 @@ app.use('/api', reviewRoutes)
 app.use('/api/whatsapp', whatsappRoutes)
 app.use(notFound);
 app.use(errorHandler);
+app.use("/api/notifications",notificationRoutes)
 
 // -------------------- CRON JOB --------------------
 const cron = require("node-cron");

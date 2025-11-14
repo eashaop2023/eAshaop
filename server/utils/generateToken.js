@@ -1,20 +1,12 @@
-// const jwt = require('jsonwebtoken');
-
-// const generateToken = (id) => {
-//   return jwt.sign({ id }, process.env.JWT_SECRET, { 
-//     expiresIn: process.env.JWT_EXPIRES_IN 
-//   });
-//   console.log("Generated JWT:", token);  // log the raw token
-// };
-
-// module.exports = generateToken;
-
 
 const jwt = require('jsonwebtoken');
-
-const generateToken = (id) => {
+/**
+ * Generate JWT token for user or doctor
+ * @param {Object} payload - { id: ObjectId, role: 'user' | 'doctor' }
+ */
+const generateToken = (id,role) => {
   const token = jwt.sign(
-    { id },
+     {id,role} ,
     process.env.JWT_SECRET,
     { expiresIn: process.env.JWT_EXPIRES_IN }
   );
@@ -23,4 +15,4 @@ const generateToken = (id) => {
   return token;
 };
 
-module.exports = generateToken;
+module.exports = {generateToken};
