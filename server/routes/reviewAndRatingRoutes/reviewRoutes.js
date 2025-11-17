@@ -1,6 +1,6 @@
 const express = require('express');
 const router = express.Router();
-const { authMiddleware } = require("../../middlewares/authMiddleware");
+const { protect } = require("../../middlewares/authMiddleware");
 
 const {
     createOrUpdate, list, getOne,
@@ -16,20 +16,20 @@ const { create: reportCreate, updateStatus: reportUpdate,
     list: reportList
 } = require('../../controllers/reviewAndRatingController/reportController');
 
-router.post('/reviews', authMiddleware, createOrUpdate);
-router.get('/reviews', authMiddleware, list);
-router.get('/reviews/:id', authMiddleware, getOne);
-router.delete('/reviews/:id', authMiddleware, reviewDelete);
-router.post('/reviews/like', authMiddleware, toggleLike);
-router.get('/reviews/:id/likes', authMiddleware, getLikeCount);
+router.post('/reviews', protect, createOrUpdate);
+router.get('/reviews', protect, list);
+router.get('/reviews/:id', protect, getOne);
+router.delete('/reviews/:id', protect, reviewDelete);
+router.post('/reviews/like', protect, toggleLike);
+router.get('/reviews/:id/likes', protect, getLikeCount);
 
-router.post('/comments', authMiddleware, upsertComment);
-router.get('/reviews/:reviewId/comments', authMiddleware, listByReview);
-router.delete('/comments/:id', authMiddleware, deleteComment);
-router.post('/comments/like', authMiddleware, toggleCommentLike);
+router.post('/comments', protect, upsertComment);
+router.get('/reviews/:reviewId/comments', protect, listByReview);
+router.delete('/comments/:id', protect, deleteComment);
+router.post('/comments/like', protect, toggleCommentLike);
 
-router.post('/reports', authMiddleware, reportCreate);
-router.patch('/reports/:id/status', authMiddleware, reportUpdate);
-router.get('/reports', authMiddleware, reportList);
+router.post('/reports', protect, reportCreate);
+router.patch('/reports/:id/status', protect, reportUpdate);
+router.get('/reports', protect, reportList);
 
 module.exports = router;
