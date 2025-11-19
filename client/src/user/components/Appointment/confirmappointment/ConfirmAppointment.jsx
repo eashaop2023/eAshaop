@@ -256,7 +256,7 @@ const ConfirmAppointment = () => {
                 }}
               />
               <img
-                src={doctor?.profileImage || Profile}
+                src={doctor?.profileImage }
                 alt={doctor?.name}
                 style={{
                   height: "120px",
