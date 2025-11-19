@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useRef, useState } from "react";
 import { Bell, User } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import Logo from "../../../assets/eAshalogo.png";
@@ -9,12 +9,12 @@ const Navbar = () => {
   const [expandedIds, setExpandedIds] = useState([]);
   const dropdownRef = useRef(null);
   const navigate = useNavigate();
-  const [profileImage,setProfileImage]=useState(0)
-  const [doctorId,setDoctorId]=useState("");
+  const [profileImage, setProfileImage] = useState(0)
+  const [doctorId, setDoctorId] = useState("");
 
   const handleUserClick = () => {
-  navigate("/doctor/doctorprofile"); 
-};
+    navigate("/doctor/doctorprofile");
+  };
 
 
   return (
