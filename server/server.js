@@ -30,6 +30,8 @@ const notificationRoutes = require('./routes/notificationRoutes');
 
 const { notFound, errorHandler } = require('./middlewares/error');
 const corsOptions = require('./config/corsConfig');
+const { protect } = require("./middlewares/authMiddleware");
+
 
 const app = express();
 const server = http.createServer(app);
@@ -49,15 +51,15 @@ app.use(
 
 app.get('/', (req, res) => res.json({ servicename: 'first app module' }));
 app.use('/api/doctors', doctorRoutes);
-app.use('/api/categories', categoryRoutes);
-app.use('/api/prescriptions', prescriptionRoutes);
-app.use('/api/patients', patientRoutes);
-app.use('/api/contact', contactRoutes);
-app.use('/api', apiRoutes);
-app.use('/api/appointments', appointmentRoutes);
-app.use('/api', reviewRoutes);
-app.use('/api/whatsapp', whatsappRoutes);
-app.use('/api/notifications', notificationRoutes);
+app.use('/api/categories',protect, categoryRoutes);
+app.use('/api/prescriptions',protect, prescriptionRoutes);
+app.use('/api/patients',protect, patientRoutes);
+app.use('/api/contact',protect, contactRoutes);
+app.use('/api',protect, apiRoutes);
+app.use('/api/appointments',protect, appointmentRoutes);
+app.use('/api',protect, reviewRoutes);
+app.use('/api/whatsapp',protect, whatsappRoutes);
+app.use('/api/notifications',protect, notificationRoutes);
 
 app.use(notFound);
 app.use(errorHandler);
