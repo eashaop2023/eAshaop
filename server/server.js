@@ -55,7 +55,7 @@ app.use('/api/categories',protect, categoryRoutes);
 app.use('/api/prescriptions',protect, prescriptionRoutes);
 app.use('/api/patients',protect, patientRoutes);
 app.use('/api/contact',protect, contactRoutes);
-app.use('/api',protect, apiRoutes);
+app.use('/api', apiRoutes);
 app.use('/api/appointments',protect, appointmentRoutes);
 app.use('/api',protect, reviewRoutes);
 app.use('/api/whatsapp',protect, whatsappRoutes);
