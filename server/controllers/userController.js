@@ -295,17 +295,25 @@ exports.sendLoginOTP = async (req, res) => {
         .json({ message: "Value and verifyBy are required" });
 
     const method = verifyBy.toLowerCase();
-    if (method !== "email" && method !== "phone")
+    // Accept both "mobile" and "phone" for phone verification
+    if (method !== "email" && method !== "phone" && method !== "mobile")
       return res
         .status(400)
-        .json({ message: "verifyBy must be 'email' or 'phone'" });
+        .json({ message: "verifyBy must be 'email', 'phone', or 'mobile'" });
 
-    const user =
-      method === "email"
-        ? await User.findOne({ email: value })
-        : await User.findOne({ phone_number: value });
+    // Normalize "mobile" to "phone" for database lookup
+    const isEmail = method === "email";
+    
+    const user = isEmail
+      ? await User.findOne({ 
+          email: { $regex: `^${value.trim()}$`, $options: "i" } // Case-insensitive email search
+        })
+      : await User.findOne({ phone_number: value.trim() });
 
-    if (!user) return res.status(404).json({ message: "User not found" });
+    if (!user) {
+      console.log(`User not found: ${isEmail ? 'email' : 'phone'} = ${value}`);
+      return res.status(404).json({ message: "User not found" });
+    }
 
     const otp = generateOTP();
     const expires = new Date(Date.now() + 10 * 60 * 1000); // 10 min expiry
@@ -314,17 +322,29 @@ exports.sendLoginOTP = async (req, res) => {
     user.login_otp = { code: otp, expires, verified: false };
     await user.save();
 
-    await sendOTP({
-      verifyBy: method,
-      email: user.email,
-      mobile: user.phone_number,
-      otp,
-    });
+    // Normalize method for sendOTP (it accepts "phone" or "mobile")
+    const sendMethod = isEmail ? "email" : (method === "mobile" ? "mobile" : "phone");
+    
+    try {
+      await sendOTP({
+        verifyBy: sendMethod,
+        email: user.email,
+        mobile: user.phone_number,
+        otp,
+      });
+      console.log(`OTP sent successfully via ${sendMethod}`);
+    } catch (sendError) {
+      console.error("Failed to send OTP:", sendError);
+      // Return specific error message to frontend
+      return res.status(500).json({ 
+        message: `Failed to send OTP: ${sendError.message || "Email/SMS service error"}` 
+      });
+    }
 
-    res.json({ message: `OTP sent to your ${method}` });
+    res.json({ message: `OTP sent to your ${isEmail ? 'email' : 'phone'}` });
   } catch (err) {
     console.error("Send Login OTP error:", err);
-    res.status(500).json({ message: "Server error" });
+    res.status(500).json({ message: err.message || "Server error" });
   }
 };
 
