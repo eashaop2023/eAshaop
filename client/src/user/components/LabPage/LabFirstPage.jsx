@@ -426,9 +426,6 @@ export default function LabCardsComponent() {
           <h1 style={{ fontSize: "48px", fontWeight: "bold", color: "#10e851ff" }}>
             Coming Soon!
           </h1>
-          <p style={{ fontSize: "20px", color: "#fff" }}>
-            We're preparing this section for launch. Please check back later.
-          </p>
         </div>
       )}
 

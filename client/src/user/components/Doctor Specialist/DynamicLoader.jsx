@@ -6,9 +6,12 @@ import OrthopedicMainContent from "./Orthopedic/MainContent";
 import ENTMainContent from "./ENT/MainContent";
 import OphthalmologyContent from "./Ophthalmology/MainContent"; // ✔ correct spelling
 import DentalMainContent from "./Dental/MainContent"
-import MentalMainContent from "./MentalHealth/MainContent";
-import WomenMainContent from "./WomenHealth/MainContent";
-import SkinBeautyMainContent from "./SkinBeauty/MainContent";
+import PsychiatristMainContent from "./Psychiatrist/MainContent";
+import PediatricianMainContent from "./Pediatrician/MainContent";
+import DermatologistMainContent from "./Dermatologist/MainContent";
+import PhysiotherapistMainContent from "./Physiotherapist/MainContent";
+import UrologistMainContent from "./Urologist/MainContent";
+import GynecologistMainContent from "./Gynecologist/MainContent";
 // import other categories
 
 const uuidToCategoryMap = {
@@ -17,11 +20,14 @@ const uuidToCategoryMap = {
   "r1ArfRKaU_": "Neurologist",
   "oybWOH7Ok8": "Orthopedic",
   "whHEP4Ba-m": "Ophthalmology",
-  "4A31RiqS_M": "ENT",
+  "4A31RiqS_M": "ENT Specialist",
   "u3bp-C0G4f": "Dentist",
-  "QWonnSUTJw": "Mental Health",
-  "EGGSWzg5RE":"Women Health",
-  "_jCoVKpbHK":"Skin & Beauty",
+  "Psych_01": "Psychiatrist",
+  "Ped_01": "Pediatrician",
+  "DrmtLgst_01":"Dermatologist",
+  "PhyThr_01":"Physiotherapist",
+  "Urolgst_01":"Urologist",
+  "Gynclgst_01":"Gynecologist",
 
   // add all UUIDs for your categories here
 };
@@ -34,14 +40,16 @@ const DynamicDoctorCategory = (props) => {
     "Cardiologist": CardiologistMainContent,
     // "childhealth": ChildHealth,
     "Dentist":DentalMainContent ,
-     "ENT": ENTMainContent,
-     "Mental Health": MentalMainContent,
+     "ENT Specialist": ENTMainContent,
+     "Psychiatrist": PsychiatristMainContent,
+     "Pediatrician": PediatricianMainContent,
     "Neurologist": NeurologistMainContent,
 "Ophthalmology": OphthalmologyContent,
      "Orthopedic": OrthopedicMainContent,
-    "Women Health": WomenMainContent,
-    "Skin & Beauty":SkinBeautyMainContent
-    // "skinbeauty": SkinBeauty,
+    "Dermatologist":DermatologistMainContent,
+    "Physiotherapist": PhysiotherapistMainContent,
+    "Urologist": UrologistMainContent,
+    "Gynecologist": GynecologistMainContent
   };
 
 const CategoryComponent = categoryComponents[categorySlug];

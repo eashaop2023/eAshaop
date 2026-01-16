@@ -125,7 +125,7 @@ useEffect(() => {
         <span style={{color:'#8E8E8E',fontSize:'18px'}} className="me-2">Category</span>
         </Link></span>
         <span className="me-2" style={{width:'18px',height:'18px',marginTop:'7px'}}><img src={arrowright} /></span>
-        <span style={{ textDecoration: "underline",fontSize:'1.12rem' }}>ENT</span>
+        <span style={{ textDecoration: "underline",fontSize:'1.12rem' }}>ENT Specialist</span>
       </div>
 
       {/* Header */}

@@ -65,12 +65,9 @@ import CardiologistMainContent from "./components/Doctor Specialist/cardiologist
 import ChildHealth from "./components/Doctor Specialist/ChildHealth/MainContent";
 import Dental from "./components/Doctor Specialist/Dental/MainContent";
 import ENT from "./components/Doctor Specialist/ENT/MainContent";
-import MentalHealth from "./components/Doctor Specialist/MentalHealth/MainContent";
 import Neurologist from "./components/Doctor Specialist/Neurologist/MainContent";
 import Ophthalmology from "./components/Doctor Specialist/Ophthalmology/MainContent";
 import Orthopedic from "./components/Doctor Specialist/Orthopedic/MainContent";
-import WomenHealth from "./components/Doctor Specialist/WomenHealth/MainContent";
-import SkinBeauty from "./components/Doctor Specialist/SkinBeauty/MainContent";
 import DynamicDoctorCategory from "./components/Doctor Specialist/DynamicLoader";
 
 // Utility to clear filters
@@ -192,16 +189,6 @@ function UserApp() {
               path="ent"
               element={
                 <ENT
-                  selectedFilters={selectedFilters}
-                  setSelectedFilters={setSelectedFilters}
-                  clearAllFilters={() => clearAllFilters(setSelectedFilters)}
-                />
-              }
-            />
-            <Route
-              path="mental-health"
-              element={
-                <MentalHealth
                   selectedFilters={selectedFilters}
                   setSelectedFilters={setSelectedFilters}
                   clearAllFilters={() => clearAllFilters(setSelectedFilters)}

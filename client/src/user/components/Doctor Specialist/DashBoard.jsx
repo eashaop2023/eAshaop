@@ -7,7 +7,6 @@ import neurologist from "../../assets/DBIcons/neurologist.svg";
 import ophthalmology from "../../assets/DBIcons/ophthalmology.svg";
 import ent from "../../assets/DBIcons/ent.svg";
 import dental from "../../assets/DBIcons/dental.svg";
-import womenHealth from "../../assets/DBIcons/womenHealth.svg";
 import childHealth from "../../assets/DBIcons/childHealth.svg";
 import skin from "../../assets/DBIcons/skin.svg";
 import mentalHealth from "../../assets/DBIcons/mentalHealth.svg";
@@ -23,12 +22,14 @@ const staticCategories = [
   { name: "Orthopedic", icon: orthopedic, path: "orthopedic", uuid: "oybWOH7Ok8" },
   { name: "Neurologist", icon: neurologist, path: "neurologist", uuid: "r1ArfRKaU_" },
   { name: "Ophthalmology", icon: ophthalmology, path: "ophthalmology", uuid: "whHEP4Ba-m" },
-  { name: "ENT", icon: ent, path: "ent", uuid: "4A31RiqS_M" },
+  { name: "ENT Specialist", icon: ent, path: "ent", uuid: "4A31RiqS_M" },
   { name: "Dentist", icon: dental, path: "dental", uuid: "u3bp-C0G4f" },
-  { name: "Women health", icon: womenHealth, path: "women-health", uuid: "EGGSWzg5RE" },
-  // { name: "Child health", icon: childHealth, path: "child-health" },
-  { name: "Skin & Beauty", icon: skin, path: "skin-&-beauty", uuid: "_jCoVKpbHK" },
-  { name: "Mental health", icon: mentalHealth, path: "mental-health", uuid: "QWonnSUTJw" },
+  { name: "Psychiatrist", icon: mentalHealth, path: "psychiatrist", uuid: "Psych_01" },
+  { name: "Pediatrician", icon: childHealth, path: "pediatrician", uuid: "Ped_01" },
+  { name: "Dermatologist", icon: skin, path: "dermatologist", uuid: "DrmtLgst_01" },
+  { name: "Physiotherapist", icon: orthopedic, path: "physiotherapist", uuid: "PhyThr_01" },
+  { name: "Urologist", icon: generalHealthCare, path: "urologist", uuid: "Urolgst_01" },
+  { name: "Gynecologist", icon: generalHealthCare, path: "gynecologist", uuid: "Gynclgst_01" },
 ];
 
 const Dashboard = () => {
@@ -81,13 +82,13 @@ const Dashboard = () => {
   // };
 
   const handleCategoryClick = (uuid, name, doctorCount) => {
-    // Show toast if no doctors
-    if (!uuid || doctorCount === 0) {
-      toast.info(`No doctors available for ${name}`);
+    // Check if UUID exists
+    if (!uuid) {
+      toast.info(`Category not available for ${name}`);
       return;
     }
 
-    // Navigate to the category page by UUID
+    // Always navigate to the category page - it will show doctors if available
     navigate(`/user/category/${uuid}`, { state: { categoryName: name } });
   };
 

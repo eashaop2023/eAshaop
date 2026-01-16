@@ -540,7 +540,6 @@ export default function HomeSection() {
               }}
             >
               <h1 style={{ fontSize: "48px", fontWeight: "bold" }}>Coming Soon</h1>
-              <p style={{ fontSize: "20px" }}>We're working hard to launch this feature!</p>
             </div>
           )}
           {/* Banner Section */}

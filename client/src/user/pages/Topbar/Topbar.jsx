@@ -817,14 +817,52 @@ useEffect(() => {
 </div>
 
          {/* Profile Image */}
-
-        <img
-          src={profileImage}
-          alt="User1"
-          className="rounded-circle hover:cursor-pointer"
-          style={{ width: '48px', height: '48px', objectFit: 'cover' }}
+        <div 
+          className="d-flex flex-column align-items-center"
+          style={{ cursor: 'pointer' }}
           onClick={handleClick}
-        />
+        >
+          {profileImage ? (
+            <img
+              src={profileImage}
+              alt="Profile"
+              className="rounded-circle"
+              style={{ width: '48px', height: '48px', objectFit: 'cover' }}
+            />
+          ) : (
+            <div
+              className="rounded-circle d-flex align-items-center justify-content-center"
+              style={{ 
+                width: '48px', 
+                height: '48px', 
+                backgroundColor: '#E0E0E0',
+                border: '2px solid #E0E0E0'
+              }}
+            >
+              <svg
+                width="48"
+                height="48"
+                viewBox="0 0 48 48"
+                fill="none"
+                xmlns="http://www.w3.org/2000/svg"
+              >
+                <circle cx="24" cy="24" r="24" fill="#E0E0E0" />
+                <circle cx="24" cy="18" r="8" fill="#9E9E9E" />
+                <ellipse cx="24" cy="38" rx="12" ry="8" fill="#9E9E9E" />
+              </svg>
+            </div>
+          )}
+          <span 
+            style={{ 
+              fontSize: '12px', 
+              color: '#252525', 
+              marginTop: '4px',
+              fontWeight: '500'
+            }}
+          >
+            Profile
+          </span>
+        </div>
       </div>
     </div>
   );

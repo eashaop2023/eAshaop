@@ -1,13 +1,27 @@
 
 import React, { useState, useEffect, useRef } from "react";
 import { Container, Row, Col, Form, Button, Badge } from "react-bootstrap";
-import Boy from "../../assets/user.png";
 import styles from "../../pages/ProfilePage/Profile.module.css";
 import { API_BASE_URL } from "../../../api-config";
 import { toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import LoaderOverlay from "../../../commonComponents/FadeLoader";
 import ProfileImageCropper from "./ImageCrop";
+
+// Generic empty avatar SVG component
+const EmptyAvatar = ({ size = 72 }) => (
+  <svg
+    width={size}
+    height={size}
+    viewBox="0 0 72 72"
+    fill="none"
+    xmlns="http://www.w3.org/2000/svg"
+  >
+    <circle cx="36" cy="36" r="36" fill="#E0E0E0" />
+    <circle cx="36" cy="28" r="12" fill="#9E9E9E" />
+    <ellipse cx="36" cy="58" rx="18" ry="12" fill="#9E9E9E" />
+  </svg>
+);
 
 function useIsMobileOrTablet() {
   const [isMobileOrTablet, setIsMobileOrTablet] = useState(window.innerWidth < 1024);
@@ -33,7 +47,7 @@ export default function UserDetailsPanel() {
     age: "",
   });
 
-  const [profileImage, setProfileImage] = useState(Boy);
+  const [profileImage, setProfileImage] = useState(null); // Use empty avatar by default
   const [loading, setLoading] = useState(true);
   const fileInputRef = useRef(null);
   const isMobileOrTablet = useIsMobileOrTablet();
@@ -73,6 +87,8 @@ export default function UserDetailsPanel() {
           setHealthTags(data.user.health_conditions || []);
           if (data.user.profileImage?.cloudinaryUrl) {
             setProfileImage(data.user.profileImage.cloudinaryUrl);
+          } else {
+            setProfileImage(null); // Use empty avatar if no image
           }
         }
       })
@@ -402,7 +418,7 @@ export default function UserDetailsPanel() {
                 {/* Desktop profile image - hide on mobile/tablet */}
 
 
-                <div className="ms-md-4 w-96 mt-3 mt-md-0">
+                <div className="ms-md-4 w-96 mt-3 mt-md-0" style={{ width: "100%", maxWidth: "100%" }}>
                   <Row>
                     <Col xs={8} md={4} className="mb-3">
                       <Form.Label className="mb-1">Full Name</Form.Label>
@@ -426,34 +442,47 @@ export default function UserDetailsPanel() {
                         onKeyDown={(e) => handleEnterKey(e, 1)}
                       />
                     </Col>
-                    <Col xs={12} md={4} className="mb-3">
+                    <Col xs={12} md={4} className="mb-3" style={{ minWidth: "200px" }}>
                       <Form.Label className="mb-1">Gender</Form.Label>
                       <div
-                        className="d-flex rounded-pill border overflow-hidden w-100"
-                        style={{ height: "48px" }}
+                        className="d-flex rounded-pill border"
+                        style={{ 
+                          height: "48px",
+                          width: "100%",
+                          borderRadius: "24px",
+                          overflow: "hidden"
+                        }}
                       >
-                        {["Male", "Female", "Others"].map((g) => (
-                          <Button
+                        {["Male", "Female", "Others"].map((g, index) => (
+                          <button
                             key={g}
-                            variant="light"
-                            // onClick={() => setGender(g)}
+                            type="button"
                             onClick={() => handleChange("gender", g)}
                             style={{
                               backgroundColor:
                                 formData.gender.toLowerCase() === g.toLowerCase() ? "#00A99D" : "white",
                               color: formData.gender.toLowerCase() === g.toLowerCase() ? "white" : "#252525",
-
-
-                              //  backgroundColor: formData.gender === g.toLowerCase() ? "#00A99D" : "white",
-                              //  color: formData.gender === g.toLowerCase() ? "white" : "#252525",
                               border: "none",
-                              flex: 1,
+                              outline: "none",
+                              flex: "1",
                               fontWeight: "500",
-                              borderRadius: "28px",
+                              borderRadius: index === 0 ? "24px 0 0 24px" : index === 2 ? "0 24px 24px 0" : "0",
+                              fontSize: "12px",
+                              padding: "0 1px",
+                              minHeight: "48px",
+                              height: "48px",
+                              display: "flex",
+                              alignItems: "center",
+                              justifyContent: "center",
+                              whiteSpace: "nowrap",
+                              cursor: "pointer",
+                              transition: "all 0.2s ease",
+                              overflow: "visible",
+                              textOverflow: "clip",
                             }}
                           >
                             {g}
-                          </Button>
+                          </button>
                         ))}
                       </div>
                     </Col>

@@ -618,9 +618,6 @@ function DBoard() {
                       <h1 className="text-4xl md:text-5xl font-bold mb-4" style={{ color: "#009084" }} >
                         Coming Soon!
                       </h1>
-                      <p className="text-white text-base md:text-xl text-center px-4 pb-4">
-                        We're preparing this section for launch. Please check back later.
-                      </p>
                     </div>
                   )}
                   {prescriptions.map((p, i) => (

@@ -1,6 +1,78 @@
 const Category = require('../models/categoryModel');
 const Doctor = require('../models/doctorModel');
 
+// Helper function to create flexible matching patterns for category names
+// This ensures doctors are matched to their categories even if there are naming variations
+const createSpecialityMatcher = (categoryName) => {
+  const trimmed = categoryName.trim();
+  const escaped = trimmed.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  const conditions = [];
+  const lowerName = trimmed.toLowerCase();
+  
+  // Handle specific categories first to avoid cross-matching
+  // Neurologist - must start with "neuro" to avoid matching "Urologist"
+  if (lowerName === 'neurologist' || lowerName.startsWith('neuro')) {
+    conditions.push({ speciality: { $regex: /^neuro/i } });
+    return { $or: conditions };
+  }
+  
+  // Urologist - must start with "urolog" (not "neuro")
+  if (lowerName === 'urologist' || lowerName.startsWith('urolog')) {
+    conditions.push({ speciality: { $regex: /^urolog/i } });
+    return { $or: conditions };
+  }
+  
+  // Physiotherapist variations
+  if (lowerName.includes('physio')) {
+    conditions.push({ speciality: { $regex: /^physio/i } });
+    conditions.push({ speciality: { $regex: /^physical\s+therapy/i } });
+    return { $or: conditions };
+  }
+  
+  // Gynecologist variations (including British spelling)
+  if (lowerName.includes('gynecol') || lowerName.includes('gynaecol')) {
+    conditions.push({ speciality: { $regex: /^gyn(ae|e)col/i } });
+    conditions.push({ speciality: { $regex: /^women\s+health/i } });
+    return { $or: conditions };
+  }
+  
+  // Psychiatrist variations
+  if (lowerName.includes('psychiatr')) {
+    conditions.push({ speciality: { $regex: /^psychiatr/i } });
+    conditions.push({ speciality: { $regex: /^mental\s+health/i } });
+    return { $or: conditions };
+  }
+  
+  // Pediatrician variations
+  if (lowerName.includes('pediatric')) {
+    conditions.push({ speciality: { $regex: /^pediatric/i } });
+    conditions.push({ speciality: { $regex: /^paediatric/i } }); // British spelling
+    conditions.push({ speciality: { $regex: /^child\s+health/i } });
+    return { $or: conditions };
+  }
+  
+  // For all other categories, use standard matching
+  // 1. Exact match (case-insensitive) - primary match
+  conditions.push({ speciality: { $regex: new RegExp(`^${escaped}$`, "i") } });
+  
+  // 2. Remove "specialist" suffix and match
+  // Example: "ENT Specialist" category matches doctors with speciality "ENT"
+  const withoutSpecialist = trimmed.replace(/\s*specialist\s*$/i, "").trim();
+  if (withoutSpecialist && withoutSpecialist !== trimmed) {
+    const escapedWithout = withoutSpecialist.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    conditions.push({ speciality: { $regex: new RegExp(`^${escapedWithout}$`, "i") } });
+  }
+  
+  // 3. Add "specialist" suffix and match
+  // Example: "ENT" category matches doctors with speciality "ENT Specialist"
+  if (!trimmed.toLowerCase().includes("specialist")) {
+    conditions.push({ speciality: { $regex: new RegExp(`^${escaped}\\s*specialist$`, "i") } });
+  }
+  
+  // Return $or condition for MongoDB query
+  return { $or: conditions };
+};
+
 // @desc    Create or update category (with doctor if provided)
 // @route   POST /api/categories
 const createCategory = async (req, res) => {
@@ -33,17 +105,76 @@ const createCategory = async (req, res) => {
 // @route   GET /api/categories
 const getAllCategories = async (req, res) => {
   try {
-    const categories = await Category.find().populate({
-      path: "doctors",
-      match: { isActive: true, isApproved: true } // match active & approved
-    });
+    // Ensure required categories exist
+    const requiredCategories = [
+      { name: "Physiotherapist", uuid: "PhyThr_01" },
+      { name: "Urologist", uuid: "Urolgst_01" },
+      { name: "Gynecologist", uuid: "Gynclgst_01" },
+      { name: "Psychiatrist", uuid: "Psych_01" },
+      { name: "Pediatrician", uuid: "Ped_01" },
+      { name: "ENT Specialist", uuid: "4A31RiqS_M" },
+      { name: "Dermatologist", uuid: "DrmtLgst_01" }
+    ];
 
-    const results = categories.map(cat => ({
-      uuid: cat.uuid,
-      name: cat.name,
-      doctorCount: cat.doctors.length, // now only active & approved
-      message: cat.doctors.length > 0 ? null : "Currently no doctors available"
-    }));
+    for (const reqCat of requiredCategories) {
+      const existing = await Category.findOne({ 
+        $or: [
+          { name: { $regex: new RegExp(`^${reqCat.name}$`, "i") } },
+          { uuid: reqCat.uuid }
+        ]
+      });
+
+      if (!existing) {
+        try {
+          await Category.create({
+            name: reqCat.name,
+            uuid: reqCat.uuid
+          });
+          console.log(`✅ Created missing category: ${reqCat.name}`);
+        } catch (error) {
+          // If category with same name but different UUID exists, update it
+          const sameName = await Category.findOne({ 
+            name: { $regex: new RegExp(`^${reqCat.name}$`, "i") }
+          });
+          if (sameName && sameName.uuid !== reqCat.uuid) {
+            sameName.uuid = reqCat.uuid;
+            await sameName.save();
+            console.log(`✅ Updated category UUID for: ${reqCat.name}`);
+          }
+        }
+      }
+    }
+
+    const categories = await Category.find();
+
+    // Count doctors by specialty name for each category
+    const results = await Promise.all(
+      categories.map(async (cat) => {
+        // Use flexible matching to find all doctors whose specialty matches the category
+        const specialityMatcher = createSpecialityMatcher(cat.name);
+        const doctorCount = await Doctor.countDocuments({
+          ...specialityMatcher,
+          isActive: true,
+          isApproved: true
+        });
+
+        // Debug logging for empty categories
+        if (doctorCount === 0 && ['Physiotherapist', 'Urologist', 'Gynecologist'].includes(cat.name)) {
+          const sampleDoctors = await Doctor.find({ isActive: true, isApproved: true })
+            .select('speciality')
+            .limit(10);
+          const sampleSpecialities = [...new Set(sampleDoctors.map(d => d.speciality).filter(Boolean))];
+          console.log(`⚠️  ${cat.name}: No doctors found. Sample specialities in DB:`, sampleSpecialities);
+        }
+
+        return {
+          uuid: cat.uuid,
+          name: cat.name,
+          doctorCount: doctorCount,
+          message: doctorCount > 0 ? null : "Currently no doctors available"
+        };
+      })
+    );
 
     res.json(results);
   } catch (error) {
@@ -59,24 +190,31 @@ const getDoctorsByCategoryByUUID = async (req, res) => {
     const { uuid } = req.params;
 
     // Find category by UUID
-const category = await Category.findOne({ uuid }).populate({
-      path: "doctors",
-      match: { isActive: true, isApproved: true } // ✅ filter same as getAllCategories
-    });
+    const category = await Category.findOne({ uuid });
     if (!category) {
       return res.status(404).json({ message: "Category not found" });
     }
 
-    if (!category.doctors || category.doctors.length === 0) {
+    // Use flexible matching to find ALL doctors whose specialty matches the category
+    // This handles variations like "ENT" matching "ENT Specialist" category
+    const specialityMatcher = createSpecialityMatcher(category.name);
+    const doctors = await Doctor.find({
+      ...specialityMatcher,
+      isActive: true,
+      isApproved: true
+    }).select('-password -verificationCode').sort({ name: 1 }); // Exclude sensitive fields and sort by name
+
+    if (!doctors || doctors.length === 0) {
       return res.json({
         category: category.name,
+        doctors: [],
         message: "No doctors are present in this category"
       });
     }
 
     res.json({
       category: category.name,
-      doctors: category.doctors
+      doctors: doctors
     });
   } catch (error) {
     console.error("Error fetching doctors by category UUID:", error);

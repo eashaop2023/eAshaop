@@ -6,8 +6,23 @@ import { toast } from "react-toastify";
 import LoaderOverlay from "../../../commonComponents/FadeLoader";
 import { Button } from "@mui/material"; 
 
+// Generic empty avatar SVG component
+const EmptyAvatar = ({ size = 72 }) => (
+  <svg
+    width={size}
+    height={size}
+    viewBox="0 0 72 72"
+    fill="none"
+    xmlns="http://www.w3.org/2000/svg"
+  >
+    <circle cx="36" cy="36" r="36" fill="#E0E0E0" />
+    <circle cx="36" cy="28" r="12" fill="#9E9E9E" />
+    <ellipse cx="36" cy="58" rx="18" ry="12" fill="#9E9E9E" />
+  </svg>
+);
+
 const ProfileImageCropper = () => {
-  const [profileImage, setProfileImage] = useState();
+  const [profileImage, setProfileImage] = useState(null); // No default image - use empty avatar
   const [selectedImage, setSelectedImage] = useState(null);
   const [crop, setCrop] = useState({ x: 0, y: 0 });
   const [zoom, setZoom] = useState(1);
@@ -42,6 +57,8 @@ const ProfileImageCropper = () => {
           // setHealthTags(data.user.health_conditions || []);
           if (data.user.profileImage?.cloudinaryUrl) {
             setProfileImage(data.user.profileImage.cloudinaryUrl);
+          } else {
+            setProfileImage(null); // Use empty avatar if no image
           }
         }
       })
@@ -122,59 +139,52 @@ const ProfileImageCropper = () => {
   return (
     <>
      <LoaderOverlay loading={loading} />
-    <div className="d-flex justify-content-center align-items-center">
+    <div className="d-flex flex-column justify-content-center align-items-center">
       <div
         className="rounded-circle border d-flex align-items-center justify-content-center"
-        style={{ width: 72, height: 72 }}
+        style={{ 
+          width: 72, 
+          height: 72,
+          overflow: "hidden",
+          backgroundColor: "#F0F0F0",
+          border: "2px solid #E0E0E0"
+        }}
+        onClick={handleImageClick}
       >
-        <div
-          style={{
-            position: "relative",
-            width: "72px",
-            height: "72px",
-            borderRadius: "50%",
-            overflow: "hidden",
-          }}
-        >
+        {profileImage ? (
           <img
             src={profileImage}
-            alt="Profile Icon"
+            alt="Profile Avatar"
             width={72}
             height={72}
             style={{ display: "block", objectFit: "cover" }}
           />
-
-          <div
-            onClick={handleImageClick}
-            style={{
-              position: "absolute",
-              bottom: 0,
-              left: 0,
-              width: "100%",
-              height: "50%",
-              backgroundColor: "rgba(0, 0, 0, 0.2)",
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              fontSize: "10px",
-              color: "#fff",
-              fontWeight: "500",
-              textDecoration: "underline",
-              cursor: "pointer",
-            }}
-          >
-            Change photo
-          </div>
-
-          <input
-            type="file"
-            accept="image/*"
-            ref={fileInputRef}
-            onChange={handleImageChange}
-            style={{ display: "none" }}
-          />
-        </div>
+        ) : (
+          <EmptyAvatar size={72} />
+        )}
       </div>
+      
+      <div
+        onClick={handleImageClick}
+        style={{
+          marginTop: "8px",
+          fontSize: "12px",
+          color: "#00A99D",
+          fontWeight: "500",
+          textDecoration: "underline",
+          cursor: "pointer",
+        }}
+      >
+        Change photo
+      </div>
+
+      <input
+        type="file"
+        accept="image/*"
+        ref={fileInputRef}
+        onChange={handleImageChange}
+        style={{ display: "none" }}
+      />
 
       {showCropper && (
         <div

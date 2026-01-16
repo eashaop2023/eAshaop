@@ -20,6 +20,7 @@ import Mic from '../../../assets/cardiologist/microphone.svg'
 import video from '../../../assets/confirmappointmenticons/video.svg'
 import walk from '../../../assets/walking_icon.svg'
 import Star from '../../../assets/icons/star.png'
+import docImage from "../../../assets/icons/doc.png"; // Fallback image for doctors without profile image
 import { API_BASE_URL } from "../../../../api-config";
 import './MainContent.css';
 
@@ -281,7 +282,13 @@ useEffect(() => {
 
 
       <div className="row">
-                {doctors.length === 0 && <p>No doctors available for this consultation type.</p>}
+                {!loading && doctors.length === 0 && (
+                  <div className="col-12 text-center py-5">
+                    <p style={{ fontSize: "18px", color: "#666" }}>
+                      No doctors available in this category.
+                    </p>
+                  </div>
+                )}
 
         {doctors.map((doc, index) => (
           <div key={index} className="col-md-4 col-sm-6 mb-4">
@@ -297,9 +304,12 @@ useEffect(() => {
                         style={{ width: 40, height: 40 }}
                       >
                         <img
-                          src={doc.profileImage}
+                          src={doc.profileImage || docImage}
                           alt={doc.name}
                           style={{ width: "100%", height: "100%", objectFit: "cover" }}
+                          onError={(e) => {
+                            e.target.src = docImage;
+                          }}
                         />
                       </div>
                       <div
@@ -357,9 +367,12 @@ useEffect(() => {
                         style={{ width: 60, height: 60 }}
                       >
                         <img
-                          src={doc.profileImage}
+                          src={doc.profileImage || docImage}
                           alt={doc.name}
                           style={{ width: "100%", height: "100%", objectFit: "cover" }}
+                          onError={(e) => {
+                            e.target.src = docImage;
+                          }}
                         />
                       </div>
                       <div className="ms-3">
