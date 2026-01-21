@@ -60,12 +60,31 @@ export default function AppointmentPage() {
 
   const fetchSlots = async () => {
     try {
-      const dateStr = startDate.toLocaleDateString("en-CA");
-      console.log(location?.state?.id,dateStr)
-      const res = await axios.get(
-        `${API_BASE_URL}/api/doctors/${location?.state?.id}/availability/${dateStr}`
-      );      
+      // Format date as YYYY-MM-DD consistently
+      const year = startDate.getFullYear();
+      const month = String(startDate.getMonth() + 1).padStart(2, '0');
+      const day = String(startDate.getDate()).padStart(2, '0');
+      const dateStr = `${year}-${month}-${day}`;
+      
+      const doctorIdToUse = location?.state?.id || doctorId;
+      console.log(`[fetchSlots] Fetching slots for doctorId: ${doctorIdToUse}, date: ${dateStr}`);
+      
+      if (!doctorIdToUse) {
+        console.error("[fetchSlots] No doctor ID available");
+        setAvailableSlots([]);
+        return;
+      }
+
+      const url = `${API_BASE_URL}/api/doctors/${doctorIdToUse}/availability/${dateStr}`;
+      console.log(`[fetchSlots] API URL: ${url}`);
+      
+      const res = await axios.get(url);
+      
+      console.log(`[fetchSlots] API Response:`, res.data);
+      
       let slots = res.data.slots || [];
+      console.log(`[fetchSlots] Received ${slots.length} slots from API`);
+      
       const today = new Date();
       today.setHours(0, 0, 0, 0);
 
@@ -78,13 +97,29 @@ export default function AppointmentPage() {
           : true;
       });
 
-      // slots = slots.slice(0, 8);
+      console.log(`[fetchSlots] After filtering past slots: ${slots.length} slots available`);
+      
       setAvailableSlots(slots);
       setSelectedSlot((prev) => (!prev && slots.length > 0 ? slots[0].start : prev));
     } catch (err) {
-      console.error("Error fetching slots:", err);
+      console.error("[fetchSlots] Error fetching slots:", err);
+      console.error("[fetchSlots] Error details:", {
+        message: err.message,
+        response: err.response?.data,
+        status: err.response?.status,
+        url: err.config?.url
+      });
       setAvailableSlots([]);
       setSelectedSlot(null);
+      
+      // Show user-friendly error message
+      if (err.response?.status === 400) {
+        toast.error(err.response.data?.message || "Invalid date or doctor ID");
+      } else if (err.response?.status >= 500) {
+        toast.error("Server error. Please try again later.");
+      } else if (!err.response) {
+        toast.error("Network error. Please check your connection.");
+      }
     }
   };
   // Fetch available slots
@@ -94,12 +129,28 @@ export default function AppointmentPage() {
 
     const fetchSlots = async () => {
       try {
-        const dateStr = startDate.toLocaleDateString("en-CA");
-        console.log(doctorId, dateStr)
-        const res = await axios.get(
-          `${API_BASE_URL}/api/doctors/${doctorId}/availability/${dateStr}`
-        );
+        if (!doctorId || !startDate) {
+          console.warn("[fetchSlots] Missing doctorId or startDate");
+          return;
+        }
+
+        // Format date as YYYY-MM-DD consistently
+        const year = startDate.getFullYear();
+        const month = String(startDate.getMonth() + 1).padStart(2, '0');
+        const day = String(startDate.getDate()).padStart(2, '0');
+        const dateStr = `${year}-${month}-${day}`;
+        
+        console.log(`[fetchSlots] Fetching slots for doctorId: ${doctorId}, date: ${dateStr}`);
+        
+        const url = `${API_BASE_URL}/api/doctors/${doctorId}/availability/${dateStr}`;
+        console.log(`[fetchSlots] API URL: ${url}`);
+        
+        const res = await axios.get(url);
+        
+        console.log(`[fetchSlots] API Response:`, res.data);
+        
         let slots = res.data.slots || [];
+        console.log(`[fetchSlots] Received ${slots.length} slots from API`);
 
         const today = new Date();
         today.setHours(0, 0, 0, 0);
@@ -113,13 +164,29 @@ export default function AppointmentPage() {
             : true;
         });
 
-        // slots = slots.slice(0, 8);
+        console.log(`[fetchSlots] After filtering past slots: ${slots.length} slots available`);
+
         setAvailableSlots(slots);
         setSelectedSlot((prev) => (!prev && slots.length > 0 ? slots[0].start : prev));
       } catch (err) {
-        console.error("Error fetching slots:", err);
+        console.error("[fetchSlots] Error fetching slots:", err);
+        console.error("[fetchSlots] Error details:", {
+          message: err.message,
+          response: err.response?.data,
+          status: err.response?.status,
+          url: err.config?.url
+        });
         setAvailableSlots([]);
         setSelectedSlot(null);
+        
+        // Show user-friendly error message
+        if (err.response?.status === 400) {
+          toast.error(err.response.data?.message || "Invalid date or doctor ID");
+        } else if (err.response?.status >= 500) {
+          toast.error("Server error. Please try again later.");
+        } else if (!err.response) {
+          toast.error("Network error. Please check your connection.");
+        }
       }
     };
 
