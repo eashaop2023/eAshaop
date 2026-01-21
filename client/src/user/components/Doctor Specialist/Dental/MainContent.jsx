@@ -115,7 +115,9 @@ const [selected, setSelected] = useState(
       if (!selected) {
         setDoctors(allDoctors);
       } else {
-                        let mode = selected === "video" ? "Video Consultation" : "Clinic Visit";
+    let mode = "";
+    if (selected === "video") mode = "Video Consultation";
+    if (selected === "clinic") mode = "Clinic Visit";
     
         const filtered = allDoctors.filter(
           (doc) => doc.consultationMode === mode || doc.consultationMode === "Both"
@@ -143,9 +145,8 @@ const [selected, setSelected] = useState(
   };
 
   const handleSelect = (type) => {
-  const newValue = selected === type ? "" : type;
-  setSelected(newValue);
-  localStorage.setItem("selectedConsultationType", newValue);
+  setSelected(type);
+  localStorage.setItem("selectedConsultationType", type);
 };
 
     if (loading) return <p>Loading doctors...</p>;
@@ -238,7 +239,7 @@ const [selected, setSelected] = useState(
       {/* Toggle Buttons */}
       <div className="d-flex justify-content-center mt-3 mb-3 outer-toggle">
         <div
-          className="p-2 rounded-pill d-flex align-items-center bg-white toggle-buttons-container"
+          className="p-2 rounded-pill d-flex align-items-center bg-white toggle-buttons-container  radio-height"
           style={{ border: "1px solid #00A99D" }}
         >
           <button
@@ -247,7 +248,7 @@ const [selected, setSelected] = useState(
               color: selected === "video" ? "white" : "#8E8E8E",
             }}
             className="btn fw-semibold px-4 py-2 rounded-pill d-flex align-items-center"
-            onClick={() => setSelected("video")}
+            onClick={() => handleSelect("video")}
           >
             <span className="me-2"><img src={video} height={24} width={24} className="toggle-images"/></span>
             Video Consultant
@@ -258,7 +259,7 @@ const [selected, setSelected] = useState(
               color: selected === "clinic" ? "white" : "#8E8E8E",
             }}
             className="btn1 fw-semibold  rounded-pill d-flex align-items-center"
-            onClick={() => setSelected("clinic")}
+            onClick={() => handleSelect("clinic")}
           >
             <span className="clinic-visit me-1 ps-4"><img src={walk} height={14} width={24} className="toggle-images"/></span>
             Clinic Visit

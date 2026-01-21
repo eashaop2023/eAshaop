@@ -105,9 +105,8 @@ useEffect(() => {
   };
 
     const handleSelect = (type) => {
-  const newValue = selected === type ? "" : type;
-  setSelected(newValue);
-  localStorage.setItem("selectedConsultationType", newValue);
+  setSelected(type);
+  localStorage.setItem("selectedConsultationType", type);
 };
 
 
@@ -201,7 +200,7 @@ useEffect(() => {
       {/* Toggle Buttons */}
       <div className="d-flex justify-content-center mt-3 mb-3 outer-toggle">
         <div
-          className="p-2 rounded-pill d-flex align-items-center bg-white toggle-buttons-container"
+          className="p-2 rounded-pill d-flex align-items-center bg-white toggle-buttons-container  radio-height"
           style={{ border: "1px solid #00A99D" }}
         >
           <button

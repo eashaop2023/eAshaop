@@ -102,9 +102,8 @@ useEffect(() => {
   };
     // if (loading) return <p>Loading doctors...</p>;
   const handleSelect = (type) => {
-  const newValue = selected === type ? "" : type;
-  setSelected(newValue);
-  localStorage.setItem("selectedConsultationType", newValue);
+  setSelected(type);
+  localStorage.setItem("selectedConsultationType", type);
 };
 
 

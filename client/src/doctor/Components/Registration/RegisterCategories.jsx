@@ -1,5 +1,5 @@
 export const categories = [
-  { name: "General healthcare", uuid:"UqkGTNQTOD" },
+  { name: "General Physician", uuid:"UqkGTNQTOD" },
   { name: "Cardiologist",uuid:"bD1KuA_6pr" },
   { name: "Orthopedic", uuid:"oybWOH7Ok8" },
   { name: "Neurologist",uuid:"r1ArfRKaU_" },
@@ -11,5 +11,5 @@ export const categories = [
   { name: "Dermatologist", uuid:"DrmtLgst_01" },
   { name: "Physiotherapist", uuid:"PhyThr_01" },
   { name: "Urologist", uuid:"Urolgst_01" },
-  { name: "Gynecologist", uuid:"Gynclgst_01" },
+  { name: "Gynaecologist", uuid:"Gynclgst_01" },
 ];

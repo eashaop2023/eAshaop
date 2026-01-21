@@ -267,6 +267,45 @@ export default function AppointmentPage() {
     return d;
   });
 
+  // Generate time slots for every half hour (6:00 AM to 10:00 PM) as ranges
+  const generateTimeSlotRanges = () => {
+    const slots = [];
+    for (let hour = 6; hour <= 22; hour++) {
+      for (let minute = 0; minute < 60; minute += 30) {
+        const startHour = hour.toString().padStart(2, '0');
+        const startMinute = minute.toString().padStart(2, '0');
+        const startTime = `${startHour}:${startMinute}`;
+        
+        // Calculate end time (30 minutes later)
+        let endHour = hour;
+        let endMinute = minute + 30;
+        if (endMinute >= 60) {
+          endHour += 1;
+          endMinute = 0;
+        }
+        // Stop if we exceed 22:30 (10:30 PM)
+        if (endHour > 22 || (endHour === 22 && endMinute > 30)) {
+          break;
+        }
+        
+        const endTime = `${endHour.toString().padStart(2, '0')}:${endMinute.toString().padStart(2, '0')}`;
+        slots.push({
+          start: startTime,
+          end: endTime,
+          display: `${startTime}-${endTime}`
+        });
+      }
+    }
+    return slots;
+  };
+
+  const allTimeSlotRanges = generateTimeSlotRanges();
+
+  // Check if a time slot range is available
+  const isSlotRangeAvailable = (slotRange) => {
+    return availableSlots.some(slot => slot.start === slotRange.start && slot.end === slotRange.end);
+  };
+
   useEffect(() => {
     if (selectedSlot) sessionStorage.setItem("selectedSlot", selectedSlot);
   }, [selectedSlot]);
@@ -862,15 +901,58 @@ export default function AppointmentPage() {
               </div>
             </div>
 
-            {/* Slots */}
-            <div className="d-flex flex-wrap gap-3 mb-3 slot-section">
-              {availableSlots.length > 0 ? (
-                availableSlots.map(slot => (
-                  <div key={`${slot.start}-${slot.end}`} className="px-3 py-2 rounded-pill slot-time" style={{ backgroundColor: selectedSlot === slot.start ? "#00A99D" : "#F0F0F0", color: selectedSlot === slot.start ? "white" : "black" }} onClick={() => setSelectedSlot(slot.start)}>
-                    {slot.start} - {slot.end}
-                  </div>
-                ))
-              ) : <p className="text-muted">No slots available for this date.</p>}
+            {/* Time Slots - Every Half Hour */}
+            <div className="mb-3" style={{ width: "100%" }}>
+              <h6 className="mb-2" style={{ fontSize: "16px", fontWeight: 500, color: "#252525" }}>Select Time Slot</h6>
+              <div 
+                className="d-flex flex-wrap gap-2 slot-section" 
+                style={{ 
+                  maxHeight: "400px", 
+                  overflowY: "auto", 
+                  padding: "8px", 
+                  minHeight: "120px", 
+                  width: "100%",
+                  backgroundColor: "#FAFAFA",
+                  borderRadius: "8px",
+                  border: "1px solid #E0E0E0"
+                }}
+              >
+                {allTimeSlotRanges.map((slotRange) => {
+                  const isAvailable = isSlotRangeAvailable(slotRange);
+                  const isSelected = selectedSlot === slotRange.start;
+                  return (
+                    <div
+                      key={`${slotRange.start}-${slotRange.end}`}
+                      className="px-3 py-2 rounded-pill slot-time"
+                      style={{
+                        backgroundColor: isSelected ? "#00A99D" : isAvailable ? "#F0F0F0" : "#E8E8E8",
+                        color: isSelected ? "white" : isAvailable ? "black" : "#666",
+                        cursor: isAvailable ? "pointer" : "not-allowed",
+                        opacity: isAvailable ? 1 : 0.7,
+                        border: isSelected ? "2px solid #00A99D" : "1px solid #D0D0D0",
+                        transition: "all 0.2s ease",
+                        fontSize: "13px",
+                        fontWeight: isSelected ? "600" : "400",
+                        minWidth: "100px",
+                        textAlign: "center"
+                      }}
+                      onClick={() => {
+                        if (isAvailable) {
+                          setSelectedSlot(slotRange.start);
+                        } else {
+                          toast.info("This time slot is not available. Please select an available slot.");
+                        }
+                      }}
+                      title={isAvailable ? "Available - Click to select" : "Not available"}
+                    >
+                      {slotRange.display}
+                    </div>
+                  );
+                })}
+              </div>
+              {availableSlots.length === 0 && (
+                <p className="text-muted mt-2" style={{ fontSize: "14px" }}>No slots available for this date. Please select a different date.</p>
+              )}
             </div>
 
             <div className="d-flex align-items-center gap-2 mb-3 book-button" style={{ flexWrap: "nowrap" }}>

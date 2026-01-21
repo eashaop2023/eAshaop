@@ -47,6 +47,11 @@ const MainContent = ({ selectedFilters, setSelectedFilters, clearAllFilters, onT
     }));
   };
 
+  const handleSelect = (type) => {
+    setSelected(type);
+    localStorage.setItem("selectedConsultationType", type);
+  };
+
   return (
     <div className="p-4 main-contents" style={{ flex: 1, }}>
       {/* ... your existing header, search, toggles etc. remain unchanged ... */}
@@ -135,7 +140,7 @@ const MainContent = ({ selectedFilters, setSelectedFilters, clearAllFilters, onT
       {/* Toggle Buttons */}
       <div className="d-flex justify-content-center mt-3 mb-3 outer-toggle">
         <div
-          className="p-2 rounded-pill d-flex align-items-center bg-white toggle-buttons-container"
+          className="p-2 rounded-pill d-flex align-items-center bg-white toggle-buttons-container  radio-height"
           style={{ border: "1px solid #00A99D" }}
         >
           <button
@@ -144,7 +149,7 @@ const MainContent = ({ selectedFilters, setSelectedFilters, clearAllFilters, onT
               color: selected === "video" ? "white" : "#8E8E8E",
             }}
             className="btn fw-semibold px-4 py-2 rounded-pill d-flex"
-            onClick={() => setSelected("video")}
+            onClick={() => handleSelect("video")}
           >
             <span className="me-2"><img src={video} height={24} width={24} className="toggle-images"/></span>
             Video Consultant
@@ -155,7 +160,7 @@ const MainContent = ({ selectedFilters, setSelectedFilters, clearAllFilters, onT
               color: selected === "clinic" ? "white" : "#8E8E8E",
             }}
             className="btn1 fw-semibold  rounded-pill d-flex"
-            onClick={() => setSelected("clinic")}
+            onClick={() => handleSelect("clinic")}
           >
             <span className="me-1 ps-4"><img src={walk} height={14} width={24} className="toggle-images"/></span>
             Clinic Visit

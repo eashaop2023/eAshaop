@@ -17,7 +17,7 @@ import { API_BASE_URL } from "../../../api-config";
 
 
 const staticCategories = [
-  { name: "General healthcare", icon: generalHealthCare, path: "general-healthcare", uuid: "UqkGTNQTOD" },
+  { name: "General Physician", icon: generalHealthCare, path: "general-healthcare", uuid: "UqkGTNQTOD" },
   { name: "Cardiologist", icon: cardiologist, path: "cardiologist", uuid: "bD1KuA_6pr" },
   { name: "Orthopedic", icon: orthopedic, path: "orthopedic", uuid: "oybWOH7Ok8" },
   { name: "Neurologist", icon: neurologist, path: "neurologist", uuid: "r1ArfRKaU_" },
@@ -29,7 +29,7 @@ const staticCategories = [
   { name: "Dermatologist", icon: skin, path: "dermatologist", uuid: "DrmtLgst_01" },
   { name: "Physiotherapist", icon: orthopedic, path: "physiotherapist", uuid: "PhyThr_01" },
   { name: "Urologist", icon: generalHealthCare, path: "urologist", uuid: "Urolgst_01" },
-  { name: "Gynecologist", icon: generalHealthCare, path: "gynecologist", uuid: "Gynclgst_01" },
+  { name: "Gynaecologist", icon: generalHealthCare, path: "gynecologist", uuid: "Gynclgst_01" },
 ];
 
 const Dashboard = () => {

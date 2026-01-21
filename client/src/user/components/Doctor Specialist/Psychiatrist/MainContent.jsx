@@ -25,7 +25,7 @@ const MainContent = ({ selectedFilters, setSelectedFilters, clearAllFilters, onT
   const navigate = useNavigate();
   const { uuid } = useParams();
 const [selected, setSelected] = useState(
-  sessionStorage.getItem("selectedConsultationType") || ""
+  sessionStorage.getItem("selectedConsultation") || ""
 );
 
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
@@ -66,7 +66,9 @@ useEffect(() => {
   if (!selected) {
     setDoctors(allDoctors);
   } else {
-              let mode = selected === "video" ? "Video Consultation" : "Clinic Visit";
+    let mode = "";
+    if (selected === "video") mode = "Video Consultation";
+    if (selected === "clinic") mode = "Clinic Visit";
 
     const filtered = allDoctors.filter(
       (doc) => doc.consultationMode === mode || doc.consultationMode === "Both"
@@ -94,9 +96,8 @@ useEffect(() => {
   };
 
   const handleSelect = (type) => {
-  const newValue = selected === type ? "" : type;
-  setSelected(newValue);
-  sessionStorage.setItem("selectedConsultationType", newValue);
+  setSelected(type);
+  localStorage.setItem("selectedConsultationType", type);
 };
   if (loading) return <p>Loading doctors...</p>;
 
@@ -182,7 +183,7 @@ useEffect(() => {
       {/* Toggle Buttons */}
       <div className="d-flex justify-content-center mt-3 mb-3 outer-toggle">
         <div
-          className="p-2 rounded-pill d-flex align-items-center bg-white toggle-buttons-container"
+          className="p-2 rounded-pill d-flex align-items-center bg-white toggle-buttons-container  radio-height"
           style={{ border: "1px solid #00A99D" }}
         >
           <button

@@ -16,7 +16,7 @@ import GynecologistMainContent from "./Gynecologist/MainContent";
 
 const uuidToCategoryMap = {
   "bD1KuA_6pr": "Cardiologist",
-  "UqkGTNQTOD": "General Healthcare",
+  "UqkGTNQTOD": "General Physician",
   "r1ArfRKaU_": "Neurologist",
   "oybWOH7Ok8": "Orthopedic",
   "whHEP4Ba-m": "Ophthalmology",
@@ -27,7 +27,7 @@ const uuidToCategoryMap = {
   "DrmtLgst_01":"Dermatologist",
   "PhyThr_01":"Physiotherapist",
   "Urolgst_01":"Urologist",
-  "Gynclgst_01":"Gynecologist",
+  "Gynclgst_01":"Gynaecologist",
 
   // add all UUIDs for your categories here
 };
@@ -36,7 +36,7 @@ const DynamicDoctorCategory = (props) => {
   const { uuid } = useParams();
   const categorySlug = uuidToCategoryMap[uuid] || "general-healthcare";
   const categoryComponents = {
-    "General Healthcare": GeneralHealthcareMainContent,
+    "General Physician": GeneralHealthcareMainContent,
     "Cardiologist": CardiologistMainContent,
     // "childhealth": ChildHealth,
     "Dentist":DentalMainContent ,
@@ -49,7 +49,7 @@ const DynamicDoctorCategory = (props) => {
     "Dermatologist":DermatologistMainContent,
     "Physiotherapist": PhysiotherapistMainContent,
     "Urologist": UrologistMainContent,
-    "Gynecologist": GynecologistMainContent
+    "Gynaecologist": GynecologistMainContent
   };
 
 const CategoryComponent = categoryComponents[categorySlug];

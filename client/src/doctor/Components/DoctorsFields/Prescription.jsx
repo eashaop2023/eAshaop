@@ -35,7 +35,9 @@ const getStatusColor = (status) => {
   }
 };
 
-const PrescriptionForm = () => {
+const Prescription = () => {
+  console.log("Prescription component rendered");
+  
   const [form, setForm] = useState({
     name: "",
     id: "",
@@ -77,10 +79,11 @@ const PrescriptionForm = () => {
   );
 
   return (
-    <div className="ml-0 md:pl-[80px] lg:pl-[327px] mt-[75px] md:mt-[35px] lg:mt-[80px] font-urbanist px-4 sm:px-6">
-      <div className="max-w-[978px]">
+    <div className="w-full overflow-x-hidden" style={{ minHeight: '100vh' }}>
+      <div className="ml-0 md:pl-[80px] lg:pl-[260px] xl:pl-[327px] mt-[75px] px-4 sm:px-6 font-urbanist" style={{ backgroundColor: '#ffffff' }}>
+        <div className="max-w-[978px]">
         {/* Title */}
-        <h2 className="text-2xl font-semibold mb-6">Create new Prescription</h2>
+        <h2 className="text-2xl font-semibold mb-6" style={{ color: '#000000' }}>Create new Prescription</h2>
 
         {/* Prescription Details */}
         <div className="space-y-6">
@@ -256,9 +259,10 @@ const PrescriptionForm = () => {
             </table>
           </div> */}
         </div>
+        </div>
       </div>
     </div>
   );
 };
 
-export default PrescriptionForm;
+export default Prescription;

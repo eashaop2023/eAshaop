@@ -20,6 +20,7 @@ const ConfirmAppointment = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const [isProcessing, setIsProcessing] = useState(false);
+  const [showPaymentDetails, setShowPaymentDetails] = useState(false);
   const locationState =
     location.state || JSON.parse(localStorage.getItem("appointmentData")) || {};
 
@@ -67,7 +68,62 @@ const ConfirmAppointment = () => {
     });
   };
 
-  // ✅ Payment handler
+  // ✅ Pay at Clinic handler
+  const handlePayAtClinic = async () => {
+    if (isProcessing) return;
+    setIsProcessing(true);
+    try {
+      const mainUser = JSON.parse(localStorage.getItem("user"));
+      if (!mainUser || !mainUser.id) {
+        toast.error("User not logged in!");
+        setIsProcessing(false);
+        return;
+      }
+
+      let userId, dependentData;
+      if (member.id) {
+        userId = member.id;
+        dependentData = null;
+      } else {
+        userId = mainUser.id;
+        dependentData = {
+          name: member.name,
+          age: member.age,
+          sex: member.sex,
+        };
+      }
+
+      const bookRes = await fetch(`${API_BASE_URL}/api/appointments/pay-at-clinic`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          userId,
+          doctorId: doctor._id,
+          date,
+          time: slot,
+          type: consultationType.toLowerCase(),
+          amount,
+          dependent: dependentData,
+        }),
+      });
+
+      const bookData = await bookRes.json();
+      if (!bookRes.ok) {
+        toast.error(bookData.message);
+        setIsProcessing(false);
+        return;
+      }
+
+      toast.success("Appointment booked successfully! Receipt sent to doctor.");
+      navigate("/user/appointment");
+    } catch (err) {
+      console.error(err);
+      toast.error("Booking error: " + err.message);
+    } finally {
+      setIsProcessing(false);
+    }
+  };
+
   // ✅ Payment handler
   const handlePayment = async () => {
     if (isProcessing) return; // Prevent multiple clicks
@@ -344,20 +400,6 @@ const ConfirmAppointment = () => {
                 Change slot
               </Button>
 
-              {/* Patient Details */}
-              <div className="bg-light p-3 rounded mb-4">
-                <h6 className="fw-medium mb-2">Patient details</h6>
-                <p className="mb-0 text-muted small" style={{ fontSize: 16 }}>
-                  {member.name} | Age: {member.age} | Sex - {member.sex}
-                </p>
-                <div
-                  className="text-decoration-none small mt-2"
-                  style={{ color: "#00A99D", cursor: "pointer" }}
-                  onClick={() => navigate(-1)}
-                >
-                  Change patient
-                </div>
-              </div>
             </div>
           </div>
         </Col>
@@ -372,50 +414,99 @@ const ConfirmAppointment = () => {
           
         >
           <div style={{ width: "100%", maxWidth: 410 }}>
-            <h4 className="fw-medium mb-2 mt-2">Payment Details</h4>
-            <p className="text-muted mb-0">
-              Confirm your appointment by checking the amount details below
-            </p>
+            {!showPaymentDetails ? (
+              <>
+                {/* Patient Details Section */}
+                <h4 className="fw-medium mb-3 mt-2">Patient Details</h4>
+                <div className="bg-light p-4 rounded mb-4" style={{ minHeight: "200px" }}>
+                  <h6 className="fw-medium mb-3" style={{ fontSize: "18px" }}>Patient details</h6>
+                  <div className="d-flex flex-column gap-2 mb-3" style={{ fontSize: "16px" }}>
+                    <div className="d-flex align-items-center">
+                      <span className="fw-medium me-2" style={{ minWidth: "80px" }}>Name:</span>
+                      <span className="text-muted">{member.name}</span>
+                    </div>
+                    <div className="d-flex align-items-center">
+                      <span className="fw-medium me-2" style={{ minWidth: "80px" }}>Age:</span>
+                      <span className="text-muted">{member.age}</span>
+                    </div>
+                    <div className="d-flex align-items-center">
+                      <span className="fw-medium me-2" style={{ minWidth: "80px" }}>Sex:</span>
+                      <span className="text-muted">{member.sex}</span>
+                    </div>
+                  </div>
+                  <div
+                    className="text-decoration-none mt-3"
+                    style={{ color: "#00A99D", cursor: "pointer", fontSize: "14px", fontWeight: 500 }}
+                    onClick={() => navigate(-1)}
+                  >
+                    Change patient
+                  </div>
+                </div>
 
-            {/* Amount Details */}
-            <div className="bg-white p-3 rounded mb-4">
-              <h5 className="fw-medium mb-3">Amount Details</h5>
-              <div className="d-flex justify-content-between mb-2">
-                <span>Consultation Fee</span>
-                <span>₹ {amount}.00</span>
-              </div>
-              <div className="d-flex justify-content-between mb-2">
-                <span>Platform Fee</span>
-                <span>₹ 0.00</span>
-              </div>
-              <div className="d-flex justify-content-between mb-2">
-                <span>Other Taxes</span>
-                <span>₹ 0.00</span>
-              </div>
-              <hr style={{ borderTop: "1px solid #dee2e6" }} />
-              <div className="d-flex justify-content-between fw-bold text-dark">
-                <span>Grand Total</span>
-                <span>₹ {amount}.00</span>
-              </div>
-            </div>
+                {/* Proceed to Payment Button */}
+                <Button
+                  className="w-100"
+                  style={{
+                    borderRadius: 6,
+                    backgroundColor: "#00A99D",
+                    borderColor: "#00A99D",
+                    color: "#fff",
+                    height: 42,
+                    fontWeight: 500,
+                  }}
+                  onClick={() => setShowPaymentDetails(true)}
+                >
+                  Proceed to Payment
+                </Button>
+              </>
+            ) : (
+              <>
+                {/* Payment Details Section */}
+                <h4 className="fw-medium mb-2 mt-2">Payment Details</h4>
+                <p className="text-muted mb-0">
+                  Confirm your appointment by checking the amount details below
+                </p>
 
-            {/* Pay & Confirm Button */}
-            <Button
-              className="w-100"
-              style={{
-                borderRadius: 6,
-                backgroundColor: "#00A99D",
-                borderColor: "#00A99D",
-                color: "#fff",
-                height: 42,
-                fontWeight: 500,
+                {/* Amount Details */}
+                <div className="bg-white p-3 rounded mb-4">
+                  <h5 className="fw-medium mb-3">Amount Details</h5>
+                  <div className="d-flex justify-content-between mb-2">
+                    <span>Consultation Fee</span>
+                    <span>₹ {amount}.00</span>
+                  </div>
+                  <div className="d-flex justify-content-between mb-2">
+                    <span>Platform Fee</span>
+                    <span>₹ 0.00</span>
+                  </div>
+                  <div className="d-flex justify-content-between mb-2">
+                    <span>Other Taxes</span>
+                    <span>₹ 0.00</span>
+                  </div>
+                  <hr style={{ borderTop: "1px solid #dee2e6" }} />
+                  <div className="d-flex justify-content-between fw-bold text-dark">
+                    <span>Grand Total</span>
+                    <span>₹ {amount}.00</span>
+                  </div>
+                </div>
 
-              }}
-              onClick={handlePayment}
-              disabled={isProcessing}
-            >
-              {isProcessing ? "Processing..." : "Proceed to Payment"}{" "}
-            </Button>
+                {/* Pay at Clinic Button */}
+                <Button
+                  className="w-100"
+                  style={{
+                    borderRadius: 6,
+                    backgroundColor: "#00A99D",
+                    borderColor: "#00A99D",
+                    color: "#fff",
+                    height: 42,
+                    fontWeight: 500,
+                  }}
+                  onClick={handlePayAtClinic}
+                  disabled={isProcessing}
+                >
+                  {isProcessing ? "Processing..." : "Pay at Clinic"}{" "}
+                </Button>
+              </>
+            )}
           </div>
         </Col>
       </Row>

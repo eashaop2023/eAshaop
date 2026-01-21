@@ -293,6 +293,7 @@ import axios from "axios";
 // import socket from "../../../common/socket";
 import socket from '../../../commonComponents/socket';
 import { API_BASE_URL } from "../../../api-config";
+import ReceiptCardCompact from "./ReceiptCardCompact";
 
 // --- Latest Bookings Component ---
 const statusStyles = {
@@ -379,6 +380,8 @@ const Dashboard = () => {
   const [bookings, setBookings] = useState([]);
   const [totalAppointments, setTotalAppointments] = useState(0);
   const [totalEarnings, setTotalEarnings] = useState(0);
+  const [receipts, setReceipts] = useState([]);
+  const [receiptsLoading, setReceiptsLoading] = useState(true);
 
   useEffect(() => {
     const doctorId = localStorage.getItem("doctorId");
@@ -404,8 +407,23 @@ const Dashboard = () => {
       }
     };
 
+    // Fetch receipts
+    const fetchReceipts = async () => {
+      try {
+        if (doctorId) {
+          const res = await axios.get(`${API_BASE_URL}/api/receipts/doctor/${doctorId}`);
+          setReceipts(res.data.receipts || []);
+        }
+      } catch (err) {
+        console.error("Error fetching receipts:", err);
+      } finally {
+        setReceiptsLoading(false);
+      }
+    };
+
     // Initial fetch
     fetchBookings();
+    fetchReceipts();
 
     // Join the doctor room
     socket.emit("joinDoctorRoom", doctorId, (ack) => {
@@ -548,6 +566,34 @@ const Dashboard = () => {
                     />
                   </BarChart>
                 </ResponsiveContainer>
+              </div>
+            </div>
+
+            {/* Receipts Section */}
+            <div className="w-full mt-6">
+              <div className="bg-white rounded-2xl border border-[#F7F7F7] p-4 w-full">
+                <div className="flex items-center justify-between mb-3">
+                  <h2 className="text-lg sm:text-xl md:text-2xl font-semibold break-words">
+                    Receipts
+                  </h2>
+                  <button
+                    className="text-sm sm:text-base font-medium text-[#00A99D] hover:underline transition"
+                    onClick={() => window.location.href = "/doctor/receipts"}
+                  >
+                    View all
+                  </button>
+                </div>
+                <div className="space-y-3 max-h-[400px] overflow-y-auto">
+                  {receiptsLoading ? (
+                    <div className="text-center py-4 text-gray-500">Loading receipts...</div>
+                  ) : receipts.length === 0 ? (
+                    <div className="text-center py-4 text-gray-500">No receipts found</div>
+                  ) : (
+                    receipts.slice(0, 3).map((receipt) => (
+                      <ReceiptCardCompact key={receipt._id} receipt={receipt} />
+                    ))
+                  )}
+                </div>
               </div>
             </div>
 

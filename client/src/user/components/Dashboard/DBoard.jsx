@@ -27,6 +27,7 @@ import { useNavigate } from "react-router-dom";
 import styles from './DBoard.module.css';
 import axios from "axios";
 import { API_BASE_URL } from "../../../api-config";
+import ReceiptCardCompact from "../Receipt/ReceiptCardCompact";
 
 import "slick-carousel/slick/slick.css";
 import "slick-carousel/slick/slick-theme.css";
@@ -293,6 +294,8 @@ function DBoard() {
   const [appointments, setAppointments] = useState([]);
   const [showComingSoon, setShowComingSoon] = useState(true);
   const [soltType, setSoltType] = useState(false);
+  const [receipts, setReceipts] = useState([]);
+  const [receiptsLoading, setReceiptsLoading] = useState(true);
 
 
   useEffect(() => {
@@ -362,6 +365,23 @@ function DBoard() {
       }
     };
     fetchAppointments();
+    
+    // Fetch receipts
+    const fetchReceipts = async () => {
+      try {
+        const userId = localStorage.getItem("userId");
+        if (userId) {
+          const res = await axios.get(`${API_BASE_URL}/api/receipts/user/${userId}`);
+          setReceipts(res.data.receipts || []);
+        }
+      } catch (err) {
+        console.error("Error fetching receipts:", err);
+      } finally {
+        setReceiptsLoading(false);
+      }
+    };
+    fetchReceipts();
+
     fetch(`${API_BASE_URL}/api/doctors/all`)
       .then((res) => res.json())
       .then((data) => {
@@ -492,23 +512,23 @@ function DBoard() {
               </div>
             </div>
 
-            <div>
-              <div className="flex justify-between items-center mb-2">
-                <h2 className="sec-header font-medium leading-[120%] text-[#252525] text-[24px]">
-                  Upcoming appointments
-                </h2>
-                <button
-                  // className="text-[#494949] text-[18px] font-normal hover:cursor-pointer hover:underline"
-                  className="{`${styles.viewallBtn}text-[16px] md:text-[18px] font-medium text-[#00A99D] hover:underline transition"
-
-                  onClick={() => {
-                    navigate("/user/appointment");
-                  }}
-                >
-                  View all
-                </button>
-              </div>
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            {/* 2x2 Grid Layout */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              {/* Top-Left: Upcoming Appointments */}
+              <div className="bg-white rounded-lg border border-gray-100 flex flex-col h-auto md:h-[400px] max-h-[60vh] overflow-hidden">
+                <div className="flex items-center justify-between px-4 py-3 border-b bg-white sticky top-0 z-10">
+                  <h2 className="text-[22px] md:text-[24px] font-semibold text-[#252525]">
+                    Upcoming appointments
+                  </h2>
+                  <button
+                    className="text-[16px] md:text-[18px] font-medium text-[#00A99D] hover:underline transition"
+                    onClick={() => navigate("/user/appointment")}
+                  >
+                    View all
+                  </button>
+                </div>
+                <div className="flex-1 overflow-y-auto p-4">
+                  <div className="grid grid-cols-1 gap-4">
                 {appointments.upcoming?.map((a, i) => {
                   const isShown = shownIndex === i;
                   const dateObj = new Date(a.date);
@@ -572,40 +592,57 @@ function DBoard() {
                   );
 
                 })}
+                  </div>
+                  {appointments.upcoming?.length === 0 && (
+                    <div className="text-center py-4 text-gray-500">No upcoming appointments</div>
+                  )}
+                </div>
               </div>
 
-
-              {showContent && (
-                <div className="mt-4 grid grid-cols-1 lg:grid-cols-[350px_2fr] items-center p-4 bg-white rounded-lg border">
-                  <div className="w-[350px] h-[135px]">
-                    <h2 className="text-[24px] font-medium leading-[120%] text-[#252525]">
-                      KIMS Hospitals
-                    </h2>
-                    <p className="text-[18px] font-normal text-[#8E8E8E]">
-                      1-8-31/1, Minister Road Krishna Nagar Colony, Ramgopalpet,
-                      Begumpet, Secunderabad, Telangana 500003
-                      <br />
-                      <span>4.5 km | 24min</span>
-                    </p>
-                  </div>
-
-                  <div>
-                    <img src={maps} alt="" className="w-full object-cover" />
-                  </div>
+              {/* Top-Right: Receipts */}
+              <div
+                className="bg-white rounded-lg border border-gray-100 
+                    flex flex-col h-auto md:h-[400px] max-h-[60vh] overflow-hidden"
+              >
+                <div className="flex items-center justify-between px-4 py-3 border-b bg-white sticky top-0 z-10">
+                  <h2 className="text-[22px] md:text-[24px] font-semibold text-[#252525]">
+                    Receipts
+                  </h2>
+                  <button
+                    className="text-[16px] md:text-[18px] font-medium text-[#00A99D] hover:underline transition"
+                    onClick={() => navigate("/user/receipts")}
+                  >
+                    View all
+                  </button>
                 </div>
-              )}
-            </div>
+                <div className="flex-1 overflow-y-auto p-4">
+                  {receiptsLoading ? (
+                    <div className="text-center py-4 text-gray-500">Loading receipts...</div>
+                  ) : receipts.length === 0 ? (
+                    <div className="text-center py-4 text-gray-500">No receipts found</div>
+                  ) : (
+                    <div className="space-y-3">
+                      {receipts.slice(0, 3).map((receipt) => (
+                        <ReceiptCardCompact key={receipt._id} receipt={receipt} />
+                      ))}
+                    </div>
+                  )}
+                </div>
+              </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+              {/* Bottom-Left: Lab tests & Prescriptions */}
               <div
                 className="relative bg-[rgba(0,0,0,0.6)] rounded-lg border border-gray-100 
-                      flex flex-col h-auto md:h-[300px] max-h-[60vh] overflow-hidden "
+                      flex flex-col h-auto md:h-[300px] max-h-[60vh] overflow-hidden"
               >
                 <div className="flex items-center justify-between px-4 py-3 border-b bg-white sticky top-0 z-10">
                   <h2 className="text-[22px] md:text-[24px] font-semibold text-[#252525]">
                     Lab tests & Prescriptions
                   </h2>
-                  <button style={{ cursor: showComingSoon ? 'not-allowed' : "pointer" }} className="text-[16px] md:text-[18px] font-medium text-[#00A99D] hover:underline transition">
+                  <button 
+                    style={{ cursor: showComingSoon ? 'not-allowed' : "pointer" }} 
+                    className="text-[16px] md:text-[18px] font-medium text-[#00A99D] hover:underline transition"
+                  >
                     View all
                   </button>
                 </div>
@@ -623,7 +660,7 @@ function DBoard() {
                   {prescriptions.map((p, i) => (
                     <div
                       key={i}
-                      className="flex justify-between items-center px-4 py-3  "
+                      className="flex justify-between items-center px-4 py-3"
                     >
                       <div>
                         <p className="text-[18px] text-[#252525] font-medium">{p.title}</p>
@@ -639,9 +676,10 @@ function DBoard() {
                 </div>
               </div>
 
+              {/* Bottom-Right: My Doctor */}
               <div
                 className="bg-white rounded-lg border border-gray-100 
-                    flex flex-col h-auto md:h-[600px] max-h-[60vh] overflow-hidden"
+                    flex flex-col h-auto md:h-[400px] max-h-[60vh] overflow-hidden"
               >
                 <div className="flex items-center justify-between px-4 py-3 border-b bg-white sticky top-0 z-10">
                   <h2 className="text-[22px] md:text-[24px] font-semibold text-[#252525]">
@@ -716,7 +754,7 @@ function DBoard() {
                           </div>
 
                           <h3 className="text-[17px] md:text-[18px] font-semibold text-[#252525]">
-                            Dr. {d.name}
+                            {d.name}
                           </h3>
 
                           <div className="flex items-start gap-2 mt-1">

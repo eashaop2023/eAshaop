@@ -25,6 +25,10 @@ import ConfirmAppointment from "./components/Appointment/confirmappointment/Conf
 import Appointments from "./pages/AppointmentPage/Appointments";
 import VirtualAppointment from "./pages/AppointmentPage/VirtualAppointment";
 
+// Receipts
+import ReceiptsList from "./components/Receipt/ReceiptsList";
+import ReceiptView from "./components/Receipt/ReceiptView";
+
 // Profile
 import Profile from "./pages/ProfilePage/Profile";
 import SecurityPanel from "./pages/ProfilePage/SecurityPanel";
@@ -107,6 +111,8 @@ function UserApp() {
           <Route path="appointment" element={<Appointments />} />
           <Route path="medication" element={<Medication />} />
           <Route path="reportone" element={<ReportPage />} />
+          <Route path="receipts" element={<ReceiptsList />} />
+          <Route path="receipts/:receiptId" element={<ReceiptView />} />
         </Route>
 
         {/* ---------- Pharmacy Nested ---------- */}

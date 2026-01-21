@@ -39,7 +39,7 @@ const MainContent = ({ selectedFilters, setSelectedFilters, clearAllFilters, onT
 
   const { uuid } = useParams();
 const [selected, setSelected] = useState(
-  sessionStorage.getItem("selectedConsultationType") || ""
+  sessionStorage.getItem("selectedConsultation") || ""
 );  // const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [isMobileView, setIsMobileView] = useState(window.innerWidth <= 1439);
   const [doctors, setDoctors] = useState([]);
@@ -78,7 +78,9 @@ useEffect(() => {
   if (!selected) {
     setDoctors(allDoctors);
   } else {
-          let mode = selected === "video" ? "Video Consultation" : "Clinic Visit";
+    let mode = "";
+    if (selected === "video") mode = "Video Consultation";
+    if (selected === "clinic") mode = "Clinic Visit";
 
     const filtered = allDoctors.filter(
       (doc) => doc.consultationMode === mode || doc.consultationMode === "Both"
@@ -108,9 +110,8 @@ useEffect(() => {
 
 
   const handleSelect = (type) => {
-  const newValue = selected === type ? "" : type;
-  setSelected(newValue);
-  sessionStorage.setItem("selectedConsultationType", newValue);
+  setSelected(type);
+  localStorage.setItem("selectedConsultationType", type);
 };
 
     if (loading) return <p>Loading doctors...</p>;
@@ -131,13 +132,13 @@ useEffect(() => {
         <span style={{color:'#8E8E8E',fontSize:'18px'}} className="me-2">Category</span>
         </Link></span>
         <span className="me-2" style={{width:'18px',height:'18px',marginTop:'7px'}}><img src={arrowright} /></span>
-        <span style={{ textDecoration: "underline",fontSize:'1.12rem' }}>GeneralHealthCare</span>
+        <span style={{ textDecoration: "underline",fontSize:'1.12rem' }}>General Physician</span>
       </div>
 
       {/* Header */}
       <div className="d-flex justify-content-between align-items-center mb-4">
         <div className=" d-none  align-items-center gap-3 text">
-          <img src={Category} alt="General Healthcare Icon" width={52} height={52} />
+          <img src={Category} alt="General Physician Icon" width={52} height={52} />
           <div>
 <h2 className="mb-1">{categorySlug?.replace(/-/g, " ")}</h2>
             <p className="text-muted mb-0 d-flex" style={{fontSize:'1.12rem'}}>
@@ -207,7 +208,7 @@ useEffect(() => {
       {/* Toggle Buttons */}
       <div className="d-flex justify-content-center mt-3 mb-3 outer-toggle">
         <div
-          className="p-2 rounded-pill d-flex align-items-center bg-white toggle-buttons-container"
+          className="p-2 rounded-pill d-flex align-items-center bg-white toggle-buttons-container  radio-height"
           style={{ border: "1px solid #00A99D" }}
         >
           <button
