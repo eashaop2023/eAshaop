@@ -60,6 +60,15 @@ export default function AppointmentPage() {
 
   const fetchSlots = async () => {
     try {
+      // Check if API_BASE_URL is configured
+      if (!API_BASE_URL || API_BASE_URL === 'undefined') {
+        console.error("[fetchSlots] API_BASE_URL is not configured!");
+        console.error("[fetchSlots] VITE_SERVER_URL env:", import.meta.env.VITE_SERVER_URL);
+        toast.error("API configuration error. Please contact support.");
+        setAvailableSlots([]);
+        return;
+      }
+
       // Format date as YYYY-MM-DD consistently
       const year = startDate.getFullYear();
       const month = String(startDate.getMonth() + 1).padStart(2, '0');
@@ -68,6 +77,7 @@ export default function AppointmentPage() {
       
       const doctorIdToUse = location?.state?.id || doctorId;
       console.log(`[fetchSlots] Fetching slots for doctorId: ${doctorIdToUse}, date: ${dateStr}`);
+      console.log(`[fetchSlots] API_BASE_URL: ${API_BASE_URL}`);
       
       if (!doctorIdToUse) {
         console.error("[fetchSlots] No doctor ID available");
@@ -76,14 +86,21 @@ export default function AppointmentPage() {
       }
 
       const url = `${API_BASE_URL}/api/doctors/${doctorIdToUse}/availability/${dateStr}`;
-      console.log(`[fetchSlots] API URL: ${url}`);
+      console.log(`[fetchSlots] Full API URL: ${url}`);
       
-      const res = await axios.get(url);
+      const res = await axios.get(url, {
+        timeout: 10000, // 10 second timeout
+      });
       
-      console.log(`[fetchSlots] API Response:`, res.data);
+      console.log(`[fetchSlots] API Response Status: ${res.status}`);
+      console.log(`[fetchSlots] API Response Data:`, res.data);
       
       let slots = res.data.slots || [];
       console.log(`[fetchSlots] Received ${slots.length} slots from API`);
+      
+      if (slots.length === 0) {
+        console.warn(`[fetchSlots] No slots returned for doctor ${doctorIdToUse} on date ${dateStr}`);
+      }
       
       const today = new Date();
       today.setHours(0, 0, 0, 0);
@@ -107,18 +124,24 @@ export default function AppointmentPage() {
         message: err.message,
         response: err.response?.data,
         status: err.response?.status,
-        url: err.config?.url
+        url: err.config?.url,
+        apiBaseUrl: API_BASE_URL
       });
       setAvailableSlots([]);
       setSelectedSlot(null);
       
       // Show user-friendly error message
-      if (err.response?.status === 400) {
+      if (err.code === 'ECONNABORTED' || err.message.includes('timeout')) {
+        toast.error("Request timeout. Please try again.");
+      } else if (err.response?.status === 400) {
         toast.error(err.response.data?.message || "Invalid date or doctor ID");
       } else if (err.response?.status >= 500) {
         toast.error("Server error. Please try again later.");
-      } else if (!err.response) {
-        toast.error("Network error. Please check your connection.");
+      } else if (err.message === 'Network Error' || !err.response) {
+        console.error("[fetchSlots] Network error - API_BASE_URL might be incorrect:", API_BASE_URL);
+        toast.error("Cannot connect to server. Please check your connection or contact support.");
+      } else {
+        toast.error("Failed to load time slots. Please try again.");
       }
     }
   };

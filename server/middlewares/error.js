@@ -1,4 +1,4 @@
-const { AppError } = require("../middlewares/error");
+const { AppError } = require("../helpers/common");
 
 const notFound = (req, res, next) => {
   const err = new AppError("Not Found", 404);

@@ -17,6 +17,9 @@ router.post("/", appointmentController.bookAppointment);
 // Confirm payment after Razorpay success
 router.post("/confirm-payment", appointmentController.confirmPayment);
 
+// Book appointment with Pay at Clinic
+router.post("/pay-at-clinic", appointmentController.bookAppointmentAtClinic);
+
 // Razorpay webhook (auto payment confirmation)
 router.post(
   "/razorpay/webhook",

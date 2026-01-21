@@ -8,13 +8,14 @@ const addAvailability = async (req, res) => {
   try {
     const { date, startTime, endTime, slotDuration } = req.body;
 
-    // Normalize date to midnight
-    const normalizedDate = new Date(date);
-    normalizedDate.setHours(0, 0, 0, 0);
+    // Convert date to YYYY-MM-DD format (schema expects String)
+    const dateObj = new Date(date);
+    dateObj.setHours(0, 0, 0, 0);
+    const dateStr = dateObj.toISOString().split('T')[0]; // Format: YYYY-MM-DD
 
     const availability = new DoctorAvailability({
       doctor: req.params.doctorId,
-      date  : normalizedDate,
+      date: dateStr, // Store as String in YYYY-MM-DD format
       startTime,
       endTime,
       slotDuration,
@@ -32,53 +33,140 @@ const getSlots = async (req, res) => {
   try {
     const { doctorId, date } = req.params;
 
-if (!mongoose.Types.ObjectId.isValid(doctorId)) {
-  return res.status(400).json({ message: "Invalid doctor ID" });
-}
+    console.log(`[getSlots] Request received - doctorId: ${doctorId}, date: ${date}`);
 
-const startOfDay = new Date(date);
-startOfDay.setHours(0, 0, 0, 0);
+    if (!mongoose.Types.ObjectId.isValid(doctorId)) {
+      console.error(`[getSlots] Invalid doctor ID: ${doctorId}`);
+      return res.status(400).json({ message: "Invalid doctor ID" });
+    }
 
-const endOfDay = new Date(date);
-endOfDay.setHours(23, 59, 59, 999);
+    // Parse date string more explicitly to avoid timezone issues
+    // Expected format: YYYY-MM-DD
+    let dateStr = date;
+    if (date.includes('T') || date.includes(' ')) {
+      // If date includes time, extract just the date part
+      dateStr = date.split('T')[0].split(' ')[0];
+    }
+    
+    // Validate date format (YYYY-MM-DD)
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(dateStr)) {
+      console.error(`[getSlots] Invalid date format: ${date}, parsed as: ${dateStr}`);
+      return res.status(400).json({ message: "Invalid date format. Expected YYYY-MM-DD" });
+    }
 
-const availability = await DoctorAvailability.findOne({
-  doctor: doctorId,
-  date: { $gte: startOfDay, $lte: endOfDay },
-});
+    console.log(`[getSlots] Parsed date string: ${dateStr}`);
+
+    const availability = await DoctorAvailability.findOne({
+      doctor: doctorId,
+      date: dateStr, // Match exact date string
+    });
+
+    console.log(`[getSlots] Availability found: ${availability ? 'Yes' : 'No'}`);
+
+    // If no availability found, generate all default slots (6:00 AM to 10:30 PM, 30 min intervals)
+    if (!availability) {
+      const defaultSlots = [];
+      for (let hour = 6; hour <= 22; hour++) {
+        for (let minute = 0; minute < 60; minute += 30) {
+          const startHour = hour.toString().padStart(2, '0');
+          const startMinute = minute.toString().padStart(2, '0');
+          const startTime = `${startHour}:${startMinute}`;
+          
+          // Calculate end time (30 minutes later)
+          let endHour = hour;
+          let endMinute = minute + 30;
+          if (endMinute >= 60) {
+            endHour += 1;
+            endMinute = 0;
+          }
+          // Stop if we exceed 22:30 (10:30 PM)
+          if (endHour > 22 || (endHour === 22 && endMinute > 30)) {
+            break;
+          }
+          
+          const endTime = `${endHour.toString().padStart(2, '0')}:${endMinute.toString().padStart(2, '0')}`;
+          defaultSlots.push({
+            start: startTime,
+            end: endTime
+          });
+        }
+      }
+      
+      // Check for booked slots and filter them out
+      // Parse date string to create date objects in local timezone
+      const [yearDefault, monthDefault, dayDefault] = dateStr.split('-').map(Number);
+      const startOfDay = new Date(yearDefault, monthDefault - 1, dayDefault, 0, 0, 0, 0);
+      const endOfDay = new Date(yearDefault, monthDefault - 1, dayDefault, 23, 59, 59, 999);
+      
+      const booked = await Booking.find({
+        doctor: doctorId,
+        date: { $gte: startOfDay, $lte: endOfDay },
+        status: "booked",
+      });
+      
+      console.log(`[getSlots] Found ${booked.length} booked slots`);
+      
+      const bookedSlots = booked.map((b) => `${b.slot.start}-${b.slot.end}`);
+      
+      const availableSlots = defaultSlots.filter(
+        (s) => !bookedSlots.includes(`${s.start}-${s.end}`)
+      );
+      
+      console.log(`[getSlots] Returning ${availableSlots.length} available slots`);
+      
+      return res.json({ doctorId, date: dateStr, slots: availableSlots });
+    }
+
     const { startTime, endTime, slotDuration } = availability;
+
+    console.log(`[getSlots] Using availability - startTime: ${startTime}, endTime: ${endTime}, slotDuration: ${slotDuration}`);
 
     const slots = [];
     let [startHour, startMinute] = startTime.split(":").map(Number);
     let [endHour, endMinute] = endTime.split(":").map(Number);
 
-    let start = new Date(date);
-    start.setHours(startHour, startMinute, 0, 0);
+    // Create date objects using the date string and local time
+    // Parse date as YYYY-MM-DD and create date in local timezone
+    const [year, month, day] = dateStr.split('-').map(Number);
+    const start = new Date(year, month - 1, day, startHour, startMinute, 0, 0);
+    const end = new Date(year, month - 1, day, endHour, endMinute, 0, 0);
 
-    let end = new Date(date);
-    end.setHours(endHour, endMinute, 0, 0);
+    // Handle case where endTime is next day (e.g., 23:00 to 01:00)
+    if (end <= start) {
+      end.setDate(end.getDate() + 1);
+    }
 
-    while (start < end) {
-      let slotStart = new Date(start);
-      start.setMinutes(start.getMinutes() + slotDuration);
-      let slotEnd = new Date(start);
+    let currentTime = new Date(start);
+    while (currentTime < end) {
+      let slotStart = new Date(currentTime);
+      currentTime.setMinutes(currentTime.getMinutes() + slotDuration);
+      let slotEnd = new Date(currentTime);
 
       if (slotEnd <= end) {
+        // Format time as HH:mm (local time)
+        const startHours = slotStart.getHours().toString().padStart(2, '0');
+        const startMins = slotStart.getMinutes().toString().padStart(2, '0');
+        const endHours = slotEnd.getHours().toString().padStart(2, '0');
+        const endMins = slotEnd.getMinutes().toString().padStart(2, '0');
+        
         slots.push({
-          start: slotStart.toTimeString().slice(0, 5),
-          end: slotEnd.toTimeString().slice(0, 5),
+          start: `${startHours}:${startMins}`,
+          end: `${endHours}:${endMins}`,
         });
       }
     }
 
-    const nextDay = new Date(date);
-    nextDay.setDate(nextDay.getDate() + 1);
+    // Check for booked slots - reuse date variables from above
+    const startOfDay = new Date(year, month - 1, day, 0, 0, 0, 0);
+    const endOfDay = new Date(year, month - 1, day, 23, 59, 59, 999);
 
     const booked = await Booking.find({
       doctor: doctorId,
-      date: { $gte: new Date(date), $lt: nextDay },
+      date: { $gte: startOfDay, $lte: endOfDay },
       status: "booked",
     });
+
+    console.log(`[getSlots] Found ${booked.length} booked slots`);
 
     const bookedSlots = booked.map((b) => `${b.slot.start}-${b.slot.end}`);
 
@@ -87,9 +175,16 @@ const availability = await DoctorAvailability.findOne({
       (s) => !bookedSlots.includes(`${s.start}-${s.end}`)
     );
 
-    res.json({ doctorId, date, slots: availableSlots });
+    console.log(`[getSlots] Returning ${availableSlots.length} available slots`);
+
+    res.json({ doctorId, date: dateStr, slots: availableSlots });
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    console.error(`[getSlots] Error:`, error);
+    console.error(`[getSlots] Error stack:`, error.stack);
+    res.status(500).json({ 
+      message: error.message,
+      error: process.env.NODE_ENV === 'development' ? error.stack : undefined
+    });
   }
 };
 

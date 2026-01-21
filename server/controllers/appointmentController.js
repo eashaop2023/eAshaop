@@ -11,10 +11,58 @@ const cors = require("cors");
 const { raw } = require("body-parser");
 const { response } = require("express");
 const moment = require("moment-timezone");
+const { sendEmail } = require("../utils/sendEmailUser");
+const Receipt = require("../models/Receipt");
 
 // Helper: Generate Jitsi Meeting Link
 function generateJitsiLink(appointmentId) {
   return `https://meet.jit.si/consult_${appointmentId}_${Date.now()}`;
+}
+
+// Helper: Generate Unique Appointment Number (EOP + Year + Sequential Number)
+async function generateAppointmentNumber() {
+  const year = new Date().getFullYear();
+  const prefix = `EOP${year}`;
+  
+  // Find the last appointment number for this year
+  const lastAppointment = await Appointment.findOne({
+    appointmentNumber: { $regex: `^${prefix}` }
+  })
+    .sort({ appointmentNumber: -1 })
+    .select('appointmentNumber')
+    .lean();
+
+  let sequenceNumber = 1;
+  
+  if (lastAppointment && lastAppointment.appointmentNumber) {
+    // Extract the sequence number from the last appointment number
+    // Format: EOP2025001 -> extract 001
+    const lastSequence = parseInt(lastAppointment.appointmentNumber.replace(prefix, ''), 10);
+    if (!isNaN(lastSequence) && lastSequence > 0) {
+      sequenceNumber = lastSequence + 1;
+    }
+  }
+
+  // Format: EOP2025001, EOP2025002, etc. (3-digit padding)
+  let appointmentNumber = `${prefix}${String(sequenceNumber).padStart(3, '0')}`;
+  
+  // Retry logic in case of race condition (though unlikely with proper indexing)
+  let attempts = 0;
+  const maxAttempts = 5;
+  
+  while (attempts < maxAttempts) {
+    const existing = await Appointment.findOne({ appointmentNumber });
+    if (!existing) {
+      return appointmentNumber;
+    }
+    // If duplicate found, increment and try again
+    sequenceNumber++;
+    appointmentNumber = `${prefix}${String(sequenceNumber).padStart(3, '0')}`;
+    attempts++;
+  }
+  
+  // Fallback: add timestamp to ensure uniqueness if all attempts fail
+  return `${prefix}${String(sequenceNumber).padStart(3, '0')}${Date.now().toString().slice(-4)}`;
 }
 
 // Book Appointment
@@ -146,6 +194,7 @@ exports.getUserAppointments = async (req, res) => {
     const onGoing = [];
     const upcoming = [];
     const past = [];
+
 
     const formatAppointment = (appt, startTime, endTime) => ({
       appointmentId: appt._id,
@@ -738,6 +787,12 @@ const appointment = await Appointment.findById(appointmentId)
 
     appointment.status = "booked";
     appointment.razorpayPaymentId = razorpayPaymentId;
+    
+    // Generate unique appointment number if not already set
+    if (!appointment.appointmentNumber) {
+      appointment.appointmentNumber = await generateAppointmentNumber();
+    }
+    
     await appointment.save();
 
     const subDoc = {
@@ -819,6 +874,12 @@ exports.razorpayWebhook = async (req, res) => {
       // Update appointment
       appointment.status = "booked";
       appointment.razorpayPaymentId = paymentEntity.id;
+      
+      // Generate unique appointment number if not already set
+      if (!appointment.appointmentNumber) {
+        appointment.appointmentNumber = await generateAppointmentNumber();
+      }
+      
       await appointment.save();
 
       const { emitNotification } = require("../services/socketService");
@@ -870,6 +931,7 @@ exports.razorpayWebhook = async (req, res) => {
       await Doctor.findByIdAndUpdate(appointment.doctorId, {
         $push: { appointments: subDoc },
       });
+      
 
       console.log("Appointment confirmed via Webhook:", appointment._id);
     }
@@ -952,6 +1014,226 @@ exports.bookAppointment = async (req, res) => {
     });
   } catch (error) {
     console.error("Book Appointment Error:", error);
+    res.status(500).json({ message: "Server Error", error: error.message });
+  }
+};
+
+// Book Appointment with Pay at Clinic
+exports.bookAppointmentAtClinic = async (req, res) => {
+  try {
+    const { userId, doctorId, date, time, type, dependent, amount } = req.body;
+
+    if (!userId || !doctorId || !date || !time || !type || !amount)
+      return res.status(400).json({ message: "All fields are required" });
+
+    if (typeof amount !== "number" || amount <= 0)
+      return res.status(400).json({ message: "Amount must be a positive number" });
+
+    const user = await User.findById(userId);
+    if (!user) return res.status(404).json({ message: "User not found" });
+
+    const doctor = await Doctor.findById(doctorId);
+    if (!doctor) return res.status(404).json({ message: "Doctor not found" });
+
+    const requestedDateIST = moment.utc(date).tz("Asia/Kolkata");
+    const requestedTimeIST = moment.tz(`${requestedDateIST.format("YYYY-MM-DD")} ${time}`, "YYYY-MM-DD HH:mm", "Asia/Kolkata");
+    const now = moment().tz("Asia/Kolkata");
+
+    if (requestedTimeIST.isBefore(now))
+      return res.status(400).json({ message: "Cannot book an appointment in the past" });
+
+    // Format date as string for comparison (DoctorAvailability.date is a String)
+    const requestedDateStr = requestedDateIST.format("YYYY-MM-DD");
+    const startOfDay = moment(requestedDateIST).startOf("day").toDate();
+    const endOfDay = moment(requestedDateIST).endOf("day").toDate();
+
+    // Try to find availability - check both string date match and date range
+    const availabilities = await DoctorAvailability.find({
+      doctor: doctorId,
+      $or: [
+        { date: requestedDateStr },
+        { 
+          date: { 
+            $gte: moment(startOfDay).format("YYYY-MM-DD"),
+            $lte: moment(endOfDay).format("YYYY-MM-DD")
+          }
+        }
+      ]
+    });
+
+    // Check if slot is already booked
+    const existingAppointment = await Appointment.findOne({
+      doctorId,
+      date: { 
+        $gte: moment(requestedDateIST).startOf("day").toDate(),
+        $lte: moment(requestedDateIST).endOf("day").toDate()
+      },
+      time,
+      status: { $in: ["booked", "pending"] }
+    });
+
+    if (existingAppointment) {
+      return res.status(400).json({ message: "This time slot is already booked. Please select another time." });
+    }
+
+    // If availability exists, validate the time slot
+    if (availabilities.length > 0) {
+      const matchingSlot = availabilities.find((availability) => {
+        const [startHour, startMinute] = availability.startTime.split(":");
+        const [endHour, endMinute] = availability.endTime.split(":");
+        const slotStart = moment(requestedDateIST).hour(startHour).minute(startMinute);
+        const slotEnd = moment(requestedDateIST).hour(endHour).minute(endMinute);
+        if (slotEnd.isBefore(slotStart)) slotEnd.add(1, "day");
+        return requestedTimeIST.isBetween(slotStart, slotEnd, null, "[)");
+      });
+
+      if (!matchingSlot) {
+        return res.status(400).json({ message: "Doctor is not available for this time slot. Please select a time within their availability window." });
+      }
+    } else {
+      // For doctors without availability set (dummy data or new doctors)
+      // Allow booking but validate reasonable time slot (6 AM - 10:30 PM)
+      const slotHour = requestedTimeIST.hour();
+      if (slotHour < 6 || slotHour > 22 || (slotHour === 22 && requestedTimeIST.minute() > 30)) {
+        return res.status(400).json({ message: "Please select a time between 6:00 AM and 10:30 PM" });
+      }
+    }
+
+    // Generate unique appointment number
+    const appointmentNumber = await generateAppointmentNumber();
+
+    // Create appointment with status "booked" (payment at clinic)
+    const appointment = await Appointment.create({
+      userId,
+      doctorId,
+      type,
+      date: requestedDateIST.toDate(),
+      time,
+      dependent: dependent || null,
+      status: "booked",
+      amount,
+      appointmentNumber
+      // No razorpayOrderId means payment will be at clinic
+    });
+
+    // Add appointment to user and doctor
+    const subDoc = {
+      appointmentId: appointment._id,
+      userId: appointment.userId,
+      doctorId: appointment.doctorId,
+      type: appointment.type,
+      date: appointment.date,
+      time: appointment.time,
+      dependent: appointment.dependent,
+      status: appointment.status,
+      jitsiLink: appointment.jitsiLink || null,
+    };
+
+    await User.findByIdAndUpdate(userId, {
+      $push: { appointments: subDoc },
+    });
+    await Doctor.findByIdAndUpdate(doctorId, {
+      $push: { appointments: subDoc },
+    });
+
+    // Send notifications
+    await sendAppointmentNotifications(appointment);
+
+    // Prepare patient details for receipt
+    const patientName = dependent ? (dependent.name || dependent.fullName) : user.full_name;
+    const patientAge = dependent ? (dependent.age || dependent.dob) : user.age;
+    const patientSex = dependent ? (dependent.sex || dependent.gender) : user.gender;
+    const formattedDate = requestedDateIST.format("DD/MM/YYYY");
+    const formattedTime = requestedTimeIST.format("hh:mm A");
+
+    // Create and save receipt
+    const receipt = await Receipt.create({
+      appointmentId: appointment._id,
+      userId: appointment.userId,
+      doctorId: appointment.doctorId,
+      appointmentNumber: appointment.appointmentNumber,
+      doctorDetails: {
+        name: doctor.name,
+        speciality: doctor.speciality,
+        email: doctor.email,
+        mobile: doctor.mobile,
+        hospitalName: doctor.hospitalName,
+        hospitalLocation: doctor.hospitalLocation
+      },
+      patientDetails: {
+        name: patientName,
+        age: patientAge,
+        gender: patientSex,
+        email: dependent ? (dependent.email || user.email) : user.email,
+        mobile: dependent ? (dependent.mobile || user.phone_number) : user.phone_number,
+        address: dependent ? (dependent.address || user.address) : user.address,
+        pincode: dependent ? (dependent.pincode || user.pincode) : user.pincode
+      },
+      appointmentDetails: {
+        date: requestedDateIST.toDate(),
+        time: formattedTime,
+        type: type,
+        status: "booked"
+      },
+      paymentDetails: {
+        amount: amount,
+        paymentMethod: "Pay at Clinic",
+        status: "Pending"
+      }
+    });
+
+    // Send receipt email to doctor
+
+    const receiptHtml = `
+      <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
+        <h2 style="color: #00A99D;">Appointment Receipt - Pay at Clinic</h2>
+        <div style="background-color: #f5f5f5; padding: 15px; border-radius: 5px; margin: 20px 0;">
+          <h3 style="margin-top: 0;">Appointment Details</h3>
+          <p><strong>Appointment Number:</strong> ${appointment.appointmentNumber || appointment._id}</p>
+          <p><strong>Date:</strong> ${formattedDate}</p>
+          <p><strong>Time:</strong> ${formattedTime}</p>
+          <p><strong>Consultation Type:</strong> ${type === "clinic" ? "Clinic Visit" : "Video Consultation"}</p>
+        </div>
+        <div style="background-color: #f5f5f5; padding: 15px; border-radius: 5px; margin: 20px 0;">
+          <h3 style="margin-top: 0;">Patient Details</h3>
+          <p><strong>Name:</strong> ${patientName}</p>
+          <p><strong>Age:</strong> ${patientAge}</p>
+          <p><strong>Sex:</strong> ${patientSex}</p>
+        </div>
+        <div style="background-color: #f5f5f5; padding: 15px; border-radius: 5px; margin: 20px 0;">
+          <h3 style="margin-top: 0;">Payment Details</h3>
+          <p><strong>Consultation Fee:</strong> ₹ ${amount}.00</p>
+          <p><strong>Payment Method:</strong> Pay at Clinic</p>
+          <p><strong>Status:</strong> Payment Pending</p>
+        </div>
+        <p style="color: #666; font-size: 12px; margin-top: 30px;">
+          This is an automated receipt. Please collect payment from the patient at the clinic.
+        </p>
+      </div>
+    `;
+
+    if (doctor.email) {
+      try {
+        await sendEmail({
+          email: doctor.email,
+          subject: `New Appointment - Pay at Clinic (${patientName})`,
+          message: receiptHtml
+        });
+        console.log(`Receipt sent to doctor: ${doctor.email}`);
+      } catch (emailError) {
+        console.error("Failed to send receipt email to doctor:", emailError);
+        // Don't fail the appointment creation if email fails
+      }
+    }
+
+    res.status(201).json({
+      message: "Appointment booked successfully. Payment will be collected at clinic.",
+      appointmentId: appointment._id,
+      appointment,
+      receiptId: receipt._id
+    });
+  } catch (error) {
+    console.error("Book Appointment At Clinic Error:", error);
     res.status(500).json({ message: "Server Error", error: error.message });
   }
 };
