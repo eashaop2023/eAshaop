@@ -267,6 +267,13 @@ const handleSendOrResendOtp = async () => {
 const handleLogin = async (e) => {
   e.preventDefault();
 
+  // Validate API configuration
+  if (!API_BASE_URL || API_BASE_URL === 'undefined' || API_BASE_URL.includes('undefined')) {
+    console.error("API_BASE_URL is not configured properly:", API_BASE_URL);
+    toast.error("Server configuration error. Please contact support.");
+    return;
+  }
+
   const phoneRegex = /^[0-9]{10}$/;
   const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
@@ -288,31 +295,54 @@ const handleLogin = async (e) => {
 
       Object.keys(payload).forEach((key) => !payload[key] && delete payload[key]);
 
-      const res = await fetch(
-        role === "doctor"
-          ? `${API_BASE_URL}/api/doctors/login`
-          : `${API_BASE_URL}/api/user/login`,
-        {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(payload),
-        }
-      );
+      let res;
+      try {
+        res = await fetch(
+          role === "doctor"
+            ? `${API_BASE_URL}/api/doctors/login`
+            : `${API_BASE_URL}/api/user/login`,
+          {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(payload),
+          }
+        );
+      } catch (fetchError) {
+        // Network error - server not reachable, CORS issue, etc.
+        console.error("Network error:", fetchError);
+        toast.error("Cannot connect to server. Please check your internet connection and ensure the server is running.");
+        return;
+      }
 
-      const data = await res.json();
+      // Check if response exists and is ok before parsing JSON
+      if (!res) {
+        toast.error("No response from server. Please try again.");
+        return;
+      }
+
+      let data;
+      try {
+        data = await res.json();
+      } catch (jsonError) {
+        // Response is not valid JSON
+        console.error("JSON parse error:", jsonError);
+        toast.error("Server returned an invalid response. Please try again.");
+        return;
+      }
+
       if (!res.ok) {
-  // Customize error messages based on backend response
-  if (data.message?.toLowerCase().includes("user not found")) {
-    toast.error("Email or password is incorrect");
-  } else if (data.message?.toLowerCase().includes("invalid password")) {
-    toast.error("Incorrect password");
-  } else if (data.message?.toLowerCase().includes("invalid credentials")) {
-    toast.error("Email or password is incorrect");
-  } else {
-    toast.error(data.message || "Login failed. Please try again.");
-  }
-  return;
-}
+        // Customize error messages based on backend response
+        if (data.message?.toLowerCase().includes("user not found")) {
+          toast.error("Email or password is incorrect");
+        } else if (data.message?.toLowerCase().includes("invalid password")) {
+          toast.error("Incorrect password");
+        } else if (data.message?.toLowerCase().includes("invalid credentials")) {
+          toast.error("Email or password is incorrect");
+        } else {
+          toast.error(data.message || "Login failed. Please try again.");
+        }
+        return;
+      }
 
 
       const authToken = data.authToken || data.token;
@@ -335,17 +365,28 @@ const handleLogin = async (e) => {
       }
       toast.success("Login successful!");
       setTimeout(() => {
-      if (role === "doctor") {
-        navigate("/doctor/dashboard");
-      } else {
-        navigate("/user/dashboard");
-      }
-    },2000);
-  } }catch (error) {
-  toast.error(error.message || "Network error. Please try again.");
-} finally{
-  setLoading(false);
-}
+        if (role === "doctor") {
+          navigate("/doctor/dashboard");
+        } else {
+          navigate("/user/dashboard");
+        }
+      }, 2000);
+    } // Close else block
+  } catch (error) {
+    // Handle any other unexpected errors
+    console.error("Login error:", error);
+    
+    // Provide user-friendly error messages
+    if (error.message?.includes("Failed to fetch") || error.message?.includes("NetworkError")) {
+      toast.error("Cannot connect to server. Please check:\n1. Server is running\n2. Internet connection\n3. API URL is correct");
+    } else if (error.message) {
+      toast.error(error.message);
+    } else {
+      toast.error("An unexpected error occurred. Please try again.");
+    }
+  } finally {
+    setLoading(false);
+  }
 };
   
 

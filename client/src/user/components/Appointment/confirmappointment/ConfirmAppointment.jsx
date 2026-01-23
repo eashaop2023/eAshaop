@@ -21,6 +21,8 @@ const ConfirmAppointment = () => {
   const location = useLocation();
   const [isProcessing, setIsProcessing] = useState(false);
   const [showPaymentDetails, setShowPaymentDetails] = useState(false);
+  const [termsAccepted, setTermsAccepted] = useState(false);
+  const [showAllDetails, setShowAllDetails] = useState(true);
   const locationState =
     location.state || JSON.parse(localStorage.getItem("appointmentData")) || {};
 
@@ -273,15 +275,17 @@ const ConfirmAppointment = () => {
         `}
       </style>
 
-      <Row className="justify-content-center">
-        {/* Left Column */}
-        <Col
-          xs={12}
-          sm={10}
-          md={6}
-          className="d-flex justify-content-center col-left"
-          style={{ padding: "0 15px" }}
-        >
+      <>
+      {showAllDetails && (
+        <Row className="justify-content-center">
+          {/* Left Column */}
+          <Col
+            xs={12}
+            sm={10}
+            md={6}
+            className="d-flex justify-content-center col-left"
+            style={{ padding: "0 15px" }}
+          >
           <div className="back-button" style={{ width: "100%", maxWidth: 566 }}>
             {/* Back Button */}
             <Button
@@ -301,7 +305,7 @@ const ConfirmAppointment = () => {
             {/* Doctor Image */}
             <div style={{ textAlign: "center", position: "relative", marginBottom: "80px" }}>
               <img
-                src="https://tse4.mm.bing.net/th/id/OIP.FbPafxK8AlAX53Pbit6KsAHaEK?rs=1&pid=ImgDetMain&o=7&rm=3"
+                src={doctor?.backgroundImage || "https://img.freepik.com/free-vector/hospital-healthcare-service-sale-banner_23-2150394136.jpg"}
                 alt="Banner"
                 style={{
                   width: "100%",
@@ -431,16 +435,39 @@ const ConfirmAppointment = () => {
                     </div>
                     <div className="d-flex align-items-center">
                       <span className="fw-medium me-2" style={{ minWidth: "80px" }}>Sex:</span>
-                      <span className="text-muted">{member.sex}</span>
+                      <span className="text-muted">{member.sex ? member.sex.charAt(0).toUpperCase() + member.sex.slice(1).toLowerCase() : member.sex}</span>
                     </div>
                   </div>
-                  <div
-                    className="text-decoration-none mt-3"
-                    style={{ color: "#00A99D", cursor: "pointer", fontSize: "14px", fontWeight: 500 }}
-                    onClick={() => navigate(-1)}
+                </div>
+
+                {/* Terms and Conditions Checkbox */}
+                <div className="mb-3" style={{ display: "flex", alignItems: "flex-start", gap: "10px" }}>
+                  <input
+                    type="checkbox"
+                    id="termsCheckboxConfirm"
+                    checked={termsAccepted}
+                    onChange={(e) => setTermsAccepted(e.target.checked)}
+                    style={{
+                      marginTop: "4px",
+                      cursor: "pointer",
+                      width: "18px",
+                      height: "18px",
+                      accentColor: "#00A99D",
+                      flexShrink: 0
+                    }}
+                  />
+                  <label
+                    htmlFor="termsCheckboxConfirm"
+                    style={{
+                      fontSize: "14px",
+                      color: "#252525",
+                      cursor: "pointer",
+                      lineHeight: "1.5",
+                      margin: 0
+                    }}
                   >
-                    Change patient
-                  </div>
+                    I confirm that the above details are correct
+                  </label>
                 </div>
 
                 {/* Proceed to Payment Button */}
@@ -454,7 +481,13 @@ const ConfirmAppointment = () => {
                     height: 42,
                     fontWeight: 500,
                   }}
-                  onClick={() => setShowPaymentDetails(true)}
+                  onClick={() => {
+                    if (!termsAccepted) {
+                      toast.error("Please accept that the above details are correct to proceed.");
+                      return;
+                    }
+                    setShowPaymentDetails(true);
+                  }}
                 >
                   Proceed to Payment
                 </Button>
@@ -509,7 +542,9 @@ const ConfirmAppointment = () => {
             )}
           </div>
         </Col>
-      </Row>
+        </Row>
+        )}
+      </>
     </Container>
   );
 };

@@ -16,7 +16,9 @@ function initSocket(server) {
         "https://www.eashaop.com",
         "http://localhost:5500",
         "http://127.0.0.1:5173",
-        "http://localhost:5173"
+        "http://localhost:5173",
+        "http://localhost:5174",  // Added for Vite dev server on port 5174
+        "http://127.0.0.1:5174"   // Added for Vite dev server on port 5174
       ],
 // <<<<<<< HEAD
       methods: ["GET", "POST","PUT","DELETE", "OPTIONS","PATCH"],

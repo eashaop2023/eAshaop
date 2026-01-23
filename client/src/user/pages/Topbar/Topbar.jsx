@@ -127,19 +127,36 @@ useEffect(() => {
   // const toggleSidebar = propToggleSidebar;
   // const isMobile = propIsMobile !== undefined ? propIsMobile : calculatedIsMobile;
   const [profileImage, setProfileImage] = useState();
+  const [isFetchingNotifications, setIsFetchingNotifications] = useState(false);
 
   useEffect(() => {
     const storedUser = JSON.parse(localStorage.getItem("user"));
-    fetch(`${API_BASE_URL}/api/user/${storedUser.id}`)
-      .then((res) => res.json()) // parse JSON
-      .then((data) => {
-        if (data?.user?.profileImage?.cloudinaryUrl) {
-          setProfileImage(data?.user?.profileImage?.cloudinaryUrl);
-        }
-      })
-      .catch((err) => {
-        console.error("Error fetching user:", err);
-      })
+    
+    // Check if user data was recently fetched (within last 5 seconds) to avoid duplicate calls
+    const lastFetchTime = sessionStorage.getItem('userDataLastFetch');
+    const now = Date.now();
+    const fiveSecondsAgo = now - 5000;
+    
+    if (!lastFetchTime || parseInt(lastFetchTime) < fiveSecondsAgo) {
+      fetch(`${API_BASE_URL}/api/user/${storedUser.id}`)
+        .then((res) => res.json()) // parse JSON
+        .then((data) => {
+          if (data?.user?.profileImage?.cloudinaryUrl) {
+            setProfileImage(data?.user?.profileImage?.cloudinaryUrl);
+          }
+          // Cache the fetch time to prevent duplicate calls
+          sessionStorage.setItem('userDataLastFetch', now.toString());
+        })
+        .catch((err) => {
+          console.error("Error fetching user:", err);
+        });
+    } else {
+      // Use cached profile image from localStorage if available
+      const cachedUser = JSON.parse(localStorage.getItem("user"));
+      if (cachedUser?.profileImage?.cloudinaryUrl) {
+        setProfileImage(cachedUser.profileImage.cloudinaryUrl);
+      }
+    }
 
      
       socket.emit("joinUserRoom", storedUser.id);
@@ -168,31 +185,56 @@ useEffect(() => {
 
   }, []);
 
-  // --- Fetch notifications
-const fetchNotifications = async () => {
-  try {
-    const storedUser = JSON.parse(localStorage.getItem("user"));
-    const storedRole = localStorage.getItem("role"); // 'user' or 'doctor'
-    const userId = storedUser?.id;
-
-    if (!userId || !storedRole) {
-      console.warn("No userId or role found in localStorage — skipping fetch.");
+  // --- Fetch notifications with debouncing to prevent duplicate calls
+  const fetchNotifications = async () => {
+    // Prevent multiple simultaneous calls
+    if (isFetchingNotifications) {
       return;
     }
 
-    const res = await fetch(`${API_BASE_URL}/api/notifications/${storedRole}/${userId}`);
-    const data = await res.json();
+    try {
+      setIsFetchingNotifications(true);
+      const storedUser = JSON.parse(localStorage.getItem("user"));
+      const storedRole = localStorage.getItem("role"); // 'user' or 'doctor'
+      const userId = storedUser?.id;
 
-    if (res.ok && Array.isArray(data.notifications)) {
-      setNotifications(data.notifications);
-      console.log("Fetched notifications:", data.notifications.length);
-    } else {
-      console.error("Failed to fetch notifications:", data.message);
+      if (!userId || !storedRole) {
+        console.warn("No userId or role found in localStorage — skipping fetch.");
+        return;
+      }
+
+      const res = await fetch(`${API_BASE_URL}/api/notifications/${storedRole}/${userId}`);
+      
+      // Handle 404 errors gracefully
+      if (res.status === 404) {
+        console.warn("Notifications endpoint not found (404). This may be expected if notifications are not yet implemented.");
+        setNotifications([]);
+        return;
+      }
+
+      if (!res.ok) {
+        throw new Error(`Failed to fetch notifications: ${res.status}`);
+      }
+
+      const data = await res.json();
+
+      if (Array.isArray(data.notifications)) {
+        setNotifications(data.notifications);
+        console.log("Fetched notifications:", data.notifications.length);
+      } else {
+        console.warn("Notifications data format unexpected:", data);
+        setNotifications([]);
+      }
+    } catch (err) {
+      console.error("Error fetching notifications:", err);
+      // Don't show error to user if it's a 404 (endpoint might not exist)
+      if (err.message && !err.message.includes("404")) {
+        console.error("Failed to fetch notifications:", err.message);
+      }
+    } finally {
+      setIsFetchingNotifications(false);
     }
-  } catch (err) {
-    console.error("Error fetching notifications:", err);
-  }
-};
+  };
 
   // useEffect(() => {
   //   fetchNotifications(); // Initial fetch on mount
@@ -205,12 +247,16 @@ useEffect(() => {
   const userId = storedUser?.id;
   if (!userId) return;
 
-  
+  let hasFetched = false; // Flag to prevent duplicate initial fetch
 
   const joinRoomAndFetch = () => {
     socket.emit("joinUser", userId);
     console.log("Joined user room after connect/reconnect:", userId);
-    fetchNotifications(); // Fetch notifications on connect/reconnect
+    // Only fetch if not already fetched (prevent duplicate on initial connect)
+    if (!hasFetched) {
+      fetchNotifications();
+      hasFetched = true;
+    }
   };
 
   // If socket is already connected, join and fetch immediately
@@ -219,7 +265,11 @@ useEffect(() => {
   }
 
   socket.on("connect", joinRoomAndFetch);
-  socket.on("reconnect", joinRoomAndFetch);
+  socket.on("reconnect", () => {
+    // On reconnect, allow fetching again (user might have new notifications)
+    hasFetched = false;
+    joinRoomAndFetch();
+  });
 
   socket.on("newNotification", (data) => {
   const messageText =
@@ -262,13 +312,6 @@ useEffect(() => {
     socket.off("connect", joinRoomAndFetch);
     socket.off("reconnect", joinRoomAndFetch);
   };
-}, []);
-
-useEffect(() => {
-  const timer = setTimeout(() => {
-    fetchNotifications();
-  }, 500); // delay 0.5s
-  return () => clearTimeout(timer);
 }, []);
 
 
@@ -319,26 +362,58 @@ useEffect(() => {
 
   const handleLogout = async () => {
     try {
-      // ✅ Call backend logout API
-      const response = await fetch(`${API_BASE_URL}/api/user/logout`, {
-        method: "POST",
-        credentials: "include", 
-        headers: {
-          "Content-Type": "application/json",
-        },
-      });
-
-      const data = await response.json();
-      if (response.ok) {
-        // ✅ Clear tokens or localStorage if you store them there
-        localStorage.removeItem("token");
-        localStorage.removeItem("user");
-        navigate("/login");
-      } else {
-        console.error("Logout failed:", data.message);
+      // Get auth token from localStorage
+      const authToken = localStorage.getItem("authToken");
+      
+      // Disconnect socket connection
+      if (socket && socket.connected) {
+        socket.disconnect();
       }
+
+      // Call backend logout API with token in body
+      if (authToken) {
+        try {
+          const response = await fetch(`${API_BASE_URL}/api/user/logout`, {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({ token: authToken }),
+          });
+
+          const data = await response.json();
+          if (!response.ok) {
+            console.warn("Logout API warning:", data.message);
+          }
+        } catch (apiError) {
+          console.warn("Logout API error (continuing with local cleanup):", apiError);
+        }
+      }
+
+      // Clear all localStorage items
+      localStorage.removeItem("authToken");
+      localStorage.removeItem("token");
+      localStorage.removeItem("user");
+      localStorage.removeItem("userId");
+      localStorage.removeItem("role");
+      localStorage.removeItem("doctorId");
+      localStorage.removeItem("appointmentData");
+      localStorage.removeItem("selectedSlot");
+      
+      // Clear sessionStorage
+      sessionStorage.clear();
+
+      // Navigate to login page
+      navigate("/login");
     } catch (error) {
       console.error("Error logging out:", error);
+      // Even if there's an error, clear local storage and navigate
+      localStorage.clear();
+      sessionStorage.clear();
+      if (socket && socket.connected) {
+        socket.disconnect();
+      }
+      navigate("/login");
     }
   };
   console.log(toggleState);

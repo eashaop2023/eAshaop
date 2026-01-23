@@ -328,18 +328,31 @@ function DBoard() {
     // Show stored user immediately
     setUser(storedUser);
 
-    // Fetch latest user data from backend
-    fetch(`${API_BASE_URL}/api/user/${storedUser.id}`)
-      .then((res) => res.json()) // parse JSON
-      .then((data) => {
-        console.log("Fetched user from API:", data);
-        // backend should return { user: {...} } or just {...}
-        setUser(data.user || data || storedUser);
-      })
-      .catch((err) => {
-        console.error("Error fetching user:", err);
-      })
-      .finally(() => setLoading(false));
+    // Fetch latest user data from backend (only if not recently fetched)
+    // Check if user data was recently fetched (within last 5 seconds) to avoid duplicate calls
+    const lastFetchTime = sessionStorage.getItem('userDataLastFetch');
+    const now = Date.now();
+    const fiveSecondsAgo = now - 5000;
+    
+    if (!lastFetchTime || parseInt(lastFetchTime) < fiveSecondsAgo) {
+      fetch(`${API_BASE_URL}/api/user/${storedUser.id}`)
+        .then((res) => res.json()) // parse JSON
+        .then((data) => {
+          console.log("Fetched user from API:", data);
+          // backend should return { user: {...} } or just {...}
+          setUser(data.user || data || storedUser);
+          // Cache the fetch time to prevent duplicate calls
+          sessionStorage.setItem('userDataLastFetch', now.toString());
+        })
+        .catch((err) => {
+          console.error("Error fetching user:", err);
+        })
+        .finally(() => setLoading(false));
+    } else {
+      // Use cached data if recently fetched
+      console.log("Using cached user data to avoid duplicate API call");
+      setLoading(false);
+    }
 
     // if (userId) fetchAppointments();
 

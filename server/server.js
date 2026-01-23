@@ -39,9 +39,19 @@ app.set("io", io);
 // CORS: allow your frontend URL
 app.use(
   cors({
-    origin: ["https://eashaop.com","https://www.eashaop.com", "http://localhost:5500", "http://127.0.0.1:5500", "http://127.0.0.1:5173", "http://localhost:5173"], // frontend URL
-    methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS","PATCH"],
+    origin: [
+      "https://eashaop.com",
+      "https://www.eashaop.com", 
+      "http://localhost:5500", 
+      "http://127.0.0.1:5500", 
+      "http://127.0.0.1:5173", 
+      "http://localhost:5173",
+      "http://localhost:5174",  // Added for Vite dev server on port 5174
+      "http://127.0.0.1:5174"   // Added for Vite dev server on port 5174
+    ], // frontend URL
+    methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"],
     credentials: true,
+    allowedHeaders: ["Content-Type", "Authorization", "X-Requested-With"],
   })
 );
 
@@ -73,9 +83,9 @@ app.use("/api/appointments", appointmentRoutes);
 app.use('/api', reviewRoutes)
 app.use('/api/whatsapp', whatsappRoutes)
 app.use("/api/receipts", receiptRoutes);
+app.use("/api/notifications",notificationRoutes)
 app.use(notFound);
 app.use(errorHandler);
-app.use("/api/notifications",notificationRoutes)
 
 // -------------------- CRON JOB --------------------
 const cron = require("node-cron");

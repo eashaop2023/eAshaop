@@ -33,6 +33,7 @@ const [selected, setSelected] = useState(
   const [doctors, setDoctors] = useState([]);
   const [loading, setLoading] = useState(true);
       const [allDoctors, setAllDoctors] = useState([]);
+      const [searchTerm, setSearchTerm] = useState("");
   
 
 useEffect(() => {
@@ -61,21 +62,33 @@ useEffect(() => {
 
 
 
-// Client-side filter when selected toggle changes
+// Client-side filter when selected toggle changes or search term changes
 useEffect(() => {
-  if (!selected) {
-    setDoctors(allDoctors);
-  } else {
+  let filtered = allDoctors;
+
+  // Filter by consultation mode
+  if (selected) {
     let mode = "";
     if (selected === "video") mode = "Video Consultation";
     if (selected === "clinic") mode = "Clinic Visit";
 
-    const filtered = allDoctors.filter(
+    filtered = filtered.filter(
       (doc) => doc.consultationMode === mode || doc.consultationMode === "Both"
     );
-    setDoctors(filtered);
   }
-}, [selected, allDoctors]);
+
+  // Filter by search term (name or speciality)
+  if (searchTerm.trim()) {
+    const searchLower = searchTerm.toLowerCase().trim();
+    filtered = filtered.filter((doc) => {
+      const nameMatch = doc.name?.toLowerCase().includes(searchLower);
+      const specialityMatch = doc.speciality?.toLowerCase().includes(searchLower);
+      return nameMatch || specialityMatch;
+    });
+  }
+
+  setDoctors(filtered);
+}, [selected, allDoctors, searchTerm]);
 
 
   useEffect(() => {
@@ -141,6 +154,8 @@ useEffect(() => {
   <input
     type="text"
     placeholder="Find doctor"
+    value={searchTerm}
+    onChange={(e) => setSearchTerm(e.target.value)}
     className="form-control mb-2 mt-1 w-100 searchbar outline-none outline-gray-300"
     style={{
       paddingLeft: "45px",

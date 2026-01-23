@@ -627,7 +627,10 @@ exports.forgotPasswordSendOTP = async (req, res) => {
     if (verifyBy === "email") {
       const email = value.trim().toLowerCase();
       console.log("Looking for user with email:", email);
-      user = await User.findOne({ email });
+      // Use case-insensitive email search to match other parts of the codebase
+      user = await User.findOne({ 
+        email: { $regex: `^${email}$`, $options: "i" } 
+      });
     } else if (verifyBy === "phone") {
       const phone = value;
       console.log("Looking for user with phone:", phone);
@@ -645,14 +648,24 @@ exports.forgotPasswordSendOTP = async (req, res) => {
     const OTP = generateOTP();
     console.log("Generated OTP:", OTP);
 
-    // Send OTP
-    if (verifyBy === "email") {
-      await sendOTP({ verifyBy: "email", email: user.email, otp: OTP });
-    } else {
-      await sendOTP({ verifyBy: "phone", mobile: user.phone_number, otp: OTP });
+    // Send OTP with error handling
+    try {
+      if (verifyBy === "email") {
+        await sendOTP({ verifyBy: "email", email: user.email, otp: OTP });
+      } else {
+        await sendOTP({ verifyBy: "phone", mobile: user.phone_number, otp: OTP });
+      }
+    } catch (sendError) {
+      console.error("Failed to send OTP:", sendError);
+      return res.status(500).json({ 
+        message: `Failed to send OTP: ${sendError.message || "Email/SMS service error"}` 
+      });
     }
 
-    // Save OTP
+    // Save OTP - Initialize forgot_password_otp if it doesn't exist
+    if (!user.forgot_password_otp) {
+      user.forgot_password_otp = {};
+    }
     user.forgot_password_otp.code = OTP;
     user.forgot_password_otp.expires = Date.now() + 10 * 60 * 1000; // 10 min
     user.forgot_password_otp.verified = false;
@@ -662,7 +675,10 @@ exports.forgotPasswordSendOTP = async (req, res) => {
     res.status(200).json({ message: "OTP sent successfully", userId: user._id });
   } catch (error) {
     console.error("Send Forgot Password OTP Error:", error);
-    res.status(500).json({ message: "Internal server error" });
+    res.status(500).json({ 
+      message: "Internal server error",
+      error: process.env.NODE_ENV === "development" ? error.message : undefined
+    });
   }
 };
 
@@ -690,14 +706,24 @@ exports.resendForgotOTP = async (req, res) => {
     // Generate new OTP
     const OTP = generateOTP();
 
-    // Send OTP
-    if (verifyBy === "email") {
-      await sendOTP({ verifyBy: "email", email: user.email, otp: OTP });
-    } else {
-      await sendOTP({ verifyBy: "phone", mobile: user.phone_number, otp: OTP });
+    // Send OTP with error handling
+    try {
+      if (verifyBy === "email") {
+        await sendOTP({ verifyBy: "email", email: user.email, otp: OTP });
+      } else {
+        await sendOTP({ verifyBy: "phone", mobile: user.phone_number, otp: OTP });
+      }
+    } catch (sendError) {
+      console.error("Failed to resend OTP:", sendError);
+      return res.status(500).json({ 
+        message: `Failed to resend OTP: ${sendError.message || "Email/SMS service error"}` 
+      });
     }
 
-    // Update OTP in DB
+    // Update OTP in DB - Initialize forgot_password_otp if it doesn't exist
+    if (!user.forgot_password_otp) {
+      user.forgot_password_otp = {};
+    }
     user.forgot_password_otp.code = OTP;
     user.forgot_password_otp.expires = Date.now() + 10 * 60 * 1000; // 10 min
     user.forgot_password_otp.verified = false;
@@ -734,7 +760,7 @@ exports.verifyForgotOTP = async (req, res) => {
 
     const otpRecord = user.forgot_password_otp;
 
-    if (!otpRecord.code || otpRecord.verified) {
+    if (!otpRecord || !otpRecord.code || otpRecord.verified) {
       return res.status(400).json({ message: "OTP already used or not generated" });
     }
 

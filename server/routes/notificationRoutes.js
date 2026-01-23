@@ -3,6 +3,42 @@ const router = express.Router();
 const UserNotification = require("../models/userNotification");
 const DoctorNotification = require("../models/doctorNotification");
 
+// ✅ Mark all notifications as read - Must be defined before parameterized routes
+const markAllAsRead = async (req, res) => {
+  try {
+    const { type } = req.query;
+    const { userId, doctorId } = req.body;
+
+    if (!type) {
+      return res.status(400).json({ message: "Type (user/doctor) is required" });
+    }
+
+    const Model = type === "doctor" ? DoctorNotification : UserNotification;
+    const id = type === "doctor" ? doctorId : userId;
+
+    if (!id) {
+      return res.status(400).json({ 
+        message: `${type === "doctor" ? "doctorId" : "userId"} is required` 
+      });
+    }
+
+    const result = await Model.updateMany(
+      { [type === "doctor" ? "doctorId" : "userId"]: id, isRead: false },
+      { $set: { isRead: true } }
+    );
+
+    res.status(200).json({
+      message: "All notifications marked as read",
+      modifiedCount: result.modifiedCount,
+    });
+  } catch (error) {
+    console.error("Error marking all notifications as read:", error);
+    res.status(500).json({ message: "Server error", error: error.message });
+  }
+};
+
+router.patch("/mark-all-read", markAllAsRead);
+
 /**
  * @route   GET /api/notifications/:role/:id
  * @desc    Get notifications for a user or doctor by ID
@@ -83,36 +119,5 @@ router.get("/unread/:role/:id", async (req, res) => {
     res.status(500).json({ message: "Server error", error: error.message });
   }
 });
-
-// ✅ 4️⃣ Mark all notifications as read
-const markAllAsRead = async (req, res) => {
-  try {
-    const { type } = req.query;
-    const { userId } = req.body;
-
-    if (!type || !userId) {
-      return res.status(400).json({ message: "Type and userId are required" });
-    }
-
-    const Model = type === "doctor" ? DoctorNotification : UserNotification;
-
-    const result = await Model.updateMany(
-      { [type === "doctor" ? "doctorId" : "userId"]: userId, isRead: false },
-      { $set: { isRead: true } }
-    );
-
-    res.status(200).json({
-      message: "All notifications marked as read",
-      modifiedCount: result.modifiedCount,
-    });
-  } catch (error) {
-    console.error("Error marking all notifications as read:", error);
-    res.status(500).json({ message: "Server error", error: error.message });
-  }
-};
-
-router.patch("/mark-all-read", markAllAsRead);
-
-
 
 module.exports = router;

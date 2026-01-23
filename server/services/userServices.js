@@ -15,7 +15,16 @@ const registration_verifyOtp = async (body) => {
 }; */
 
 const user_logout = async (body) => {
-  return await userRepository.user_logout(body);
+  // Extract token from body - can be either a string or an object with token property
+  let token;
+  if (typeof body === 'string') {
+    token = body;
+  } else if (body && typeof body === 'object') {
+    token = body.token || body;
+  } else {
+    token = body;
+  }
+  return await userRepository.user_logout(token);
 };
 
 /* 

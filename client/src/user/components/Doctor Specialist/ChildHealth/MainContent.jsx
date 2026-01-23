@@ -31,6 +31,8 @@ const MainContent = ({ selectedFilters, setSelectedFilters, clearAllFilters, onT
   const [selected, setSelected] = useState("video");
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [isMobileView, setIsMobileView] = useState(window.innerWidth <= 1439);
+  const [searchTerm, setSearchTerm] = useState("");
+  const [filteredDoctors, setFilteredDoctors] = useState(mockDoctors);
 
   useEffect(() => {
     function handleResize() {
@@ -51,6 +53,22 @@ const MainContent = ({ selectedFilters, setSelectedFilters, clearAllFilters, onT
     setSelected(type);
     localStorage.setItem("selectedConsultationType", type);
   };
+
+  // Filter doctors based on search term
+  useEffect(() => {
+    let filtered = mockDoctors;
+    
+    if (searchTerm.trim()) {
+      const searchLower = searchTerm.toLowerCase().trim();
+      filtered = filtered.filter((doc) => {
+        const nameMatch = doc.name?.toLowerCase().includes(searchLower);
+        const specialityMatch = doc.speciality?.toLowerCase().includes(searchLower);
+        return nameMatch || specialityMatch;
+      });
+    }
+    
+    setFilteredDoctors(filtered);
+  }, [searchTerm]);
 
   return (
     <div className="p-4 main-contents" style={{ flex: 1, }}>
@@ -94,6 +112,8 @@ const MainContent = ({ selectedFilters, setSelectedFilters, clearAllFilters, onT
   <input
     type="text"
     placeholder="Find doctor"
+    value={searchTerm}
+    onChange={(e) => setSearchTerm(e.target.value)}
     className="form-control mb-2 mt-1 w-100 searchbar outline-none outline-gray-300"
     style={{
       paddingLeft: "45px",
@@ -210,7 +230,7 @@ const MainContent = ({ selectedFilters, setSelectedFilters, clearAllFilters, onT
 
 
       <div className="row">
-        {mockDoctors.map((doc, index) => (
+        {filteredDoctors.map((doc, index) => (
           <div key={index} className="col-md-4 col-sm-6 mb-4">
             <div className="card shadow-sm rounded-4 border-0 h-100">
               <div className="card-body px-4 py-4 d-flex flex-column justify-content-between h-100">
