@@ -35,9 +35,145 @@ const registerDoctor = async (req, res) => {
     } = req.body;
     const doctorName = name.startsWith("Dr.") ? name : `Dr. ${name}`;
 
-    const doctorExists = await Doctor.findOne({ mobile });
-    if (doctorExists) {
-      return res.status(400).json({ message: "Doctor already exists" });
+    // Check if doctor exists
+    const existingDoctor = await Doctor.findOne({ mobile });
+    
+    if (existingDoctor) {
+      // If doctor is already verified, they can't register again
+      if (existingDoctor.isVerified) {
+        return res.status(400).json({ 
+          message: "Doctor already exists. Please login instead." 
+        });
+      }
+      
+      // If doctor exists but is not verified, allow them to resend OTP
+      // First, handle category
+      let category = await Category.findOne({
+        name: { $regex: `^${speciality.trim()}$`, $options: "i" }
+      });
+
+      if (!category) {
+        try {
+          category = await Category.create({ name: speciality.trim() });
+        } catch (err) {
+          if (err.code === 11000) {
+            category = await Category.findOne({
+              name: { $regex: `^${speciality.trim()}$`, $options: "i" }
+            });
+          } else {
+            throw err;
+          }
+        }
+      }
+
+      // Validate consultation mode requirements
+      if (
+        (consultationMode === "Clinic Visit" || consultationMode === "Both") &&
+        (!hospitalName || !hospitalLocation)
+      ) {
+        return res.status(400).json({
+          message: "Hospital name and location are required for Clinic Visit mode"
+        });
+      }
+
+      // Handle uploaded files
+      const files = req.files || {};
+      let medicalCertificates = existingDoctor.medicalCertificates || [];
+      let profileImage = existingDoctor.profileImage || "";
+
+      if (files?.govtId) {
+        const url = await uploadToCloudinary(files.govtId[0].buffer, "doctors/govtId");
+        const existingIndex = medicalCertificates.findIndex(cert => cert.type === "Govt ID");
+        if (existingIndex !== -1) {
+          medicalCertificates[existingIndex].fileUrl = url;
+        } else {
+          medicalCertificates.push({ type: "Govt ID", fileUrl: url });
+        }
+      }
+      if (files?.medicalLicense) {
+        const url = await uploadToCloudinary(files.medicalLicense[0].buffer, "doctors/licenses");
+        const existingIndex = medicalCertificates.findIndex(cert => cert.type === "Medical License");
+        if (existingIndex !== -1) {
+          medicalCertificates[existingIndex].fileUrl = url;
+        } else {
+          medicalCertificates.push({ type: "Medical License", fileUrl: url });
+        }
+      }
+      if (files?.educationCertificate) {
+        const url = await uploadToCloudinary(files.educationCertificate[0].buffer, "doctors/certificates");
+        const existingIndex = medicalCertificates.findIndex(cert => cert.type === "Education Certificate");
+        if (existingIndex !== -1) {
+          medicalCertificates[existingIndex].fileUrl = url;
+        } else {
+          medicalCertificates.push({ type: "Education Certificate", fileUrl: url });
+        }
+      }
+      if (files?.additionalCertificate) {
+        for (let i = 0; i < files.additionalCertificate.length; i++) {
+          const url = await uploadToCloudinary(files.additionalCertificate[i].buffer, "doctors/additionalCertificates");
+          medicalCertificates.push({ type: "Additional Certificate", fileUrl: url });
+        }
+      }
+      if (files?.profileImage) {
+        profileImage = await uploadToCloudinary(files.profileImage[0].buffer, "doctors/profileImages");
+      }
+
+      // Generate new OTP and update the existing record
+      const otp = generateOTP();
+      existingDoctor.verificationCode = otp;
+      existingDoctor.verificationCodeExpire = Date.now() + 10 * 60 * 1000; // 10 mins
+      
+      // Update doctor information
+      existingDoctor.name = doctorName;
+      existingDoctor.email = email;
+      existingDoctor.password = password; // will be hashed in pre-save hook
+      existingDoctor.gender = gender;
+      existingDoctor.age = age;
+      existingDoctor.speciality = category.name;
+      existingDoctor.consultationMode = consultationMode;
+      existingDoctor.medicalCertificates = medicalCertificates;
+      existingDoctor.profileImage = profileImage;
+      existingDoctor.about = about;
+      existingDoctor.languages = languages;
+      existingDoctor.location = location;
+      existingDoctor.experience = experience;
+      existingDoctor.consultationFee = consultationFee;
+      existingDoctor.university = university;
+      existingDoctor.areaOfInterest = areaOfInterest;
+      existingDoctor.education = education;
+      existingDoctor.certification = certification;
+      
+      if (consultationMode === "Clinic Visit" || consultationMode === "Both") {
+        existingDoctor.hospitalName = hospitalName;
+        existingDoctor.hospitalLocation = hospitalLocation;
+      }
+      
+      await existingDoctor.save();
+      
+      // Update category
+      await Category.findByIdAndUpdate(
+        category._id,
+        { $addToSet: { doctors: existingDoctor._id } },
+        { new: true }
+      );
+      
+      // Send OTP
+      await sendOTP({
+        verifyBy,
+        mobile: existingDoctor.mobile,
+        email: existingDoctor.email,
+        otp,
+      });
+      
+      return res.status(200).json({
+        message: "Registration updated. OTP resent successfully. Please verify your account.",
+        doctor: {
+          _id: existingDoctor._id,
+          name: existingDoctor.name,
+          email: existingDoctor.email,
+          isVerified: existingDoctor.isVerified
+        }
+      });
     }
 
 let category = await Category.findOne({
@@ -169,9 +305,19 @@ const verifyDoctorOtp = async (req, res) => {
     const { otp } = req.body;
     const doctorId = req.headers["doctorid"]; 
 
+    console.log("OTP Verification Request:", { 
+      doctorId, 
+      otp, 
+      otpType: typeof otp,
+      headers: Object.keys(req.headers)
+    });
 
     if (!doctorId) {
       return res.status(400).json({ message: "Doctor ID missing" });
+    }
+
+    if (!otp) {
+      return res.status(400).json({ message: "OTP is required" });
     }
 
     const doctor = await Doctor.findById(doctorId);
@@ -179,8 +325,27 @@ const verifyDoctorOtp = async (req, res) => {
       return res.status(404).json({ message: "Doctor not found" });
     }
 
+    if (!doctor.verificationCode) {
+      return res.status(400).json({ message: "No OTP found. Please request a new OTP." });
+    }
+
+    // Convert both to strings and trim whitespace for comparison
+    const storedOtp = String(doctor.verificationCode).trim();
+    const enteredOtp = String(otp).trim();
+
+    console.log("OTP Comparison:", {
+      storedOtp,
+      enteredOtp,
+      storedType: typeof doctor.verificationCode,
+      enteredType: typeof otp,
+      match: storedOtp === enteredOtp,
+      expiryTime: doctor.verificationCodeExpire,
+      currentTime: Date.now(),
+      isExpired: doctor.verificationCodeExpire < Date.now()
+    });
+
     if (
-      doctor.verificationCode !== otp ||
+      storedOtp !== enteredOtp ||
       doctor.verificationCodeExpire < Date.now()
     ) {
       return res.status(400).json({ message: "Invalid or expired OTP" });
@@ -384,10 +549,22 @@ const verifyLoginOTP = async (req, res) => {
       return res.status(400).json({ message: "Doctor ID missing" });
     }
 
+    if (!otp) {
+      return res.status(400).json({ message: "OTP is required" });
+    }
+
     const doctor = await Doctor.findById(doctorId);
     if (!doctor) return res.status(404).json({ message: "Doctor not found" });
 
-    if (!doctor.loginOTP || doctor.loginOTP !== otp) {
+    if (!doctor.loginOTP) {
+      return res.status(400).json({ message: "No OTP found. Please request a new OTP." });
+    }
+
+    // Convert both to strings and trim whitespace for comparison
+    const storedOtp = String(doctor.loginOTP).trim();
+    const enteredOtp = String(otp).trim();
+
+    if (storedOtp !== enteredOtp) {
       return res.status(400).json({ message: "Invalid OTP" });
     }
     if (doctor.loginOTPExpire < Date.now()) {
@@ -499,12 +676,24 @@ const verifyForgotPasswordOTP = async (req, res) => {
       return res.status(400).json({ message: "doctorId missing in headers" });
     }
 
+    if (!otp) {
+      return res.status(400).json({ message: "OTP is required" });
+    }
+
     const doctor = await Doctor.findById(doctorId);
     if (!doctor) {
       return res.status(404).json({ message: "Doctor not found" });
     }
 
-    if (!doctor.resetOTP || doctor.resetOTP !== otp) {
+    if (!doctor.resetOTP) {
+      return res.status(400).json({ message: "No OTP found. Please request a new OTP." });
+    }
+
+    // Convert both to strings and trim whitespace for comparison
+    const storedOtp = String(doctor.resetOTP).trim();
+    const enteredOtp = String(otp).trim();
+
+    if (storedOtp !== enteredOtp) {
       return res.status(400).json({ message: "Invalid OTP" });
     }
 

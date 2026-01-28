@@ -50,16 +50,40 @@ const OtpRegister = () => {
 const handleSubmit = async (e) => {
   e.preventDefault();
   const enteredOtp = otp.join("").trim();  
+  
+  if (!doctorId) {
+    toast.error("Doctor ID is missing. Please register again.", { position: "top-center" });
+    return;
+  }
+
+  if (enteredOtp.length !== 4) {
+    setError(true);
+    toast.error("Please enter a 4-digit OTP", { position: "top-center" });
+    return;
+  }
+
   setLoading(true);
+  setError(false);
   try {
+    console.log("Verifying OTP:", { doctorId, enteredOtp, apiUrl: `${API_BASE_URL}/api/doctors/verify-otp` });
+    
     const res = await fetch(`${API_BASE_URL}/api/doctors/verify-otp`, {
       method: "POST",
-      headers: { "Content-Type": "application/json",doctorId:doctorId, },
-      body: JSON.stringify({ doctorId, email: identifier, otp: enteredOtp }),
+      headers: { 
+        "Content-Type": "application/json",
+        "doctorid": doctorId 
+      },
+      body: JSON.stringify({ otp: enteredOtp }),
     });
 
+    if (!res.ok) {
+      const errorData = await res.json().catch(() => ({ message: "Network error" }));
+      console.error("OTP verification failed:", errorData);
+      throw new Error(errorData.message || "Invalid OTP");
+    }
+
     const data = await res.json();
-    if (!res.ok) throw new Error(data.message || "Invalid OTP");
+    console.log("OTP verification successful:", data);
 
     toast.success("Account verified successfully!", {
       position: "top-center",
@@ -70,9 +94,18 @@ const handleSubmit = async (e) => {
     setError(false);
   } catch (err) {
       setError(true);
-      toast.error(err.message || "Invalid OTP", { position: "top-center" });
+      let errorMessage = "Invalid OTP";
+      
+      if (err.name === "TypeError" || err.message.includes("fetch")) {
+        errorMessage = "Network error. Please check your connection and try again.";
+      } else if (err.message) {
+        errorMessage = err.message;
+      }
+      
+      toast.error(errorMessage, { position: "top-center" });
+      console.error("OTP verification error:", err);
     } finally {
-      setLoading(false); // ✅ Stop loader
+      setLoading(false);
     }
   };
 
