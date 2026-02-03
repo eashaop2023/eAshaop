@@ -41,5 +41,8 @@
     "swagger-ui-express": "^5.0.1",
     "twilio": "^5.9.0",
     "uuid": "^13.0.0"
+  },
+  "devDependencies": {
+    "nodemon": "^3.1.11"
   }
 }

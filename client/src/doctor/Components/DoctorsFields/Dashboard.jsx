@@ -279,6 +279,10 @@
 // export default Dashboard;
 
 
+
+
+
+import { useNavigate } from "react-router-dom";
 import React, { useState, useEffect } from "react";
 import {
   BarChart,
@@ -382,6 +386,7 @@ const Dashboard = () => {
   const [totalEarnings, setTotalEarnings] = useState(0);
   const [receipts, setReceipts] = useState([]);
   const [receiptsLoading, setReceiptsLoading] = useState(true);
+  const navigate = useNavigate();
 
   useEffect(() => {
     const doctorId = localStorage.getItem("doctorId");
@@ -578,7 +583,8 @@ const Dashboard = () => {
                   </h2>
                   <button
                     className="text-sm sm:text-base font-medium text-[#00A99D] hover:underline transition"
-                    onClick={() => window.location.href = "/doctor/receipts"}
+                    // onClick={() => window.location.href = "/doctor/receipts"}
+                    onClick={() => navigate("/doctor/receipts")}
                   >
                     View all
                   </button>
@@ -590,11 +596,13 @@ const Dashboard = () => {
                     <div className="text-center py-4 text-gray-500">No receipts found</div>
                   ) : (
                     receipts.slice(0, 3).map((receipt) => (
-                      <ReceiptCardCompact key={receipt._id} receipt={receipt} />
+                      <ReceiptCardCompact key={receipt._id} receipt={receipt}  
+                    
+                      />
                     ))
                   )}
                 </div>
-              </div>
+              </div> 
             </div>
 
             {/* Bookings (mobile view) */}
