@@ -388,6 +388,12 @@ const Dashboard = () => {
   const [receiptsLoading, setReceiptsLoading] = useState(true);
   const navigate = useNavigate();
 
+   // --- 1. DEFINE THE HANDLE FUNCTION HERE ---
+  const handleViewClick = (receipt) => {
+    // This navigates to /doctor/receipts and appends the specific ID hash
+    navigate(`/doctor/receipts#receipt-${receipt._id}`);
+  };
+
   useEffect(() => {
     const doctorId = localStorage.getItem("doctorId");
     if (!doctorId) return;
@@ -585,6 +591,7 @@ const Dashboard = () => {
                     className="text-sm sm:text-base font-medium text-[#00A99D] hover:underline transition"
                     // onClick={() => window.location.href = "/doctor/receipts"}
                     onClick={() => navigate("/doctor/receipts")}
+                
                   >
                     View all
                   </button>
@@ -596,8 +603,17 @@ const Dashboard = () => {
                     <div className="text-center py-4 text-gray-500">No receipts found</div>
                   ) : (
                     receipts.slice(0, 3).map((receipt) => (
-                      <ReceiptCardCompact key={receipt._id} receipt={receipt}  
-                    
+        //               <ReceiptCardCompact key={receipt._id} receipt={receipt} 
+        //            isDashboard={true} 
+        // // Pass the navigation function here
+        // onViewClick={() => navigate("/doctor/receipts")} 
+        //               />
+        // --- 2. UPDATE THE COMPONENT HERE ---
+                      <ReceiptCardCompact 
+                        key={receipt._id} 
+                        receipt={receipt} 
+                        isDashboard={true} 
+                        onViewClick={() => handleViewClick(receipt)} 
                       />
                     ))
                   )}
@@ -622,3 +638,15 @@ const Dashboard = () => {
 };
 
 export default Dashboard;
+
+
+
+
+
+
+
+
+
+
+
+

@@ -257,11 +257,17 @@
 
 
 
-
 import React from "react";
 import eAshalogo from "../../../assets/eAshalogo.png";
 
-const ReceiptCardCompact = ({ receipt, isDashboard = true }) => {
+/**
+ * ReceiptCardCompact Component
+ * @param {Object} receipt - The receipt data object
+ * @param {Boolean} isDashboard - If true, shows a compact version with a "View All" button. 
+ * If false, shows the full detailed billing view.
+ * @param {Function} onViewClick - Callback function for the "View All" button
+ */
+const ReceiptCardCompact = ({ receipt, isDashboard = true, onViewClick }) => {
   if (!receipt) return null;
 
   const {
@@ -272,6 +278,7 @@ const ReceiptCardCompact = ({ receipt, isDashboard = true }) => {
     paymentDetails,
   } = receipt;
 
+  // Helper function to format ISO dates to DD/MM/YYYY
   const formatDate = (date) => {
     if (!date) return "N/A";
     const d = new Date(date);
@@ -286,28 +293,50 @@ const ReceiptCardCompact = ({ receipt, isDashboard = true }) => {
       className="bg-white rounded-lg border border-gray-200 hover:shadow-lg transition-shadow"
       style={{ padding: "20px", marginBottom: "20px" }}
     >
-      {/* Top Section: Logo and OP Unique Number (Always Visible) */}
+      {/* TOP SECTION: Header
+          Always visible. Shows Logo, OP Number, and the "View All" button (on Dashboard).
+      */}
       <div style={{ 
         display: "flex", 
         alignItems: "center", 
-        gap: "30px",
+        justifyContent: "space-between", 
+        gap: "20px",
         marginBottom: isDashboard ? "0px" : "25px"
       }}>
-        <div>
-          <img 
-            src={eAshalogo} 
-            alt="eAsha Logo" 
-            style={{ maxWidth: "120px", height: "auto" }}
-          />
+        <div style={{ display: "flex", alignItems: "center", gap: "30px" }}>
+          <div>
+            <img 
+              src={eAshalogo} 
+              alt="eAsha Logo" 
+              style={{ maxWidth: "120px", height: "auto" }}
+            />
+          </div>
+          <div>
+            <h3 style={{ margin: "0", color: "#00A99D", fontSize: "18px", fontWeight: "600" }}>
+              OP Unique Number: <strong>{appointmentNumber}</strong>
+            </h3>
+          </div>
         </div>
-        <div>
-          <h3 style={{ margin: "0", color: "#00A99D", fontSize: "18px", fontWeight: "600" }}>
-            OP Unique Number: <strong>{appointmentNumber}</strong>
-          </h3>
-        </div>
+
+        {/* Individual View All Button - Only rendered on Dashboard cards */}
+        {isDashboard && (
+          <button 
+            onClick={onViewClick}
+            className="flex items-center gap-1 text-[#00A99D] font-bold text-sm hover:underline transition-all"
+          >
+            View all
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" 
+            //stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"
+            >
+              <path d="M5 12h14M12 5l7 7-7 7"/>
+            </svg>
+          </button>
+        )}
       </div>
 
-      {/* Logic: Only show the original details when NOT on dashboard */}
+      {/* FULL DETAILS SECTION
+          Only renders when isDashboard is FALSE (e.g., on the All Receipts page).
+      */}
       {!isDashboard && (
         <>
           {/* Middle Section: Doctor and Patient Details Side by Side */}
@@ -333,8 +362,6 @@ const ReceiptCardCompact = ({ receipt, isDashboard = true }) => {
                 <p style={{ margin: "6px 0" }}><strong>Speciality:</strong> {doctorDetails?.speciality || "N/A"}</p>
                 <p style={{ margin: "6px 0" }}><strong>Email:</strong> {doctorDetails?.email || "N/A"}</p>
                 <p style={{ margin: "6px 0" }}><strong>Mobile:</strong> {doctorDetails?.mobile || "N/A"}</p>
-                {doctorDetails?.hospitalName && <p style={{ margin: "6px 0" }}><strong>Hospital:</strong> {doctorDetails.hospitalName}</p>}
-                {doctorDetails?.hospitalLocation && <p style={{ margin: "6px 0" }}><strong>Location:</strong> {doctorDetails.hospitalLocation}</p>}
               </div>
             </div>
 
@@ -353,10 +380,7 @@ const ReceiptCardCompact = ({ receipt, isDashboard = true }) => {
                 <p style={{ margin: "6px 0" }}><strong>Name:</strong> {patientDetails?.name || "N/A"}</p>
                 <p style={{ margin: "6px 0" }}><strong>Age:</strong> {patientDetails?.age || "N/A"}</p>
                 <p style={{ margin: "6px 0" }}><strong>Gender:</strong> {patientDetails?.gender || "N/A"}</p>
-                <p style={{ margin: "6px 0" }}><strong>Email:</strong> {patientDetails?.email || "N/A"}</p>
                 <p style={{ margin: "6px 0" }}><strong>Mobile:</strong> {patientDetails?.mobile || "N/A"}</p>
-                {patientDetails?.address && <p style={{ margin: "6px 0" }}><strong>Address:</strong> {patientDetails.address}</p>}
-                {patientDetails?.pincode && <p style={{ margin: "6px 0" }}><strong>Pincode:</strong> {patientDetails.pincode}</p>}
               </div>
             </div>
           </div>
@@ -383,14 +407,11 @@ const ReceiptCardCompact = ({ receipt, isDashboard = true }) => {
                   <span style={{ fontWeight: "600", color: "#333" }}>Payment Method:</span>
                   <span style={{ color: "#00A99D", fontWeight: "600" }}>{paymentDetails?.paymentMethod || "Pay at Clinic"}</span>
                 </div>
-                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                  <span style={{ fontWeight: "600", color: "#333" }}>OP Status:</span>
-                  <span style={{ color: appointmentDetails?.status === "booked" ? "#28a745" : "#ffc107", fontWeight: "600" }}>
-                    {appointmentDetails?.status === "booked" ? "Successful" : appointmentDetails?.status || "Pending"}
-                  </span>
-                </div>
               </div>
+
+              {/* Vertical Divider */}
               <div style={{ backgroundColor: "#e0e0e0", width: "1px", height: "100%" }}></div>
+
               <div style={{ display: "flex", flexDirection: "column", gap: "15px" }}>
                 <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
                   <span style={{ fontWeight: "600", color: "#333" }}>Date:</span>
@@ -401,8 +422,8 @@ const ReceiptCardCompact = ({ receipt, isDashboard = true }) => {
                   <span style={{ color: "#666" }}>{appointmentDetails?.time}</span>
                 </div>
                 <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                  <span style={{ fontWeight: "600", color: "#333" }}>Type:</span>
-                  <span style={{ color: "#666" }}>{appointmentDetails?.type === "clinic" ? "Clinic Visit" : "Video Consultation"}</span>
+                  <span style={{ fontWeight: "600", color: "#333" }}>Status:</span>
+                  <span style={{ color: "#28a745", fontWeight: "600" }}>Successful</span>
                 </div>
               </div>
             </div>
@@ -414,3 +435,6 @@ const ReceiptCardCompact = ({ receipt, isDashboard = true }) => {
 };
 
 export default ReceiptCardCompact;
+
+
+
