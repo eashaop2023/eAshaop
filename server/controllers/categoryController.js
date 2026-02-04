@@ -188,6 +188,9 @@ const getAllCategories = async (req, res) => {
 const getDoctorsByCategoryByUUID = async (req, res) => {
   try {
     const { uuid } = req.params;
+    const page = parseInt(req.query.page) || 1;
+    const limit = parseInt(req.query.limit) || 10;
+    const skip = (page - 1) * limit;
 
     // Find category by UUID
     const category = await Category.findOne({ uuid });
@@ -198,23 +201,55 @@ const getDoctorsByCategoryByUUID = async (req, res) => {
     // Use flexible matching to find ALL doctors whose specialty matches the category
     // This handles variations like "ENT" matching "ENT Specialist" category
     const specialityMatcher = createSpecialityMatcher(category.name);
-    const doctors = await Doctor.find({
+    const query = {
       ...specialityMatcher,
       isActive: true,
       isApproved: true
-    }).select('-password -verificationCode').sort({ name: 1 }); // Exclude sensitive fields and sort by name
+    };
+
+    const totalDoctors = await Doctor.countDocuments(query);
+    const doctors = await Doctor.find(query)
+      .select('-password -verificationCode -loginOTP -resetOTP -__v')
+      .sort({ name: 1 })
+      .skip(skip)
+      .limit(limit);
 
     if (!doctors || doctors.length === 0) {
       return res.json({
         category: category.name,
+        totalDoctors: 0,
+        page,
+        limit,
+        totalPages: 0,
         doctors: [],
         message: "No doctors are present in this category"
       });
     }
 
+    // Convert to plain objects and verify speciality field
+    const doctorsData = doctors.map(doc => {
+      const doctorObj = doc.toObject ? doc.toObject() : doc;
+      // Log if speciality is missing
+      if (!doctorObj.speciality) {
+        console.warn(`⚠️  Doctor ${doctorObj._id || doctorObj.name} missing speciality field`);
+      }
+      return doctorObj;
+    });
+
+    // Log sample doctor data for debugging
+    if (doctorsData.length > 0) {
+      console.log(`✅ Returning ${doctorsData.length} doctors for category ${category.name}`);
+      console.log(`Sample doctor fields:`, Object.keys(doctorsData[0]));
+      console.log(`Sample doctor speciality:`, doctorsData[0].speciality);
+    }
+
     res.json({
       category: category.name,
-      doctors: doctors
+      totalDoctors,
+      page,
+      limit,
+      totalPages: Math.ceil(totalDoctors / limit),
+      doctors: doctorsData
     });
   } catch (error) {
     console.error("Error fetching doctors by category UUID:", error);

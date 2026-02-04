@@ -15,8 +15,21 @@ const { sendEmail } = require("../utils/sendEmailUser");
 const Receipt = require("../models/Receipt");
 
 // Helper: Generate Jitsi Meeting Link
+// Add URL parameters to allow anyone to start the meeting (first person becomes moderator)
 function generateJitsiLink(appointmentId) {
-  return `https://meet.jit.si/consult_${appointmentId}_${Date.now()}`;
+  const baseUrl = `https://meet.jit.si/consult_${appointmentId}_${Date.now()}`;
+  // Add config parameters:
+  // - Skip welcome page for faster joining
+  // - Don't require display name
+  // - First person to join automatically becomes moderator
+  const configParams = [
+    'config.enableWelcomePage=false',
+    'config.requireDisplayName=false',
+    'config.prejoinPageEnabled=false',
+    'config.startWithVideoMuted=false',
+    'config.startWithAudioMuted=false'
+  ].join('&');
+  return `${baseUrl}#${configParams}`;
 }
 
 // Helper: Generate Unique Appointment Number (EOP + Year + Sequential Number)
@@ -166,13 +179,17 @@ async function generateAppointmentNumber() {
 exports.getUserAppointments = async (req, res) => {
   try {
     const { userId } = req.params;
+    const page = parseInt(req.query.page) || 1;
+    const limit = parseInt(req.query.limit) || 10;
+    const skip = (page - 1) * limit;
 
     const appointments = await Appointment.find({ userId })
       .populate(
         "doctorId",
         "name education speciality hospitalName hospitalLocation consultationMode email mobile profileImage"
       )
-      .lean();
+      .lean()
+      .sort({ date: -1 });
 
     const now = moment().tz("Asia/Kolkata");
 
@@ -237,13 +254,25 @@ exports.getUserAppointments = async (req, res) => {
       }
     });
 
+    // Apply pagination to each category
+    const paginatedOnGoing = onGoing.slice(skip, skip + limit);
+    const paginatedUpcoming = upcoming.slice(skip, skip + limit);
+    const paginatedPast = past.slice(skip, skip + limit);
+
     res.status(200).json({
       totalOngoing: onGoing.length,
       totalUpcoming: upcoming.length,
       totalPast: past.length,
-      onGoing,
-      upcoming,
-      past,
+      page,
+      limit,
+      totalPages: {
+        onGoing: Math.ceil(onGoing.length / limit),
+        upcoming: Math.ceil(upcoming.length / limit),
+        past: Math.ceil(past.length / limit)
+      },
+      onGoing: paginatedOnGoing,
+      upcoming: paginatedUpcoming,
+      past: paginatedPast,
     });
 
   } catch (error) {
@@ -304,12 +333,23 @@ exports.cancelAppointment = async (req, res) => {
 // GET /api/appointments
 exports.getAllAppointments = async (req, res) => {
   try {
+    const page = parseInt(req.query.page) || 1;
+    const limit = parseInt(req.query.limit) || 10;
+    const skip = (page - 1) * limit;
+
+    const totalAppointments = await Appointment.countDocuments();
     const appointments = await Appointment.find()
       .populate("doctorId", "name speciality email mobile")
-      .populate("userId", "full_name email phone_number");
+      .populate("userId", "full_name email phone_number")
+      .sort({ createdAt: -1 })
+      .skip(skip)
+      .limit(limit);
 
     res.status(200).json({
-      totalAppointments: appointments.length,
+      totalAppointments,
+      page,
+      limit,
+      totalPages: Math.ceil(totalAppointments / limit),
       appointments,
     });
   } catch (error) {
@@ -389,6 +429,9 @@ exports.getAllAppointments = async (req, res) => {
 exports.getDoctorAppointments = async (req, res) => {
   try {
     const { doctorId } = req.params;
+    const page = parseInt(req.query.page) || 1;
+    const limit = parseInt(req.query.limit) || 10;
+    const skip = (page - 1) * limit;
     const now = new Date();
 
     const userIds = await Appointment.distinct('userId', { doctorId, status: 'booked' });
@@ -445,20 +488,42 @@ exports.getDoctorAppointments = async (req, res) => {
     const upcoming = await Appointment.find({
       doctorId: doctorId, // make sure field matches schema
       date: { $gte: now }, // 'date' is the correct field
-    }).populate("userId", "full_name email phone_number");
+    }).populate("userId", "full_name email phone_number")
+      .sort({ date: 1 })
+      .skip(skip)
+      .limit(limit);
     const ongoing = appointmentOngoing.filter(app => {
       const startDate = app.date; // assuming app.date is a Date object
       const endDate = new Date(startDate.getTime() + slotDuration * 60000);
       return endDate >= now;
     });
 
+    const [totalPast, totalUpcoming] = await Promise.all([
+      Appointment.countDocuments({
+        doctorId: doctorId,
+        date: { $lt: now },
+      }),
+      Appointment.countDocuments({ doctorId, date: { $gte: now } })
+    ]);
+    
     const past = await Appointment.find({
       doctorId: doctorId,
       date: { $lt: now },
-    }).populate("userId", "full_name email phone_number");
+    }).populate("userId", "full_name email phone_number")
+      .sort({ date: -1 })
+      .skip(skip)
+      .limit(limit);
     const profileImage = await User.findById
     res.status(200).json({
-      totalAppointments: past.length,
+      totalAppointments: totalPast,
+      totalUpcoming: totalUpcoming,
+      totalOngoing: ongoing.length,
+      page,
+      limit,
+      totalPages: {
+        upcoming: Math.ceil(totalUpcoming / limit),
+        past: Math.ceil(totalPast / limit)
+      },
       upcoming,
       ongoing,
       past,
@@ -793,6 +858,11 @@ const appointment = await Appointment.findById(appointmentId)
       appointment.appointmentNumber = await generateAppointmentNumber();
     }
     
+    // Generate Jitsi link immediately for video appointments
+    if (appointment.type === "video" && !appointment.jitsiLink) {
+      appointment.jitsiLink = generateJitsiLink(appointment._id);
+    }
+    
     await appointment.save();
 
     const subDoc = {
@@ -878,6 +948,11 @@ exports.razorpayWebhook = async (req, res) => {
       // Generate unique appointment number if not already set
       if (!appointment.appointmentNumber) {
         appointment.appointmentNumber = await generateAppointmentNumber();
+      }
+      
+      // Generate Jitsi link immediately for video appointments
+      if (appointment.type === "video" && !appointment.jitsiLink) {
+        appointment.jitsiLink = generateJitsiLink(appointment._id);
       }
       
       await appointment.save();
@@ -1116,6 +1191,12 @@ exports.bookAppointmentAtClinic = async (req, res) => {
       // No razorpayOrderId means payment will be at clinic
     });
 
+    // Generate Jitsi link immediately for video appointments
+    if (type === "video" && !appointment.jitsiLink) {
+      appointment.jitsiLink = generateJitsiLink(appointment._id);
+      await appointment.save();
+    }
+
     // Add appointment to user and doctor
     const subDoc = {
       appointmentId: appointment._id,
@@ -1243,6 +1324,9 @@ exports.bookAppointmentAtClinic = async (req, res) => {
 exports.getDoctorAppointmentsForApp = async (req, res) => {
   try {
     const { doctorId } = req.params;
+    const page = parseInt(req.query.page) || 1;
+    const limit = parseInt(req.query.limit) || 10;
+    const skip = (page - 1) * limit;
     const now = new Date();
 
     const userIds = await Appointment.distinct('userId', { doctorId, status: 'booked' });
@@ -1304,19 +1388,37 @@ exports.getDoctorAppointmentsForApp = async (req, res) => {
       };
     });
 
+    const totalUpcomingCount = await Appointment.countDocuments({
+      doctorId,
+      date: { $gte: now },
+    });
     let upcoming = await Appointment.find({
       doctorId,
       date: { $gte: now },
-    }).populate("userId", "full_name email phone_number");
+    }).populate("userId", "full_name email phone_number")
+      .sort({ date: 1 })
+      .skip(skip)
+      .limit(limit);
 
+    const totalPastCount = await Appointment.countDocuments({
+      doctorId,
+      date: { $lt: now },
+    });
     let past = await Appointment.find({
       doctorId,
       date: { $lt: now },
-    }).populate("userId", "full_name email phone_number");
+    }).populate("userId", "full_name email phone_number")
+      .sort({ date: -1 })
+      .skip(skip)
+      .limit(limit);
 
+    const totalCount = await Appointment.countDocuments({ doctorId });
     let total = await Appointment.find({
       doctorId
-    }).populate("userId", "full_name email phone_number");
+    }).populate("userId", "full_name email phone_number")
+      .sort({ date: -1 })
+      .skip(skip)
+      .limit(limit);
 
     const attachUserDetails = (appointments) => {
       return appointments.map(appointment => {
@@ -1359,10 +1461,17 @@ exports.getDoctorAppointmentsForApp = async (req, res) => {
 
     res.status(200).json({
       totalAmount: totalAmount,
-      totalUpcoming: upcoming.length,
-      totalAppointments: total.length,
+      totalUpcoming: totalUpcomingCount,
+      totalAppointments: totalCount,
       todayPatient : todayPatient.length,
       rating : "3.5",
+      page,
+      limit,
+      totalPages: {
+        upcoming: Math.ceil(totalUpcomingCount / limit),
+        past: Math.ceil(totalPastCount / limit),
+        total: Math.ceil(totalCount / limit)
+      },
       upcoming,
       past,
       total

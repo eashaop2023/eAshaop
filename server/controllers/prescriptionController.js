@@ -129,11 +129,25 @@ const createPrescription = async (req, res) => {
 const getPrescriptions = async (req, res) => {
   try {
     const doctorId = req.doctor._id;
+    const page = parseInt(req.query.page) || 1;
+    const limit = parseInt(req.query.limit) || 10;
+    const skip = (page - 1) * limit;
 
+    const totalPrescriptions = await Prescription.countDocuments({ doctor: doctorId });
     const prescriptions = await Prescription.find({ doctor: doctorId })
       .populate("patient", "name age email") 
-      .populate("doctor", "name"); 
-    res.json(prescriptions);
+      .populate("doctor", "name")
+      .sort({ createdAt: -1 })
+      .skip(skip)
+      .limit(limit);
+    
+    res.json({
+      totalPrescriptions,
+      page,
+      limit,
+      totalPages: Math.ceil(totalPrescriptions / limit),
+      prescriptions
+    });
   } catch (err) {
     res.status(500).json({ message: err.message });
   }
@@ -144,11 +158,24 @@ const getPatientPrescriptions = async (req, res) => {
     const { patientId } = req.query;
     if (!patientId) return res.status(400).json({ message: "patientId is required" });
 
+    const page = parseInt(req.query.page) || 1;
+    const limit = parseInt(req.query.limit) || 10;
+    const skip = (page - 1) * limit;
+
+    const totalPrescriptions = await Prescription.countDocuments({ patient: patientId });
     const prescriptions = await Prescription.find({ patient: patientId })
       .populate("patient", "name age gender")
-      .populate("doctor", "name"); 
+      .populate("doctor", "name")
+      .sort({ createdAt: -1 })
+      .skip(skip)
+      .limit(limit);
+    
     res.status(200).json({
       message: "Patient prescriptions fetched successfully",
+      totalPrescriptions,
+      page,
+      limit,
+      totalPages: Math.ceil(totalPrescriptions / limit),
       prescriptions
     });
   } catch (err) {

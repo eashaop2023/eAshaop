@@ -48,26 +48,49 @@ router.patch("/mark-all-read", markAllAsRead);
 router.get("/:role/:id", async (req, res) => {
   try {
     const { role, id } = req.params;
+    const page = parseInt(req.query.page) || 1;
+    const limit = parseInt(req.query.limit) || 10;
+    const skip = (page - 1) * limit;
 
     let notifications;
+    let totalNotifications;
 
     if (role === "user") {
+      totalNotifications = await UserNotification.countDocuments({ userId: id });
       notifications = await UserNotification.find({ userId: id })
-        .sort({ "message.createdAt": -1 });
+        .sort({ "message.createdAt": -1 })
+        .skip(skip)
+        .limit(limit);
     } else if (role === "doctor") {
+      totalNotifications = await DoctorNotification.countDocuments({ doctorId: id });
       notifications = await DoctorNotification.find({ doctorId: id })
-        .sort({ "message.createdAt": -1 });
+        .sort({ "message.createdAt": -1 })
+        .skip(skip)
+        .limit(limit);
     } else {
       return res.status(400).json({ message: "Invalid role. Use 'user' or 'doctor'." });
     }
 
     if (!notifications || notifications.length === 0) {
-      return res.status(404).json({ message: "No notifications found." });
+      return res.status(200).json({
+        success: true,
+        count: 0,
+        totalNotifications: 0,
+        page,
+        limit,
+        totalPages: 0,
+        notifications: [],
+        message: "No notifications found."
+      });
     }
 
     res.status(200).json({
       success: true,
-      count: notifications.length,
+      count: totalNotifications,
+      totalNotifications,
+      page,
+      limit,
+      totalPages: Math.ceil(totalNotifications / limit),
       notifications,
     });
 
@@ -102,16 +125,29 @@ router.patch("/:id/read", async (req,res)=>{
 router.get("/unread/:role/:id", async (req, res) => {
   try {
     const { role, id } = req.params;
+    const page = parseInt(req.query.page) || 1;
+    const limit = parseInt(req.query.limit) || 10;
+    const skip = (page - 1) * limit;
 
     const Model = role === "doctor" ? DoctorNotification : UserNotification;
-    const unread = await Model.find({
+    const query = {
       [role === "doctor" ? "doctorId" : "userId"]: id,
       isRead: false,
-    }).sort({ "message.createdAt": -1 });
+    };
+
+    const totalUnread = await Model.countDocuments(query);
+    const unread = await Model.find(query)
+      .sort({ "message.createdAt": -1 })
+      .skip(skip)
+      .limit(limit);
 
     res.status(200).json({
       success: true,
-      count: unread.length,
+      count: totalUnread,
+      totalUnread,
+      page,
+      limit,
+      totalPages: Math.ceil(totalUnread / limit),
       unread,
     });
   } catch (error) {

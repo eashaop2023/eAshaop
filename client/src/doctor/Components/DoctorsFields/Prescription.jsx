@@ -1,28 +1,7 @@
-import React, { useState } from "react";
-
-const prescriptions = [
-  {
-    patient: "Ravi",
-    medicine: "Metformin 500mg",
-    dosage: "1 tablet, twice daily",
-    date: "2024-07-28",
-    status: "Dispensed",
-  },
-  {
-    patient: "Ravi",
-    medicine: "Metformin 500mg",
-    dosage: "1 tablet, once daily",
-    date: "2024-07-28",
-    status: "Pending",
-  },
-  {
-    patient: "Sarah Miller",
-    medicine: "Omeprazole 20mg",
-    dosage: "1 tablet, once daily",
-    date: "2024-07-28",
-    status: "Pending",
-  },
-];
+import React, { useState, useEffect } from "react";
+import { useLocation } from "react-router-dom";
+import axios from "axios";
+import { API_BASE_URL } from "../../../api-config";
 
 const getStatusColor = (status) => {
   switch (status) {
@@ -36,7 +15,13 @@ const getStatusColor = (status) => {
 };
 
 const Prescription = () => {
-  console.log("Prescription component rendered");
+  const location = useLocation();
+  console.log("Prescription component rendering", location.pathname);
+  
+  // Ensure API_BASE_URL is available
+  if (!API_BASE_URL) {
+    console.error("API_BASE_URL is not defined");
+  }
   
   const [form, setForm] = useState({
     name: "",
@@ -51,6 +36,69 @@ const Prescription = () => {
   });
 
   const [searchTerm, setSearchTerm] = useState("");
+  const [prescriptions, setPrescriptions] = useState([]);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
+  const [page, setPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+  const limit = 10;
+
+  // Fetch prescriptions from API
+  useEffect(() => {
+    const fetchPrescriptions = async () => {
+      try {
+        setLoading(true);
+        setError(null);
+        const token = localStorage.getItem("authToken");
+        
+        if (!token) {
+          setError("Please login to view prescriptions");
+          setLoading(false);
+          return;
+        }
+
+        const response = await axios.get(`${API_BASE_URL}/api/prescriptions`, {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+          params: {
+            page,
+            limit,
+            _t: Date.now(), // Cache busting parameter
+          },
+        });
+
+        console.log("Prescriptions API response:", response.data);
+        
+        // Handle paginated response
+        if (response.data && response.data.prescriptions) {
+          setPrescriptions(response.data.prescriptions || []);
+          setTotalPages(response.data.totalPages || 1);
+          console.log(`Loaded ${response.data.prescriptions?.length || 0} prescriptions`);
+        } else if (Array.isArray(response.data)) {
+          // Fallback for non-paginated response
+          setPrescriptions(response.data);
+          setTotalPages(1);
+        } else {
+          setPrescriptions([]);
+          setTotalPages(1);
+        }
+      } catch (err) {
+        console.error("Error fetching prescriptions:", err);
+        const errorMessage = err.response?.data?.message || err.message || "Failed to load prescriptions";
+        setError(errorMessage);
+        setPrescriptions([]);
+        setTotalPages(1);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    // Only fetch if we're on the prescriptions route
+    if (location.pathname.includes('prescriptions')) {
+      fetchPrescriptions();
+    }
+  }, [page, location.pathname]); // Add location.pathname to dependencies to refetch on navigation
 
   const handleChange = (e) => {
     setForm({ ...form, [e.target.name]: e.target.value });
@@ -70,18 +118,19 @@ const Prescription = () => {
     });
   };
 
-  // Filter prescriptions by search term
-  const filteredPrescriptions = prescriptions.filter(
-    (p) =>
-      p.patient.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      p.medicine.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      p.status.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  // Reset page to 1 and clear state when navigating to this page
+  useEffect(() => {
+    if (location.pathname.includes('prescriptions')) {
+      setPage(1);
+      setPrescriptions([]);
+      setError(null);
+      setLoading(true);
+    }
+  }, [location.pathname]);
 
   return (
-    <div className="w-full overflow-x-hidden" style={{ minHeight: '100vh' }}>
-      <div className="ml-0 md:pl-[80px] lg:pl-[260px] xl:pl-[327px] mt-[75px] px-4 sm:px-6 font-urbanist" style={{ backgroundColor: '#ffffff' }}>
-        <div className="max-w-[978px]">
+    <div className="w-full h-full overflow-y-auto" style={{ backgroundColor: '#ffffff' }}>
+      <div className="max-w-[978px] mx-auto py-6 px-4 font-urbanist">
         {/* Title */}
         <h2 className="text-2xl font-semibold mb-6" style={{ color: '#000000' }}>Create new Prescription</h2>
 
@@ -204,61 +253,130 @@ const Prescription = () => {
           <h3 className="text-lg font-medium mb-3">Recent Prescriptions</h3>
 
           {/* Search Bar */}
-          {/* <input
+          <input
             type="text"
             placeholder="Search by patient, medicine, or status"
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
             className="border border-gray-300 rounded-lg px-4 py-2 w-full mb-4"
-          /> */}
+          />
 
-          {/* <div className="overflow-x-auto">
-            <table className="w-full border-collapse min-w-[600px]">
-              <thead>
-                <tr className="bg-gray-100 text-gray-700 text-left">
-                  <th className="px-4 py-2">Patient Name</th>
-                  <th className="px-4 py-2">Medicine</th>
-                  <th className="px-4 py-2">Dosage</th>
-                  <th className="px-4 py-2">Date</th>
-                  <th className="px-4 py-2">Status</th>
-                </tr>
-              </thead>
-              <tbody>
-                {filteredPrescriptions.length > 0 ? (
-                  filteredPrescriptions.map((p, idx) => (
-                    <tr
-                      key={idx}
-                      className="border-b text-gray-700 border-none"
-                    >
-                      <td className="px-4 py-2">{p.patient}</td>
-                      <td className="px-4 py-2">{p.medicine}</td>
-                      <td className="px-4 py-2">{p.dosage}</td>
-                      <td className="px-4 py-2">{p.date}</td>
-                      <td className="px-4 py-2">
-                        <span
-                          className={`${getStatusColor(
-                            p.status
-                          )} text-white px-3 py-1 rounded-full text-sm w-24 inline-block text-center`}
-                        >
-                          {p.status}
-                        </span>
-                      </td>
-                    </tr>
-                  ))
-                ) : (
-                  <tr>
-                    <td
-                      colSpan="5"
-                      className="text-center text-gray-500 py-4"
-                    >
-                      No prescriptions found
-                    </td>
+          {loading && (
+            <div className="text-center text-gray-500 py-4">Loading prescriptions...</div>
+          )}
+
+          {error && (
+            <div className="text-center text-red-500 py-4">{error}</div>
+          )}
+
+          {!loading && !error && (
+            <div className="overflow-x-auto">
+              <table className="w-full border-collapse min-w-[600px]">
+                <thead>
+                  <tr className="bg-gray-100 text-gray-700 text-left">
+                    <th className="px-4 py-2">Patient Name</th>
+                    <th className="px-4 py-2">Medicines</th>
+                    <th className="px-4 py-2">Date</th>
+                    <th className="px-4 py-2">Actions</th>
                   </tr>
-                )}
-              </tbody>
-            </table>
-          </div> */}
-        </div>
+                </thead>
+                <tbody>
+                  {(() => {
+                    const filtered = prescriptions.filter((p) => {
+                      if (!p) return false;
+                      try {
+                        const patientName = p.patientName || p.patient?.name || "";
+                        const medicines = Array.isArray(p.medicines) 
+                          ? p.medicines.map(m => m?.name || "").filter(Boolean).join(", ")
+                          : "";
+                        return (
+                          patientName.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                          medicines.toLowerCase().includes(searchTerm.toLowerCase())
+                        );
+                      } catch (e) {
+                        console.error("Error filtering prescription:", e);
+                        return false;
+                      }
+                    });
+
+                    if (filtered.length === 0) {
+                      return (
+                        <tr>
+                          <td
+                            colSpan="4"
+                            className="text-center text-gray-500 py-4"
+                          >
+                            No prescriptions found
+                          </td>
+                        </tr>
+                      );
+                    }
+
+                    return filtered.map((p, idx) => {
+                      try {
+                        const patientName = p.patientName || p.patient?.name || "N/A";
+                        const medicines = Array.isArray(p.medicines) 
+                          ? p.medicines.map(m => m?.name || "").filter(Boolean).join(", ") || "N/A"
+                          : "N/A";
+                        const date = p.createdAt 
+                          ? new Date(p.createdAt).toLocaleDateString() 
+                          : "N/A";
+
+                        return (
+                          <tr
+                            key={p._id || idx}
+                            className="border-b text-gray-700 border-none"
+                          >
+                            <td className="px-4 py-2">{patientName}</td>
+                            <td className="px-4 py-2">{medicines}</td>
+                            <td className="px-4 py-2">{date}</td>
+                            <td className="px-4 py-2">
+                              {p.pdfUrl && (
+                                <a
+                                  href={p.pdfUrl}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  className="text-teal-600 hover:underline"
+                                >
+                                  View PDF
+                                </a>
+                              )}
+                            </td>
+                          </tr>
+                        );
+                      } catch (e) {
+                        console.error("Error rendering prescription row:", e);
+                        return null;
+                      }
+                    });
+                  })()}
+                </tbody>
+              </table>
+            </div>
+          )}
+
+          {/* Pagination */}
+          {!loading && !error && totalPages > 1 && (
+            <div className="flex justify-center items-center gap-2 mt-4">
+              <button
+                onClick={() => setPage(prev => Math.max(1, prev - 1))}
+                disabled={page === 1}
+                className="px-4 py-2 border rounded-lg disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                Previous
+              </button>
+              <span className="px-4 py-2">
+                Page {page} of {totalPages}
+              </span>
+              <button
+                onClick={() => setPage(prev => Math.min(totalPages, prev + 1))}
+                disabled={page === totalPages}
+                className="px-4 py-2 border rounded-lg disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                Next
+              </button>
+            </div>
+          )}
         </div>
       </div>
     </div>

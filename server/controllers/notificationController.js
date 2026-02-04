@@ -31,10 +31,16 @@ exports.sendAppointmentNotifications = async (appointment) => {
     });
 
     // User: Appointment booked or pending
+    // Check if doctor name already includes "Dr." prefix to avoid duplication
+    const doctorName = populated.doctorId.name;
+    const doctorNameWithPrefix = doctorName.trim().toLowerCase().startsWith("dr.") 
+      ? doctorName 
+      : `Dr. ${doctorName}`;
+    
     const userMessage =
       status === "pending"
         ? "Your appointment request is pending approval."
-        : `Your appointment with Dr. ${populated.doctorId.name} is confirmed for ${formattedDate} at ${formattedTime}.`;
+        : `Your appointment with ${doctorNameWithPrefix} is confirmed for ${formattedDate} at ${formattedTime}.`;
 
     const userNotif = await UserNotification.create({
       userId,

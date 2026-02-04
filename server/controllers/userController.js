@@ -911,8 +911,25 @@ exports.updateProfileImage = async (req, res) => {
 // Get all users
 exports.getAllUsers = async (req, res) => {
   try {
-    const users = await userServices.getAllUsers();
-    res.status(200).json({ users });
+    const page = parseInt(req.query.page) || 1;
+    const limit = parseInt(req.query.limit) || 10;
+    const skip = (page - 1) * limit;
+
+    const User = require("../models/user");
+    const totalUsers = await User.countDocuments();
+    const users = await User.find()
+      .select("-password -appointments")
+      .sort({ createdAt: -1 })
+      .skip(skip)
+      .limit(limit);
+
+    res.status(200).json({ 
+      totalUsers,
+      page,
+      limit,
+      totalPages: Math.ceil(totalUsers / limit),
+      users 
+    });
   } catch (error) {
     res.status(500).json({ message: "Server error", error: error.message });
   }

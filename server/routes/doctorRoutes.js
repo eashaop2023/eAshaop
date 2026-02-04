@@ -2090,34 +2090,120 @@ router.get("/all", getAllDoctors);
 
 
 
-router.put("/:id/set-password", async (req, res) => {
+// Admin route: Approve doctor and send password setup link
+router.put("/:id/approve", async (req, res) => {
   try {
-    const bcrypt = require("bcryptjs");
+    const crypto = require("crypto");
     const Doctor = require("../models/doctorModel");
+    const { sendEmail } = require("../utils/sendEmailUser");
 
-    const { password } = req.body;
-    if (!password) {
-      return res.status(400).json({ message: "Password is required" });
-    }
-
-    const hash = await bcrypt.hash(password, 10);
-
-    const doctor = await Doctor.findByIdAndUpdate(
-      req.params.id,
-      {
-        password: hash,
-        isApproved: true,   
-        isVerified: true    
-      },
-      { new: true }         
-    );
+    const doctor = await Doctor.findById(req.params.id);
 
     if (!doctor) {
       return res.status(404).json({ message: "Doctor not found" });
     }
 
+    // Generate password setup token
+    const passwordSetupToken = crypto.randomBytes(32).toString("hex");
+    const passwordSetupTokenExpire = Date.now() + 7 * 24 * 60 * 60 * 1000; // 7 days
+
+    // Approve doctor and save token
+    doctor.isApproved = true;
+    doctor.isVerified = true;
+    doctor.passwordSetupToken = passwordSetupToken;
+    doctor.passwordSetupTokenExpire = passwordSetupTokenExpire;
+    await doctor.save();
+
+    // Generate password setup link
+    const clientOrigin = process.env.CLIENT_ORIGIN || "http://localhost:5173";
+    const setupLink = `${clientOrigin}/doctor/set-password?token=${passwordSetupToken}&id=${doctor._id}`;
+
+    // Send email to doctor
+    const emailSubject = "Your Account Has Been Approved - Set Your Password";
+    const emailMessage = `
+      <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+        <h2 style="color: #00A99D;">Account Approved!</h2>
+        <p>Dear ${doctor.name},</p>
+        <p>Congratulations! Your doctor account has been approved by the administrator.</p>
+        <p>Please click the link below to set your password and complete your account setup:</p>
+        <p style="margin: 30px 0;">
+          <a href="${setupLink}" 
+             style="background-color: #00A99D; color: white; padding: 12px 24px; 
+                    text-decoration: none; border-radius: 5px; display: inline-block;">
+            Set Your Password
+          </a>
+        </p>
+        <p>Or copy and paste this link into your browser:</p>
+        <p style="color: #666; word-break: break-all;">${setupLink}</p>
+        <p><strong>Note:</strong> This link will expire in 7 days.</p>
+        <p>If you did not request this, please ignore this email.</p>
+        <p>Best regards,<br>Easha OP Team</p>
+      </div>
+    `;
+
+    try {
+      await sendEmail({
+        email: doctor.email,
+        subject: emailSubject,
+        message: emailMessage,
+      });
+      console.log(`Password setup email sent to doctor: ${doctor.email}`);
+    } catch (emailError) {
+      console.error("Error sending password setup email:", emailError);
+      // Still approve the doctor even if email fails
+    }
+
     res.json({
-      message: "Password set and doctor approved",
+      message: "Doctor approved successfully. Password setup link sent to doctor's email.",
+    });
+  } catch (error) {
+    console.error("Error approving doctor:", error);
+    res.status(500).json({ message: "Server error" });
+  }
+});
+
+// Doctor route: Set password using token (from email link)
+router.put("/:id/set-password", async (req, res) => {
+  try {
+    const bcrypt = require("bcryptjs");
+    const Doctor = require("../models/doctorModel");
+
+    const { password, token } = req.body;
+    
+    if (!password) {
+      return res.status(400).json({ message: "Password is required" });
+    }
+
+    if (!token) {
+      return res.status(400).json({ message: "Token is required" });
+    }
+
+    const doctor = await Doctor.findById(req.params.id);
+
+    if (!doctor) {
+      return res.status(404).json({ message: "Doctor not found" });
+    }
+
+    // Verify token
+    if (!doctor.passwordSetupToken || doctor.passwordSetupToken !== token) {
+      return res.status(400).json({ message: "Invalid or expired token" });
+    }
+
+    if (doctor.passwordSetupTokenExpire && doctor.passwordSetupTokenExpire < Date.now()) {
+      return res.status(400).json({ message: "Token has expired. Please contact admin for a new link." });
+    }
+
+    // Hash and set password
+    const hash = await bcrypt.hash(password, 10);
+
+    // Update doctor: set password and clear token
+    doctor.password = hash;
+    doctor.passwordSetupToken = undefined;
+    doctor.passwordSetupTokenExpire = undefined;
+    await doctor.save();
+
+    res.json({
+      message: "Password set successfully. You can now login.",
     });
   } catch (error) {
     console.error("Error setting password:", error);

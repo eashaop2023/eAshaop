@@ -114,7 +114,22 @@ const getSlots = async (req, res) => {
       
       console.log(`[getSlots] Returning ${availableSlots.length} available slots`);
       
-      return res.json({ doctorId, date: dateStr, slots: availableSlots });
+      // Apply pagination
+      const page = parseInt(req.query.page) || 1;
+      const limit = parseInt(req.query.limit) || 50;
+      const skip = (page - 1) * limit;
+      const totalSlots = availableSlots.length;
+      const paginatedSlots = availableSlots.slice(skip, skip + limit);
+      
+      return res.json({ 
+        doctorId, 
+        date: dateStr, 
+        totalSlots,
+        page,
+        limit,
+        totalPages: Math.ceil(totalSlots / limit),
+        slots: paginatedSlots 
+      });
     }
 
     const { startTime, endTime, slotDuration } = availability;
@@ -177,7 +192,22 @@ const getSlots = async (req, res) => {
 
     console.log(`[getSlots] Returning ${availableSlots.length} available slots`);
 
-    res.json({ doctorId, date: dateStr, slots: availableSlots });
+    // Apply pagination
+    const page = parseInt(req.query.page) || 1;
+    const limit = parseInt(req.query.limit) || 50;
+    const skip = (page - 1) * limit;
+    const totalSlots = availableSlots.length;
+    const paginatedSlots = availableSlots.slice(skip, skip + limit);
+
+    res.json({ 
+      doctorId, 
+      date: dateStr, 
+      totalSlots,
+      page,
+      limit,
+      totalPages: Math.ceil(totalSlots / limit),
+      slots: paginatedSlots 
+    });
   } catch (error) {
     console.error(`[getSlots] Error:`, error);
     console.error(`[getSlots] Error stack:`, error.stack);

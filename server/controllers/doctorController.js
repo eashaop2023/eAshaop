@@ -1112,22 +1112,41 @@ const updateDoctorProfile = async (req, res) => {
 // @access  Public
 const getDoctorsByCategory = async (req, res) => {
   try {
-const doctors = await Doctor.find({
-  speciality: { $regex: new RegExp(`^${req.params.id}$`, "i") },
-  isActive: true,
-  lastActiveAt: { $gte: new Date(Date.now() - 1000 * 60 * 5) }
-});
-   
+    const page = parseInt(req.query.page) || 1;
+    const limit = parseInt(req.query.limit) || 10;
+    const skip = (page - 1) * limit;
+
+    const query = {
+      speciality: { $regex: new RegExp(`^${req.params.id}$`, "i") },
+      isActive: true,
+      lastActiveAt: { $gte: new Date(Date.now() - 1000 * 60 * 5) }
+    };
+
+    const totalDoctors = await Doctor.countDocuments(query);
+    const doctors = await Doctor.find(query)
+      .select("-password -verificationCode -loginOTP -resetOTP -__v")
+      .sort({ name: 1 })
+      .skip(skip)
+      .limit(limit);
 
     if (doctors.length === 0) {
       return res.json({
         speciality: req.params.id,
+        totalDoctors: 0,
+        page,
+        limit,
+        totalPages: 0,
+        doctors: [],
         message: "No doctors are present in this speciality",
       });
     }
 
     res.json({
       speciality: doctors[0].speciality,
+      totalDoctors,
+      page,
+      limit,
+      totalPages: Math.ceil(totalDoctors / limit),
       doctors,
     });
   } catch (error) {
@@ -1140,6 +1159,10 @@ const doctors = await Doctor.find({
 // @access  Public
 const filterDoctors = async (req, res) => {
   try {
+    const page = parseInt(req.query.page) || 1;
+    const limit = parseInt(req.query.limit) || 10;
+    const skip = (page - 1) * limit;
+
     const filters = {};
 
 if (req.query.hospitalLocation) {
@@ -1179,9 +1202,20 @@ if (req.query.hospitalLocation) {
     // filters.isActive = true;
     // filters.lastActiveAt = { $gte: new Date(Date.now() - 1000 * 60 * 5) }; 
 
-
-    const doctors = await Doctor.find(filters);
-    res.json(doctors);
+    const totalDoctors = await Doctor.countDocuments(filters);
+    const doctors = await Doctor.find(filters)
+      .select("-password -verificationCode -loginOTP -resetOTP -__v")
+      .sort({ name: 1 })
+      .skip(skip)
+      .limit(limit);
+    
+    res.json({
+      totalDoctors,
+      page,
+      limit,
+      totalPages: Math.ceil(totalDoctors / limit),
+      doctors
+    });
   } catch (error) {
     console.error(error);
     res.status(500).json({ message: "Server error" });
@@ -1211,12 +1245,26 @@ const deleteDoctor = async (req, res) => {
 // @access  Public
 const getAllDoctors = async (req, res) => {
   try {
-    const doctors = await Doctor.find().select(
-      "-password -verificationCode -loginOTP -resetOTP -__v"
-    );
+    const page = parseInt(req.query.page) || 1;
+    const limit = parseInt(req.query.limit) || 10;
+    const skip = (page - 1) * limit;
+
+    const totalDoctors = await Doctor.countDocuments();
+    const doctors = await Doctor.find()
+      .select("-password -verificationCode -loginOTP -resetOTP -__v")
+      .sort({ name: 1 })
+      .skip(skip)
+      .limit(limit);
 
     if (!doctors || doctors.length === 0) {
-      return res.status(404).json({ message: "No doctors found" });
+      return res.status(404).json({ 
+        message: "No doctors found",
+        totalDoctors: 0,
+        page,
+        limit,
+        totalPages: 0,
+        doctors: []
+      });
     }
 
     // Map to rename _id -> id
@@ -1226,7 +1274,14 @@ const getAllDoctors = async (req, res) => {
       _id: undefined, // Remove _id field
     }));
 
-    res.json({ count: formattedDoctors.length, doctors: formattedDoctors });
+    res.json({ 
+      count: totalDoctors,
+      totalDoctors,
+      page,
+      limit,
+      totalPages: Math.ceil(totalDoctors / limit),
+      doctors: formattedDoctors 
+    });
   } catch (error) {
     console.error("Error fetching all doctors:", error);
     res.status(500).json({ message: "Server error" });

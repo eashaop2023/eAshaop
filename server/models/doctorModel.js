@@ -35,6 +35,9 @@ const doctorSchema = new mongoose.Schema(
     resetOTP: { type: String },
     resetOTPExpire: { type: Date },
     resetOTPVerified: { type: Boolean, default: false },
+    
+    passwordSetupToken: { type: String },
+    passwordSetupTokenExpire: { type: Date },
 
     speciality: { type: String, required: true },
     experience: { type: Number, default: 0 },

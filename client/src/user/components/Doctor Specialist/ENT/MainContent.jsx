@@ -55,8 +55,24 @@ useEffect(() => {
     try {
       const url = `${API_BASE_URL}/api/categories/${uuid}/doctors`;
       const res = await fetch(url);
-      if (!res.ok) throw new Error("Failed to fetch doctors");
+      if (!res.ok) {
+        const errorData = await res.json().catch(() => ({}));
+        console.error("API Error Response:", {
+          status: res.status,
+          statusText: res.statusText,
+          error: errorData
+        });
+        throw new Error(errorData.message || "Failed to fetch doctors");
+      }
       const data = await res.json();
+      console.log("Doctors API Response:", {
+        doctorsCount: data.doctors?.length || 0,
+        firstDoctor: data.doctors?.[0] ? {
+          name: data.doctors[0].name,
+          speciality: data.doctors[0].speciality,
+          hasSpeciality: !!data.doctors[0].speciality
+        } : null
+      });
       setAllDoctors(data.doctors || []);
       setDoctors(data.doctors || []); // show all initially
     } catch (err) {

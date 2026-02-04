@@ -110,7 +110,19 @@ cron.schedule("* * * * *", async () => {
 
       // If the appointment starts within the next 5 minutes
       if (apptDateTime - now <= 5 * 60 * 1000 && apptDateTime > now) {
-        const jitsiLink = `https://meet.jit.si/EashaOP-${appt._id}-${Date.now()}`;
+        const baseUrl = `https://meet.jit.si/EashaOP-${appt._id}-${Date.now()}`;
+        // Add config parameters:
+        // - Skip welcome page for faster joining
+        // - Don't require display name
+        // - First person to join automatically becomes moderator
+        const configParams = [
+          'config.enableWelcomePage=false',
+          'config.requireDisplayName=false',
+          'config.prejoinPageEnabled=false',
+          'config.startWithVideoMuted=false',
+          'config.startWithAudioMuted=false'
+        ].join('&');
+        const jitsiLink = `${baseUrl}#${configParams}`;
         appt.jitsiLink = jitsiLink;
         await appt.save();
 

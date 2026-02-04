@@ -159,20 +159,35 @@ export default function AppointmentPage() {
       const storedUser = JSON.parse(localStorage.getItem("user"));
       if (!storedUser) return;
 
-      const mainUser = {
-        name: storedUser.full_name || storedUser.name || "Unknown Patient",
-        age: storedUser.age || "Not Provided",
-        sex: storedUser.sex || storedUser.gender || "Not Provided",
-        isUser: true,
-        _id: storedUser._id || storedUser.id,
-      };
-
       try {
-        // Call backend to fetch dependents
-        const res = await axios.get(`${API_BASE_URL}/api/user/${mainUser._id}`);
+        // Call backend to fetch user details and dependents
+        const res = await axios.get(`${API_BASE_URL}/api/user/${storedUser._id || storedUser.id}`);
+        console.log("User API Response:", {
+          hasUser: !!res.data.user,
+          hasDob: !!res.data.user?.dob,
+          hasDependents: !!(res.data.userDependent?.length > 0)
+        });
+        const userData = res.data.user || storedUser;
+        
+        // Calculate age from dob
+        let userAge = "Not Provided";
+        if (userData.dob) {
+          userAge = Math.floor((Date.now() - new Date(userData.dob).getTime()) / 31557600000);
+        } else if (storedUser.dob) {
+          userAge = Math.floor((Date.now() - new Date(storedUser.dob).getTime()) / 31557600000);
+        }
+
+        const mainUser = {
+          name: userData.full_name || storedUser.full_name || storedUser.name || "Unknown Patient",
+          age: userAge,
+          sex: userData.gender || storedUser.sex || storedUser.gender || "Not Provided",
+          isUser: true,
+          _id: userData._id || storedUser._id || storedUser.id,
+        };
+
         const dependents = (res.data.userDependent || []).map(dep => ({
           name: dep.full_name,
-          age: Math.floor((Date.now() - new Date(dep.dob).getTime()) / 31557600000),
+          age: dep.dob ? Math.floor((Date.now() - new Date(dep.dob).getTime()) / 31557600000) : "Not Provided",
           sex: dep.gender,
           isUser: false,
           _id: dep._id,
@@ -182,6 +197,18 @@ export default function AppointmentPage() {
         setSelectedMemberIndex(0);
       } catch (err) {
         console.error("Error fetching dependents:", err);
+        // Fallback: try to calculate age from storedUser.dob if available
+        let userAge = "Not Provided";
+        if (storedUser.dob) {
+          userAge = Math.floor((Date.now() - new Date(storedUser.dob).getTime()) / 31557600000);
+        }
+        const mainUser = {
+          name: storedUser.full_name || storedUser.name || "Unknown Patient",
+          age: userAge,
+          sex: storedUser.sex || storedUser.gender || "Not Provided",
+          isUser: true,
+          _id: storedUser._id || storedUser.id,
+        };
         setMembers([mainUser]); // fallback
       }
     };

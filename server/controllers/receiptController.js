@@ -5,15 +5,24 @@ const Appointment = require("../models/Appointment");
 exports.getUserReceipts = async (req, res) => {
   try {
     const { userId } = req.params;
+    const page = parseInt(req.query.page) || 1;
+    const limit = parseInt(req.query.limit) || 10;
+    const skip = (page - 1) * limit;
 
+    const totalReceipts = await Receipt.countDocuments({ userId });
     const receipts = await Receipt.find({ userId })
       .populate("doctorId", "name speciality email mobile hospitalName hospitalLocation profileImage")
       .populate("appointmentId")
-      .sort({ createdAt: -1 });
+      .sort({ createdAt: -1 })
+      .skip(skip)
+      .limit(limit);
 
     res.status(200).json({
       success: true,
-      count: receipts.length,
+      count: totalReceipts,
+      page,
+      limit,
+      totalPages: Math.ceil(totalReceipts / limit),
       receipts
     });
   } catch (error) {
@@ -26,15 +35,24 @@ exports.getUserReceipts = async (req, res) => {
 exports.getDoctorReceipts = async (req, res) => {
   try {
     const { doctorId } = req.params;
+    const page = parseInt(req.query.page) || 1;
+    const limit = parseInt(req.query.limit) || 10;
+    const skip = (page - 1) * limit;
 
+    const totalReceipts = await Receipt.countDocuments({ doctorId });
     const receipts = await Receipt.find({ doctorId })
       .populate("userId", "full_name email phone_number address")
       .populate("appointmentId")
-      .sort({ createdAt: -1 });
+      .sort({ createdAt: -1 })
+      .skip(skip)
+      .limit(limit);
 
     res.status(200).json({
       success: true,
-      count: receipts.length,
+      count: totalReceipts,
+      page,
+      limit,
+      totalPages: Math.ceil(totalReceipts / limit),
       receipts
     });
   } catch (error) {

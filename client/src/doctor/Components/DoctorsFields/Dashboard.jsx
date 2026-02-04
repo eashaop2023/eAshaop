@@ -307,37 +307,88 @@ const statusStyles = {
 };
 
 const LatestBookings = ({ bookings }) => {
+  // Format date for display
+  const formatDate = (date) => {
+    if (!date) return "N/A";
+    try {
+      const d = new Date(date);
+      if (isNaN(d.getTime())) return date; // Return as-is if invalid
+      const day = String(d.getDate()).padStart(2, '0');
+      const month = String(d.getMonth() + 1).padStart(2, '0');
+      const year = d.getFullYear();
+      return `${day}/${month}/${year}`;
+    } catch (e) {
+      return date; // Return as-is if error
+    }
+  };
+
+  const handleBookingClick = (booking) => {
+    // Check if it's a video appointment with a meeting link
+    if (booking.type === "video" && booking.jitsiLink) {
+      // Open the meeting link in a new tab
+      window.open(booking.jitsiLink, "_blank");
+    } else if (booking.type === "video" && !booking.jitsiLink) {
+      // Show alert if link is not available yet
+      alert("Meeting link is not available yet. Please wait for the link to be generated.");
+    } else {
+      // For clinic visits, show appointment details
+      const formattedDate = formatDate(booking.date);
+      alert(`Clinic Visit Appointment\nPatient: ${booking.userId?.full_name || "Unknown"}\nDate: ${formattedDate}\nTime: ${booking.time}`);
+    }
+  };
+
   return (
     <div className="bg-white rounded-2xl border border-[#F7F7F7] p-4 w-full">
       <h2 className="text-lg sm:text-xl md:text-2xl font-semibold mb-3 break-words">
         Latest Bookings
       </h2>
       <div className="space-y-4">
-        {bookings.map((b, i) => (
-          <div key={i} className="flex items-center justify-between w-full">
-            <div className="flex items-center gap-3 w-full max-w-[70%]">
-              <img
-                src="https://randomuser.me/api/portraits/women/44.jpg"
-                alt={b.userId?.full_name}
-                className="w-10 h-10 rounded-full object-cover"
-              />
-              <div className="whitespace-normal break-words">
-                <p className="text-xs sm:text-sm md:text-base font-medium break-words">
-                  {b.userId?.full_name || "Unknown"}
-                </p>
-                <p className="text-[10px] sm:text-xs md:text-sm text-gray-500">
-                  {b.date} at {b.time}
-                </p>
-              </div>
-            </div>
-            <span
-              className="px-2 sm:px-3 py-1 rounded-lg text-[10px] sm:text-xs md:text-sm font-medium capitalize"
-              style={statusStyles[b.status]}
+        {bookings.map((b, i) => {
+          const formattedDate = formatDate(b.date);
+          const isVideo = b.type === "video";
+          const hasLink = !!b.jitsiLink;
+          
+          return (
+            <div 
+              key={i} 
+              className="flex items-center justify-between w-full cursor-pointer hover:bg-gray-50 p-2 rounded-lg transition-colors"
+              onClick={() => handleBookingClick(b)}
+              title={isVideo && hasLink ? "Click to join meeting" : isVideo ? "Meeting link not available yet" : "Click to view details"}
             >
-              {b.status}
-            </span>
-          </div>
-        ))}
+              <div className="flex items-center gap-3 w-full max-w-[70%]">
+                <img
+                  src="https://randomuser.me/api/portraits/women/44.jpg"
+                  alt={b.userId?.full_name}
+                  className="w-10 h-10 rounded-full object-cover"
+                />
+                <div className="whitespace-normal break-words">
+                  <p className="text-xs sm:text-sm md:text-base font-medium break-words">
+                    {b.userId?.full_name || "Unknown"}
+                  </p>
+                  <p className="text-[10px] sm:text-xs md:text-sm text-gray-500">
+                    {formattedDate} at {b.time}
+                  </p>
+                  {isVideo && hasLink && (
+                    <p className="text-[10px] sm:text-xs text-[#00A99D] mt-1 font-medium">
+                      Click to join meeting →
+                    </p>
+                  )}
+                  {isVideo && !hasLink && (
+                    <p className="text-[10px] sm:text-xs text-gray-400 mt-1">
+                      Waiting for link...
+                    </p>
+                  )}
+                </div>
+              </div>
+              <span
+                className="px-2 sm:px-3 py-1 rounded-lg text-[10px] sm:text-xs md:text-sm font-medium capitalize"
+                style={statusStyles[b.status]}
+              >
+                {b.status}
+              </span>
+            </div>
+          );
+        })}
       </div>
     </div>
   );

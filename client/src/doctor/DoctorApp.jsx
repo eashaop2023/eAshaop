@@ -70,6 +70,7 @@ import { Routes, Route, Navigate } from "react-router-dom";
 // import { ToastContainer } from "react-toastify"; // Handled in App.jsx
 
 import LoginPage from "./Components/LoginPage/LoginPage";
+import SetPassword from "./Components/LoginPage/SetPassword";
 import DoctorsLayout from "./Components/DoctorsFields/DoctorsLayout";
 import Dashboard from "./Components/DoctorsFields/Dashboard";
 import CalendarAndSlots from "./Components/DoctorsFields/SetAvailability";
@@ -94,6 +95,7 @@ const DoctorApp = () => {
         <Route path="/" element={<Navigate to="dashboard" replace />} />
 
         <Route path="/login" element={<LoginPage />} />
+        <Route path="/set-password" element={<SetPassword />} />
 
         {/* Layout route - Sidebar and Navbar are here */}
         <Route
@@ -108,7 +110,7 @@ const DoctorApp = () => {
           <Route path="dashboard" element={<Dashboard />} />
           <Route path="availability" element={<CalendarAndSlots />} />
           <Route path="bookings" element={<BookingHistory />} />
-          <Route path="prescriptions" element={<Prescription />} />
+          <Route path="prescriptions" element={<Prescription key="prescriptions" />} />
           <Route path="reviews" element={<Ratings />} />
           <Route path="doctorprofile" element={<DoctorProfilePage />} />
           <Route path="appointments" element={<Appointments />} />
