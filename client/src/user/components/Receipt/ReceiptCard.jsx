@@ -1,5 +1,23 @@
-import React from "react";
-import eAshalogo from "../../assets/eAshalogo.png";
+import React from 'react';
+import {
+  Card,
+  CardContent,
+  Typography,
+  Box,
+  Grid,
+  Divider,
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableRow,
+} from '@mui/material';
+
+import eAshalogo from '../../assets/eAshalogo.png';
+import PdfReceiptDownloader from '../commonComponent/Pdf';
+
+const teal = '#00A99D';
+const borderColor = '#e0e0e0';
 
 const ReceiptCard = ({ receipt }) => {
   if (!receipt) return null;
@@ -10,227 +28,193 @@ const ReceiptCard = ({ receipt }) => {
     patientDetails,
     appointmentDetails,
     paymentDetails,
-    createdAt
+    createdAt,
   } = receipt;
 
+  console.log('rec', receipt);
+
   const formatDate = (date) => {
-    if (!date) return "N/A";
+    if (!date) return 'N/A';
     const d = new Date(date);
-    const day = String(d.getDate()).padStart(2, '0');
-    const month = String(d.getMonth() + 1).padStart(2, '0');
-    const year = d.getFullYear();
-    return `${day}/${month}/${year}`;
+    return `${String(d.getDate()).padStart(2, '0')}/${String(d.getMonth() + 1).padStart(
+      2,
+      '0',
+    )}/${d.getFullYear()}`;
   };
 
   const formatTime = (date) => {
-    if (!date) return "N/A";
+    if (!date) return 'N/A';
     const d = new Date(date);
     let hours = d.getHours();
     const minutes = String(d.getMinutes()).padStart(2, '0');
     const ampm = hours >= 12 ? 'PM' : 'AM';
-    hours = hours % 12;
-    hours = hours ? hours : 12;
+    hours = hours % 12 || 12;
     return `${String(hours).padStart(2, '0')}:${minutes} ${ampm}`;
   };
 
   return (
-    <div className="receipt-card" style={{
-      maxWidth: "800px",
-      margin: "20px auto",
-      padding: "30px",
-      backgroundColor: "#ffffff",
-      border: "1px solid #e0e0e0",
-      borderRadius: "8px",
-      boxShadow: "0 2px 8px rgba(0,0,0,0.1)"
-    }}>
-      {/* Company Logo */}
-      <div style={{ textAlign: "center", marginBottom: "20px" }}>
-        <img 
-          src={eAshalogo} 
-          alt="eAsha Logo" 
-          style={{ maxWidth: "150px", height: "auto" }}
-        />
-      </div>
+    <PdfReceiptDownloader receipt={receipt}>
+      <Card
+        sx={{
+          maxWidth: 850,
+          mx: 'auto',
+          p: 3,
+          border: `1px solid ${borderColor}`,
+          boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
+        }}
+      >
+        <CardContent>
+          {/* Logo */}
+          <Box textAlign='center' mb={2}>
+            <img src={eAshalogo} width={150} alt='eAsha Logo' />
+          </Box>
+          {/* OP Number */}
+          <Box textAlign='center' mb={3}>
+            <Typography sx={{ color: teal, fontWeight: 600, fontSize: '24px' }}>
+              OP Unique Number: <b>{appointmentNumber}</b>
+            </Typography>
+          </Box>
+          <Grid container spacing={5}>
+            {/* Doctor */}
+            <Grid item xs={12} md={6}>
+              <Card sx={{ ...sectionCard, padding: 3, height: '100%' }}>
+                <SectionTitle title='Doctor Details' />
+                <Info label='Name' value={doctorDetails?.name} />
+                <Info label='Speciality' value={doctorDetails?.speciality} />
+                <Info label='Email' value={doctorDetails?.email} />
+                <Info label='Mobile' value={doctorDetails?.mobile} />
+                <Info label='Hospital' value={doctorDetails?.hospitalName} />
+                <Info label='Location' value={doctorDetails?.hospitalLocation} />
+              </Card>
+            </Grid>
 
-      {/* OP Unique Number */}
-      <div style={{ 
-        textAlign: "center", 
-        marginBottom: "30px",
-        padding: "15px"
-      }}>
-        <h3 style={{ margin: "0", color: "#00A99D", fontSize: "18px", fontWeight: "600" }}>
-          OP Unique Number: <strong>{appointmentNumber}</strong>
-        </h3>
-      </div>
+            {/* Patient */}
+            <Grid item xs={12} md={6}>
+              <Card sx={{ ...sectionCard, padding: 3, height: '100%' }}>
+                <SectionTitle title='Patient Details' />
+                <Info label='Name' value={patientDetails?.name} />
+                <Info label='Age' value={patientDetails?.age} />
+                <Info label='Gender' value={patientDetails?.gender} />
+                <Info label='Email' value={patientDetails?.email} />
+                <Info label='Mobile' value={patientDetails?.mobile} />
+                <Info label='Address' value={patientDetails?.address} />
+                <Info label='Pincode' value={patientDetails?.pincode} />
+              </Card>
+            </Grid>
+          </Grid>
 
-      {/* Doctor Details Card */}
-      <div style={{
-        padding: "20px",
-        backgroundColor: "#ffffff",
-        borderRadius: "8px",
-        border: "1px solid #e0e0e0",
-        marginBottom: "20px",
-        boxShadow: "0 1px 3px rgba(0,0,0,0.1)"
-      }}>
-        <h4 style={{ 
-          marginTop: "0", 
-          marginBottom: "15px",
-          color: "#00A99D", 
-          fontSize: "18px",
-          fontWeight: "600",
-          borderBottom: "2px solid #00A99D", 
-          paddingBottom: "10px" 
-        }}>
-          Doctor Details
-        </h4>
-        <div style={{ lineHeight: "2" }}>
-          <p style={{ margin: "8px 0" }}><strong>Name:</strong> {doctorDetails?.name || "N/A"}</p>
-          <p style={{ margin: "8px 0" }}><strong>Speciality:</strong> {doctorDetails?.speciality || "N/A"}</p>
-          <p style={{ margin: "8px 0" }}><strong>Email:</strong> {doctorDetails?.email || "N/A"}</p>
-          <p style={{ margin: "8px 0" }}><strong>Mobile:</strong> {doctorDetails?.mobile || "N/A"}</p>
-          {doctorDetails?.hospitalName && (
-            <p style={{ margin: "8px 0" }}><strong>Hospital:</strong> {doctorDetails.hospitalName}</p>
-          )}
-          {doctorDetails?.hospitalLocation && (
-            <p style={{ margin: "8px 0" }}><strong>Location:</strong> {doctorDetails.hospitalLocation}</p>
-          )}
-        </div>
-      </div>
+          {/* Payment */}
+          <Card sx={{ ...sectionCard, mt: 2 }}>
+            <SectionTitle title='Payment Details' />
 
-      {/* Patient Details Card */}
-      <div style={{
-        padding: "20px",
-        backgroundColor: "#ffffff",
-        borderRadius: "8px",
-        border: "1px solid #e0e0e0",
-        marginBottom: "20px",
-        boxShadow: "0 1px 3px rgba(0,0,0,0.1)"
-      }}>
-        <h4 style={{ 
-          marginTop: "0", 
-          marginBottom: "15px",
-          color: "#00A99D", 
-          fontSize: "18px",
-          fontWeight: "600",
-          borderBottom: "2px solid #00A99D", 
-          paddingBottom: "10px" 
-        }}>
-          Patient Details
-        </h4>
-        <div style={{ lineHeight: "2" }}>
-          <p style={{ margin: "8px 0" }}><strong>Name:</strong> {patientDetails?.name || "N/A"}</p>
-          <p style={{ margin: "8px 0" }}><strong>Age:</strong> {patientDetails?.age || "N/A"}</p>
-          <p style={{ margin: "8px 0" }}><strong>Gender:</strong> {patientDetails?.gender || "N/A"}</p>
-          <p style={{ margin: "8px 0" }}><strong>Email:</strong> {patientDetails?.email || "N/A"}</p>
-          <p style={{ margin: "8px 0" }}><strong>Mobile:</strong> {patientDetails?.mobile || "N/A"}</p>
-          {patientDetails?.address && (
-            <p style={{ margin: "8px 0" }}><strong>Address:</strong> {patientDetails.address}</p>
-          )}
-          {patientDetails?.pincode && (
-            <p style={{ margin: "8px 0" }}><strong>Pincode:</strong> {patientDetails.pincode}</p>
-          )}
-        </div>
-      </div>
+            <Table>
+              <TableHead>
+                <TableRow sx={{ backgroundColor: teal }}>
+                  <TableCell sx={{ color: '#fff' }}>Description</TableCell>
+                  <TableCell sx={{ color: '#fff' }} align='right'>
+                    Amount
+                  </TableCell>
+                </TableRow>
+              </TableHead>
 
-      {/* Payment Details Card */}
-      <div style={{
-        padding: "20px",
-        backgroundColor: "#ffffff",
-        borderRadius: "8px",
-        border: "1px solid #e0e0e0",
-        marginBottom: "20px",
-        boxShadow: "0 1px 3px rgba(0,0,0,0.1)"
-      }}>
-        <h4 style={{ 
-          marginTop: "0", 
-          marginBottom: "15px",
-          color: "#00A99D", 
-          fontSize: "18px",
-          fontWeight: "600",
-          borderBottom: "2px solid #00A99D", 
-          paddingBottom: "10px" 
-        }}>
-          Payment Details
-        </h4>
-        
-        {/* Payment Table */}
-        <div style={{
-          marginBottom: "20px",
-          border: "1px solid #e0e0e0",
-          borderRadius: "5px",
-          overflow: "hidden"
-        }}>
-          <table style={{ width: "100%", borderCollapse: "collapse" }}>
-            <thead>
-              <tr style={{ backgroundColor: "#00A99D", color: "#ffffff" }}>
-                <th style={{ padding: "12px", textAlign: "left" }}>Description</th>
-                <th style={{ padding: "12px", textAlign: "right" }}>Amount</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr>
-                <td style={{ padding: "12px", borderBottom: "1px solid #e0e0e0" }}>
-                  Consultation Fee ({appointmentDetails?.type === "clinic" ? "Clinic Visit" : "Video Consultation"})
-                </td>
-                <td style={{ padding: "12px", textAlign: "right", borderBottom: "1px solid #e0e0e0" }}>
-                  ₹{paymentDetails?.amount || 0}.00
-                </td>
-              </tr>
-              <tr style={{ backgroundColor: "#f9f9f9", fontWeight: "bold" }}>
-                <td style={{ padding: "12px" }}>Total</td>
-                <td style={{ padding: "12px", textAlign: "right" }}>₹{paymentDetails?.amount || 0}.00</td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
+              <TableBody>
+                <TableRow>
+                  <TableCell>
+                    Consultation Fee (
+                    {appointmentDetails?.type === 'clinic' ? 'Clinic Visit' : 'Video Consultation'})
+                  </TableCell>
+                  <TableCell align='right'>₹{paymentDetails?.amount || 0}.00</TableCell>
+                </TableRow>
 
-        {/* Payment Method & Status */}
-        <div style={{
-          display: "grid",
-          gridTemplateColumns: "1fr 1fr",
-          gap: "15px"
-        }}>
-          <div>
-            <p style={{ margin: "0 0 5px 0", fontSize: "14px", color: "#666" }}><strong>Payment Method:</strong></p>
-            <p style={{ margin: "0", color: "#00A99D", fontWeight: "600", fontSize: "16px" }}>
-              {paymentDetails?.paymentMethod || "Pay at Clinic"}
-            </p>
-          </div>
-          <div>
-            <p style={{ margin: "0 0 5px 0", fontSize: "14px", color: "#666" }}><strong>OP Status:</strong></p>
-            <p style={{ 
-              margin: "0", 
-              color: appointmentDetails?.status === "booked" ? "#28a745" : "#ffc107",
-              fontWeight: "600",
-              fontSize: "16px"
-            }}>
-              {appointmentDetails?.status === "booked" ? "Successful" : appointmentDetails?.status || "Pending"}
-            </p>
-          </div>
-        </div>
+                <TableRow sx={{ backgroundColor: '#f9f9f9', fontWeight: 600 }}>
+                  <TableCell>Total</TableCell>
+                  <TableCell align='right'>
+                    <b>₹{paymentDetails?.amount || 0}.00</b>
+                  </TableCell>
+                </TableRow>
+              </TableBody>
+            </Table>
 
-        {/* Appointment Date & Time */}
-        <div style={{ marginTop: "15px", paddingTop: "15px", borderTop: "1px solid #e0e0e0" }}>
-          <p style={{ margin: "5px 0" }}><strong>Appointment Date:</strong> {formatDate(appointmentDetails?.date)}</p>
-          <p style={{ margin: "5px 0" }}><strong>Appointment Time:</strong> {appointmentDetails?.time}</p>
-          <p style={{ margin: "5px 0" }}><strong>Type:</strong> {appointmentDetails?.type === "clinic" ? "Clinic Visit" : "Video Consultation"}</p>
-        </div>
-      </div>
+            <Divider sx={{ my: 2 }} />
 
-      {/* Receipt Generated Date */}
-      <div style={{
-        textAlign: "center",
-        padding: "10px",
-        color: "#666",
-        fontSize: "12px",
-        borderTop: "1px solid #e0e0e0",
-        marginTop: "20px"
-      }}>
-        Receipt Generated: {formatDate(createdAt)} at {formatTime(createdAt)}
-      </div>
-    </div>
+            <Grid container spacing={2}>
+              <Grid item xs={6}>
+                <Typography>
+                  Payment Method: <b>{paymentDetails?.paymentMethod || 'Pay at Clinic'}</b>
+                </Typography>
+              </Grid>
+
+              <Grid item xs={6}>
+                <Typography>
+                  OP Status:{' '}
+                  <b
+                    style={{
+                      color: appointmentDetails?.status === 'booked' ? '#28a745' : '#ffc107',
+                    }}
+                  >
+                    {appointmentDetails?.status === 'booked'
+                      ? 'Successful'
+                      : appointmentDetails?.status}
+                  </b>
+                </Typography>
+              </Grid>
+            </Grid>
+
+            <Divider sx={{ my: 2 }} />
+
+            <Typography>Appointment Date: {formatDate(appointmentDetails?.date)}</Typography>
+            <Typography>Appointment Time: {appointmentDetails?.time}</Typography>
+            <Typography>
+              Type: {appointmentDetails?.type === 'clinic' ? 'Clinic Visit' : 'Video Consultation'}
+            </Typography>
+          </Card>
+
+          {/* Footer */}
+          <Typography
+            align='center'
+            sx={{
+              mt: 3,
+              fontSize: 12,
+              color: '#666',
+              borderTop: `1px solid ${borderColor}`,
+              pt: 1,
+            }}
+          >
+            Receipt Generated: {formatDate(createdAt)} at {formatTime(createdAt)}
+          </Typography>
+        </CardContent>
+      </Card>
+    </PdfReceiptDownloader>
   );
 };
 
-export default ReceiptCard;
+/* ===== Helpers ===== */
 
+const sectionCard = {
+  p: 2,
+  border: '1px solid #e0e0e0',
+  boxShadow: '0 1px 3px rgba(0,0,0,0.1)',
+};
+
+const SectionTitle = ({ title }) => (
+  <Typography
+    sx={{
+      color: '#00A99D',
+      fontWeight: 600,
+      fontSize: 18,
+      borderBottom: '2px solid #00A99D',
+      pb: 1,
+      mb: 2,
+    }}
+  >
+    {title}
+  </Typography>
+);
+
+const Info = ({ label, value }) => (
+  <Typography sx={{ mb: 1 }}>
+    <b>{label}:</b> {value || 'N/A'}
+  </Typography>
+);
+
+export default ReceiptCard;

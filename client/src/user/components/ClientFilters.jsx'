@@ -1,0 +1,93 @@
+import React from "react";
+import {
+  Box,
+  TextField,
+  MenuItem,
+  IconButton,
+  Tooltip,
+} from "@mui/material";
+import RefreshIcon from "@mui/icons-material/Refresh";
+
+type DoctorOption = {
+  label: string;
+  value: string;
+};
+
+type ClientFiltersProps = {
+  filterByDate?: boolean;
+  filterByDoctor?: boolean;
+
+  selectedDate?: string;
+  onDateChange?: (date: string) => void;
+
+  doctors?: DoctorOption[];
+  selectedDoctor?: string;
+  onDoctorChange?: (doctor: string) => void;
+
+  onRefresh?: () => void;
+};
+
+const ClientFilters: React.FC<ClientFiltersProps> = ({
+  filterByDate = false,
+  filterByDoctor = false,
+
+  selectedDate,
+  onDateChange,
+
+  doctors = [],
+  selectedDoctor,
+  onDoctorChange,
+
+  onRefresh,
+}) => {
+  return (
+    <Box
+      display="flex"
+      gap={2}
+      alignItems="center"
+      flexWrap="wrap"
+    >
+      {/* Date Filter */}
+      {filterByDate && (
+        <TextField
+          type="date"
+          size="small"
+          label="Filter by Date"
+          InputLabelProps={{ shrink: true }}
+          value={selectedDate || ""}
+          onChange={(e) => onDateChange?.(e.target.value)}
+        />
+      )}
+
+      {/* Doctor Filter */}
+      {filterByDoctor && (
+        <TextField
+          select
+          size="small"
+          label="Filter by Doctor"
+          value={selectedDoctor || ""}
+          onChange={(e) => onDoctorChange?.(e.target.value)}
+          sx={{ minWidth: 200 }}
+        >
+          <MenuItem value="">All Doctors</MenuItem>
+          {doctors.map((doc) => (
+            <MenuItem key={doc.value} value={doc.value}>
+              {doc.label}
+            </MenuItem>
+          ))}
+        </TextField>
+      )}
+
+      {/* Refresh Button */}
+      {onRefresh && (
+        <Tooltip title="Refresh">
+          <IconButton onClick={onRefresh} color="primary">
+            <RefreshIcon />
+          </IconButton>
+        </Tooltip>
+      )}
+    </Box>
+  );
+};
+
+export default ClientFilters;
