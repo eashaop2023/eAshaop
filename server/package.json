@@ -31,7 +31,11 @@
     "nanoid": "^3.3.4",
     "node-cron": "^4.2.1",
     "node-fetch": "^2.7.0",
+<<<<<<< HEAD
     "nodemailer": "^7.0.13",
+=======
+    "nodemailer": "^7.0.12",
+>>>>>>> 38289c3190e2e2a7b35df7b846a712f7b0fe9504
     "pdfkit": "^0.17.2",
     "punycode": "^2.3.1",
     "razorpay": "^2.9.6",
