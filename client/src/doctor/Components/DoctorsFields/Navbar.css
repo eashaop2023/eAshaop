@@ -1,0 +1,137 @@
+/* Notification Dropdown Container */
+/* Header actions (Mark all + close) */
+.notification-header-actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.mark-all-btn {
+  background: transparent;
+  border: none;
+  color: #007bff;
+  font-size: 13px;
+  cursor: pointer;
+}
+
+.close-icon {
+  cursor: pointer;
+  color: #555;
+  font-size: 16px;
+}
+
+.toggle-text {
+  color: #007bff;
+  cursor: pointer;
+}
+
+.notification-empty {
+  text-align: center;
+  color: #888;
+  padding: 10px;
+}
+
+.notification-dropdown {
+  position: absolute;
+  top: 50px; /* 👈 Increased from 30px to push below navbar height */
+  right: 0;
+  width: 320px;
+  background: #fff;
+  border-radius: 12px;
+  box-shadow: 0px 4px 16px rgba(0, 0, 0, 0.15);
+  overflow: hidden;
+  z-index: 9999; /* 👈 Higher than navbar (which uses z-50 ≈ 100) */
+  display: flex;
+  flex-direction: column;
+  max-height: 80vh;
+}
+
+/* Header area (X and Mark all) */
+.notification-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px 15px;
+  background-color: #f9f9f9;
+  border-bottom: 1px solid #eee;
+  flex-shrink: 0;
+}
+
+/* Scrollable area only for notifications */
+.notification-list {
+  flex-grow: 1;
+  overflow-y: auto;
+  max-height: 60vh;
+  scrollbar-width: none; /* Firefox */
+}
+
+/* Hide scrollbar for Chrome/Safari/Edge */
+.notification-list::-webkit-scrollbar {
+  display: none;
+}
+
+/* Notification Item */
+.notification-item {
+  padding: 12px 16px;
+  border-bottom: 1px solid #f2f2f2;
+  font-size: 14px;
+  line-height: 1.5;
+  transition: background 0.3s;
+}
+
+.notification-item.unread {
+  background-color: #00a99d;
+}
+
+.notification-item:hover {
+  background-color: #f7f7f7;
+}
+
+/* Footer (optional padding for spacing) */
+.notification-footer {
+  padding: 10px;
+  text-align: center;
+  background: #fff;
+  flex-shrink: 0;
+}
+
+/* ✅ Responsive Design */
+@media (max-width: 768px) {
+   .notification-dropdown {
+    right: 5px;
+    width: 60vw;
+    top: 60px; /* 👈 increase top spacing */
+    max-height: 75vh;
+    z-index: 9999; /* ensure stays above navbar */
+  }
+
+  .notification-header {
+    padding: 10px 12px;
+  }
+
+  .notification-item {
+    font-size: 13px;
+    padding: 10px 12px;
+  }
+}
+
+@media (max-width: 480px) {
+  .notification-dropdown {
+    width: 65vw;
+    top: 45px;
+    border-radius: 10px;
+    display: flex;
+    justify-content: right;
+    left: -230px !important;
+  }
+
+  .notification-item {
+    font-size: 12px;
+  }
+
+  .notification-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 8px;
+  }
+}

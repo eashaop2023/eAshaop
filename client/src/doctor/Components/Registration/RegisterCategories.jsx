@@ -1,0 +1,15 @@
+export const categories = [
+  { name: "General Physician", uuid:"UqkGTNQTOD" },
+  { name: "Cardiologist",uuid:"bD1KuA_6pr" },
+  { name: "Orthopedic", uuid:"oybWOH7Ok8" },
+  { name: "Neurologist",uuid:"r1ArfRKaU_" },
+  { name: "Ophthalmology", uuid:"whHEP4Ba-m" },
+  { name: "ENT Specialist", uuid:"4A31RiqS_M" },
+  { name: "Dentist", uuid:"u3bp-C0G4f" },
+  { name: "Psychiatrist", uuid:"Psych_01" },
+  { name: "Pediatrician", uuid:"Ped_01" },
+  { name: "Dermatologist", uuid:"DrmtLgst_01" },
+  { name: "Physiotherapist", uuid:"PhyThr_01" },
+  { name: "Urologist", uuid:"Urolgst_01" },
+  { name: "Gynaecologist", uuid:"Gynclgst_01" },
+];

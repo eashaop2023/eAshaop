@@ -1,0 +1,102 @@
+/* Notification Dropdown Container */
+.notification-dropdown {
+  position: absolute;
+  top: 30px;
+  right: 0;
+  width: 320px;
+  background: #fff;
+  border-radius: 12px;
+  box-shadow: 0px 4px 16px rgba(0,0,0,0.15);
+  overflow: hidden;
+  z-index: 1000;
+  display: flex;
+  flex-direction: column;
+  max-height: 80vh;
+}
+
+/* Header area (X and Mark all) */
+.notification-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px 15px;
+  background-color: #f9f9f9;
+  border-bottom: 1px solid #eee;
+  flex-shrink: 0;
+}
+
+/* Scrollable area only for notifications */
+.notification-list {
+  flex-grow: 1;
+  overflow-y: auto;
+  max-height: 60vh;
+  scrollbar-width: none; /* Firefox */
+}
+
+/* Hide scrollbar for Chrome/Safari/Edge */
+.notification-list::-webkit-scrollbar {
+  display: none;
+}
+
+/* Notification Item */
+.notification-item {
+  padding: 12px 16px;
+  border-bottom: 1px solid #f2f2f2;
+  font-size: 14px;
+  line-height: 1.5;
+  transition: background 0.3s;
+}
+
+.notification-item.unread {
+  background-color: #f0f8ff;
+}
+
+.notification-item:hover {
+  background-color: #f7f7f7;
+}
+
+/* Footer (optional padding for spacing) */
+.notification-footer {
+  padding: 10px;
+  text-align: center;
+  background: #fff;
+  flex-shrink: 0;
+}
+
+/* ✅ Responsive Design */
+@media (max-width: 768px) {
+  .notification-dropdown {
+    right: 5px;
+    width: 60vw;
+    top: 50px;
+    max-height: 75vh;
+  }
+
+  .notification-header {
+    padding: 10px 12px;
+  }
+
+  .notification-item {
+    font-size: 13px;
+    padding: 10px 12px;
+  }
+}
+
+@media (max-width: 480px) {
+  .notification-dropdown {
+    width: 65vw;
+    top: 45px;
+    border-radius: 10px;
+    margin-left: 30px !important;
+  }
+
+  .notification-item {
+    font-size: 12px;
+  }
+
+  .notification-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 8px;
+  }
+}

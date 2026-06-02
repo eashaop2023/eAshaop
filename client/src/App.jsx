@@ -1,0 +1,109 @@
+// import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
+// // import LoginPage from "./common./LoginPage./LoginPage";
+// import Forgotpassword from "./common/LoginPage/Forgotpassword";
+// import UserApp from "./user/UserApp";
+// import DoctorApp from "./doctor/DoctorApp";
+// import LoginFlow from "./common/LoginPage/LoginFlow";
+// import { ToastContainer } from "react-toastify";
+// import "react-toastify/dist/ReactToastify.css";
+// import { createContext, useEffect, useState } from "react";
+// import AllReceipts from "./doctor/Components/DoctorsFields/AllReceipts";
+
+
+
+// export const MyContext = createContext("");
+
+
+// function App() {
+//   const [showNotification, setShowNotification] = useState(false);
+  
+//   useEffect(() => {
+//     console.log("FR",showNotification);
+//     const timer = setTimeout(() => setShowNotification(true), 300);
+//     return () => { clearTimeout(timer); setShowNotification(false) };
+//   }, []);
+
+//   return (
+//     <MyContext.Provider value={{ showNotification, setShowNotification }}>
+//       <Router>
+//         <ToastContainer
+//           position="top-center"
+//           autoClose={3000}
+//           hideProgressBar={false}
+//           newestOnTop={true}
+//           closeOnClick
+//           pauseOnHover
+//           draggable
+//         />
+//         <Routes>
+//           {/* Common Login Page */}
+//           <Route path="/*" element={<LoginFlow />} />
+
+//           <Route path="/login" element={<LoginFlow />} />
+//           {/* <Route path="/forgot-password" element={<Forgotpassword />} /> */}
+
+//           {/* User routes (handled inside UserApp.jsx) */}
+//           <Route path="/user/*" element={<UserApp />} />
+
+//           {/* Doctor routes (handled inside DoctorApp.jsx) */}
+//           <Route path="/doctor/*" element={<DoctorApp />} />
+//           <Route path="dashboard" element={<Dashboard />} />
+//   <Route path="receipts" element={<AllReceipts />} />
+//           <Route path="/doctor/receipts" element={<AllReceipts />} />
+//         </Routes>
+//       </Router>
+//     </MyContext.Provider>
+
+//   );
+// }
+
+// export default App;
+
+
+
+
+
+
+
+
+
+
+
+
+import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
+import Forgotpassword from "./common/LoginPage/Forgotpassword";
+import UserApp from "./user/UserApp";
+import DoctorApp from "./doctor/DoctorApp"; // This file will handle the Sidebar
+import LoginFlow from "./common/LoginPage/LoginFlow";
+import { ToastContainer } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
+import { createContext, useEffect, useState } from "react";
+
+export const MyContext = createContext("");
+
+function App() {
+  const [showNotification, setShowNotification] = useState(false);
+  
+  useEffect(() => {
+    const timer = setTimeout(() => setShowNotification(true), 300);
+    return () => { clearTimeout(timer); setShowNotification(false) };
+  }, []);
+
+  return (
+    <MyContext.Provider value={{ showNotification, setShowNotification }}>
+      <Router>
+        <ToastContainer position="top-center" autoClose={3000} />
+        <Routes>
+          <Route path="/*" element={<LoginFlow />} />
+          <Route path="/login" element={<LoginFlow />} />
+          <Route path="/user/*" element={<UserApp />} />
+          
+          {/* Keep ONLY this for doctor. It points to DoctorApp.jsx */}
+          <Route path="/doctor/*" element={<DoctorApp />} />
+        </Routes>
+      </Router>
+    </MyContext.Provider>
+  );
+}
+
+export default App;

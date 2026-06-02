@@ -1,0 +1,211 @@
+
+.mobile-top-bar,
+.mobile-search-row,
+.mobile-filter-toggle-btn,
+.mobile-filter-container {
+  display: none;
+}
+
+@media (max-width: 991px) {
+  /* Hide desktop sidebar & header elements */
+  .filters-sidebar,
+  .fixed-header-container {
+    display: none !important;
+  }
+
+  /* Reset main content */
+  .main-content {
+    padding-left: 0 !important;
+    margin-left: 0 !important;
+    width: 100% !important;
+    position: absolute !important;
+    top: -205px !important;
+    background-color: white !important;
+  }
+
+  /* Mobile top bar (Row 1) */
+  .mobile-top-bar {
+    display: flex !important;
+    justify-content: space-between;
+    align-items: center;
+    height: 48px;
+    padding: 0 16px;
+    background-color: white !important;
+    position: fixed;
+    top: 77.9px; /* below your main header */
+    left: 0;
+    right: 0;
+    z-index: 1050;
+  }
+
+  /* Force location icon + dropdown inline */
+  .mobile-top-bar .location-container {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+
+  .mobile-top-bar .location-container .dropdown-toggle {
+    background: none !important;
+    border: none !important;
+    padding: 0 !important;
+    font-size: 16px;
+    color: #00A99D;
+  }
+
+  .mobile-top-bar .cart-button-mobile {
+    font-size: 26px !important;
+    background: none !important;
+    border: none !important;
+  }
+
+  /* Row 2 - Search row */
+  .mobile-search-row {
+    display: flex !important;
+    align-items: center;
+    gap: 10px;
+    background-color: white !important;
+    padding: 8px 16px;
+    width: 100%;
+    box-sizing: border-box;
+    position: fixed;
+    top: calc(63px + 55px);
+    left: 0;
+    z-index: 1040;
+    height: 65px !important;
+  }
+
+  .mobile-search-row input {
+    flex: 1;
+    border-radius: 28px;
+    border: 1px solid #F7F7F7;
+    padding: 8px 14px;
+    background-color: white !important;
+    height: 35px !important;
+  }
+
+  .mobile-search-row button {
+    background-color: #00A99D;
+    color: white;
+    border: none;
+    border-radius: 28px;
+    padding: 0px 18px !important;
+    white-space: nowrap;
+    height: 35px !important;
+  }
+
+  /* Row 3 - Filter button full-width */
+  .mobile-filter-toggle-btn {
+    display: flex !important;
+    align-items: center;
+    gap: 6px;
+    background-color: white !important;
+    color: black;
+    padding: 8px 12px;
+    font-size: 16px;
+    margin: 0;
+    position: fixed;
+    top: calc(182px);
+    left: 10;
+    z-index: 1040;
+    box-sizing: border-box;
+    border-radius: 0px;
+    border: 0px solid #F7F7F7;
+    width: 100% !important;
+  }
+
+  /* Filter container */
+  .mobile-filter-container {
+    display: none;
+    position: fixed;
+    top: 202px;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    overflow-y: auto;
+    background-color: white !important;
+    padding: 20px 16px;
+    z-index: 0;
+    width: 80%;
+  }
+
+  .mobile-filter-container.show {
+    display: block;
+  }
+
+  /* Inline location + dropdown */
+  .mobile-top-bar i, 
+  .mobile-top-bar select, 
+  .mobile-top-bar .dropdown, 
+  .mobile-top-bar .dropdown-toggle {
+    display: inline-flex !important;
+    align-items: center;
+    vertical-align: middle;
+  }
+
+  .mobile-top-bar {
+    display: flex !important;
+    justify-content: space-between;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .mobile-top-bar .location-icon {
+    margin-right: 6px;
+  }
+}
+
+/* Mobile ≤ 767px — 2 columns */
+@media (max-width: 767px) {
+  .product-grid {
+    display: grid !important;
+    grid-template-columns: repeat(2, 1fr) !important;
+    gap: 12px !important;
+    padding: 0 16px 16px !important;
+    background-color: white !important;
+    margin-top: calc(78px + 55px + 50px + 50px) !important;
+  }
+}
+
+/* Tablet 768px–991px — 3 columns */
+@media (min-width: 767px) and (max-width: 991px) {
+  .product-grid {
+    display: grid !important;
+    grid-template-columns: repeat(3, 1fr) !important;
+    gap: 12px !important;
+    padding: 0 16px 16px !important;
+    background-color: white !important;
+    margin-top: calc(78px + 55px + 50px + 50px) !important;
+  }
+  .product-grid .card {
+    min-width: 242px !important;
+    max-width: 300px !important;
+  }
+}
+
+/* Extra small devices ≤ 374px — still 2 columns but smaller gap */
+@media (max-width: 374px) {
+  .product-grid {
+    grid-template-columns: repeat(2, 1fr) !important;
+    gap: 8px !important;
+    padding: 0 28px 12px !important;
+  }
+   .product-grid .card {
+    min-width: 17px !important;
+  }
+}
+
+
+@media (min-width: 375px) and (max-width: 425px) {
+  
+  .product-grid .card {
+    min-width: 195px !important;
+  }
+}
+
+@media (min-width: 426px) and  (max-width: 766px) {
+
+  .product-grid .card {
+    max-width: 195px !important;
+  }
+}

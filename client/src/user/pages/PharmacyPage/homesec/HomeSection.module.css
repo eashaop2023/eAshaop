@@ -1,0 +1,28 @@
+
+
+
+@media (min-width : 1440px) {
+
+    .mainContainer {
+        width: 90% !important;
+    }
+
+    .searchWrapper {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 5px !important;
+    }
+
+    .secSearchWrapper {
+        width: 70% !important;
+    }
+
+    .imgWrapper {
+        width: 100% !important;
+        display: flex !important;
+        flex-wrap: wrap !important;
+        gap: 2rem !important
+        ;
+        
+    }
+}

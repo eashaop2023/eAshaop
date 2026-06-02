@@ -1,0 +1,207 @@
+
+@media (min-width: 425px) {
+    
+    .mainContainer {
+        margin-left: 0% !important;
+        width: 90% !important;
+        display: flex !important;
+        flex-direction: column !important;
+        /* align-items: center !important; */
+        justify-content: center !important;
+        margin-left: 2.1rem !important;
+    }
+    .headerOne {
+        width: 80%;
+        /* margin-top: 1.5rem; */
+                /* width: 80%; */
+        margin-top: -0.8rem;
+        margin-left: 2.5rem;
+
+    }
+    .cardContainer {
+        width: 100%;
+        display: flex;
+        flex-direction: column;
+        /* align-items: center; */
+    }
+    .rowContainer {
+        width: 100%;
+    }
+}
+
+@media (min-width : 769px) {
+    .mainContainer {
+        margin-left: 0% !important;
+        width: 90% !important;
+        margin-left: 2.3rem !important;
+    }
+    .headerOne {
+        width: 80%;
+        margin-top: 1.5rem;
+    }
+    .cardContainer {
+        width: 100%;
+        /* display: flex; */
+        /* flex-direction: column; */
+        /* align-items: center; */
+    }
+    .rowContainer {
+        width: 100% !important;
+        min-height:max-content !important;
+        display: grid !important;
+        grid-template-columns: 1fr 1fr !important;
+        
+    }
+
+   .cardsContainer {
+        width: 100% !important;
+     
+        /* padding-bottom: 10px !important; */
+    }
+
+    
+
+    .cardRow {
+        width: 150% !important;
+        /* overflow-x: hidden !important; */
+    }
+  
+
+  
+
+    /* .cardRow {
+        width: 105% !important;
+    }
+
+    .reportcardCol {
+        width: 100% !important;
+    } */
+
+}
+
+
+@media (min-width : 1024px) {
+    
+    div .mainContainer {
+        /* display: flex !important;
+        align-items: flex-end !important; */
+        position: relative !important;
+        padding-left: 20px !important;
+        
+        
+    }
+
+     .mainContainer {
+        margin-left: 0% !important;
+        width: 75% !important;
+        margin-left: 2.3rem !important;
+        position: absolute !important;
+        right: 0 !important;
+        /* padding-top: 50px !important; */
+        margin-top: 0px !important;
+    }
+    .headerOne {
+        width: 80%;
+        margin-top: 1.5rem;
+        margin-left: 0rem;
+    }
+    .cardContainer {
+        width: 100% !important;
+        /* display: flex; */
+        /* flex-direction: column; */
+        /* align-items: center; */
+    }
+    .rowContainer {
+        /* width: 100% !important; */
+        /* min-height:max-content !important; */
+        display: grid !important;
+        grid-template-columns: 1fr 1fr 1fr !important;
+        width: 100% !important;
+        
+    }
+    .cardsContainer {
+        width: 100% !important;
+        height: 120px !important;
+    }
+    /* .cardRow {
+        width: 105% !important;
+    } */
+     .colContainer {
+        width: 100% !important;
+     }
+     .outerMainDiv {
+        display: flex !important;
+        /* align-items: end !important; */
+        justify-content: end !important;
+     }
+
+}
+
+@media (min-width:1440px) {
+    .mainContainer {
+        width: 78% !important;
+        /* height: 85vh !important; */
+        padding-top: 0px !important;
+    }
+
+    .cardsContainer {
+        /* width: 100% !important; */
+        height: 110px !important;
+    }
+
+}
+
+@media (min-width : 1450px) {
+      .mainContainer {
+        width: 78% !important;
+        padding-top: 80px !important;
+    }
+    
+}
+
+/* 🟩 Fix layout for very small screens (<425px) */
+@media (max-width: 424px) {
+  .mainContainer {
+    margin-left: 0 !important;
+    width: 100% !important;
+    padding: 16px !important;
+    display: flex !important;
+    flex-direction: column !important;
+    padding-top: 105px !important;
+  }
+
+  .headerOne {
+    font-size: 20px !important; /* smaller text */
+    width: 100% !important;
+    margin: 0 0 1rem 0 !important;
+    text-align: left !important;
+  }
+
+  .cardContainer {
+    width: 100% !important;
+    margin-left: 0 !important;
+    margin-top: 0px !important;  
+  }
+
+  .rowContainer {
+    width: 100% !important;
+    display: grid !important;
+    grid-template-columns: 1fr !important; /* 1 card per row */
+    gap: 12px !important;
+  }
+
+  .colContainer {
+    width: 100% !important;
+    padding: 0 !important;
+  }
+
+  .cardsContainer {
+    width: 100% !important;
+    height: auto !important; /* allow cards to expand naturally */
+    padding: 12px !important;
+  }
+
+  .cardRow {
+    width: 100% !important;
+  }
+}
